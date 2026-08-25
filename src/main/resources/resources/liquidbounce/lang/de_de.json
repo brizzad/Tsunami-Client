@@ -246,16 +246,7 @@
   "liquidbounce.generic.error": "Fehler",
   "liquidbounce.generic.forum": "Forum",
   "liquidbounce.generic.notifyDeveloper": "Überprüfe dein Spielprotokoll und benachrichtige uns.",
-  "liquidbounce.liquidchat.authenticationFailed": "Authentifizierung fehlgeschlagen! Für LiquidChat ist ein Minecraft-Premium-Konto erforderlich.",
-  "liquidbounce.liquidchat.jwtTokenReceived": "JWT-Token erhalten! Erneut anmelden...",
-  "liquidbounce.liquidchat.notConnected": "Keine Verbindung zum Chatserver! Schalte das LiquidChat-Modul ein!",
-  "liquidbounce.liquidchat.notLoggedIn": "Nicht authentifiziert! Du kannst leider nur mit einem Premium-Minecraft-Konto chatten!",
-  "liquidbounce.liquidchat.states.connected": "Mit Chatserver verbunden!",
-  "liquidbounce.liquidchat.states.disconnected": "Verbindung zum Chatserver getrennt!",
-  "liquidbounce.liquidchat.states.loggedIn": "Authentifiziert!",
-  "liquidbounce.liquidchat.writeMessage": "So sendest du eine Nachricht: %s",
   "liquidbounce.module.wings.description": "Rendert Flügel hinter dem Spieler.",
-  "liquidbounce.liquidchat.writePrivateMessage": "So sendest du eine private Nachricht: %s",
   "liquidbounce.module.totemEffect.description": "Rendert einen Effekt, wenn Spieler ein Totem benutzen.",
   "liquidbounce.module.ESP.description": "Ermöglicht das Sehen von Zielen durch Wände.",
   "liquidbounce.module.abortBreaking.description": "Ermöglicht dir, das Abbauen eines Blocks abzubrechen, ohne den Fortschritt zu verlieren.",
@@ -308,7 +299,6 @@
   "liquidbounce.module.breadcrumbs.description": "Hinterlässt eine Spur.",
   "liquidbounce.module.antiVoid.description": "Schützt dich davor, ins Void zu fallen.",
   "liquidbounce.module.cameraClip.description": "Ermöglicht dir, mit der Kamera im Third-Person-Modus durch Blöcke zu schauen.",
-  "liquidbounce.module.capeTransfer.description": "Überträgt dir den Spenderumhang automatisch auf deinen aktuellen Account. Spende unter liquidbounce.net/donate.",
   "liquidbounce.module.chestStealer.description": "Stiehlt automatisch alle Gegenstände aus einer Kiste.",
   "liquidbounce.module.clickGUI.description": "Zeigt dir ein benutzerfreundliches Menü zum Umschalten und Konfigurieren von Modulen.",
   "liquidbounce.module.clientSpoofer.description": "Verfälscht die Client deines Spiel-Clients mit einer anderen.",
@@ -478,7 +468,6 @@
   "liquidbounce.module.antiHunger.description": "Verhindert, dass du hungrig wirst.",
   "liquidbounce.module.antiHunger.messages.warnSprint": "Ein anderes Modul verursacht Sprintpakete, die zu Hunger führen konnten.",
   "liquidbounce.module.antiHunger.messages.warnBreak": "Du zerstörst einen Block, was zu Hunger führen könnte.",
-  "liquidbounce.module.liquidChat.description": "Ermöglicht dir, mit anderen LiquidBounce Benutzern zu chatten.",
   "liquidbounce.module.consoleSpammer.description": "Spamt die Konsole des Servers mit Fehlermeldungen zu.",
   "liquidbounce.module.autoQueue.description": "Tritt automatisch auf Mini Game Servern dem Spiel bei.",
   "liquidbounce.module.chams.description": "Rendert Spieler durch Wände.",
@@ -555,7 +544,6 @@
   "liquidbounce.module.phase.description": "Ermöglicht dir, durch Blöcke zu gehen.",
   "liquidbounce.module.aspect.description": "Passt das horizontale Seitenverhältnis an.",
   "liquidbounce.module.extendedFirework.description": "Ändert die Geschwindigkeit des Feuerwerkraketen-Boosts.",
-
   "liquidbounce.command.models.subcommand.create.result.modelExists": "❌ Das Modell %s existiert bereits.",
   "liquidbounce.command.models.subcommand.create.result.trainingStart": "⚡ Training wurde für das Modell %s gestartet...",
   "liquidbounce.command.models.subcommand.create.result.samplesLoaded": "✔ %s Daten in %s geladen.",
@@ -564,7 +552,6 @@
   "liquidbounce.command.models.subcommand.create.result.trainingEnd": "✔ Das Modell %s wurde trainiert und erfolgreich in %s gespeichert.",
   "liquidbounce.command.models.subcommand.create.result.trainingFailed": "❌ Das Training ist mit dem Fehlercode %s fehlgeschlagen.",
   "liquidbounce.command.models.subcommand.create.result.invalidName": "❌ Ungültiger Modellname. Der Modellname muss alphanumerisch sein und darf keine Leerzeichen enthalten.",
-
   "liquidbounce.command.models.subcommand.improve.result.modelNotFound": "❌ Das Modell %s konnte nicht gefunden werden.",
   "liquidbounce.command.models.subcommand.improve.result.trainingStart": "⚡ Training wurde für das Modell %s gestartet...",
   "liquidbounce.command.models.subcommand.improve.result.noSamples": "❌ Keine Daten für das Modell %s gefunden.",
@@ -572,15 +559,11 @@
   "liquidbounce.command.models.subcommand.improve.result.preparedData": "✔ Datenset vorbereitet in %s.",
   "liquidbounce.command.models.subcommand.improve.result.trainingEnd": "✔ Das Modell %s wurde trainiert und erfolgreich in %s gespeichert.",
   "liquidbounce.command.models.subcommand.improve.result.trainingFailed": "❌ Das Training ist mit dem Fehlercode %s fehlgeschlagen.",
-
   "liquidbounce.command.models.subcommand.reload.result.modelsReloaded": "✔ Modelle wurden neu geladen.",
-
   "liquidbounce.command.models.subcommand.delete.result.modelNotFound": "❌ Das Modell %s konnte nicht gefunden werden.",
   "liquidbounce.command.models.subcommand.delete.result.modelDeleted": "✔ Das Modell %s wurde gelöscht.",
-
   "liquidbounce.unsupportedDeepLearning": "❌ Die KI-Engine wurde nicht initialisiert. Dein System wird möglicherweise nicht unterstützt.",
   "liquidbounce.rotationSystem.angleSmooth.ai.fallback": "Daher wird auf %s angle smoothing zurückgegriffen.",
-
   "liquidbounce.module.particles.description": "Zeigt Partikel beim Angriff eines z.B. Spielers an.",
   "liquidbounce.module.elytraTarget.description": "Verfolgt dein Ziel mit einer Elytra.",
   "liquidbounce.module.dupe.messages.singleplayer": "Du kannst keine Duplizierungs-Exploits im Einzelspielermodus ausführen, da sie Serverfehler ausnutzen. Verwende stattdessen den Kreativmodus.",
@@ -651,5 +634,4 @@
   "liquidbounce.module.potionSpoof.description": "Erlaubt dem Spieler, Effekte zu erhalten, ohne einen Trank zu benutzen.",
   "liquidbounce.module.macros.description": "Ermöglicht dir, per benutzerdefinierter Taste Chat-Nachrichten oder Item-Aktionen auszuführen.",
   "liquidbounce.module.newChunks.description": "Hebt Chunks hervor, die wahrscheinlich neu generiert wurden."
-
 }

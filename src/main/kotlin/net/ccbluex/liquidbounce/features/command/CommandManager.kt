@@ -42,7 +42,6 @@ import net.ccbluex.liquidbounce.features.command.commands.client.CommandTargets
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandToggle
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandValue
 import net.ccbluex.liquidbounce.features.command.commands.client.client.CommandClient
-import net.ccbluex.liquidbounce.features.command.commands.client.marketplace.CommandMarketplace
 import net.ccbluex.liquidbounce.features.command.commands.ingame.CommandCenter
 import net.ccbluex.liquidbounce.features.command.commands.ingame.CommandCoordinates
 import net.ccbluex.liquidbounce.features.command.commands.ingame.CommandPing
@@ -149,7 +148,6 @@ object CommandManager : Collection<Command> by commandSet {
             CommandServerInfo,
             CommandTranslate,
             CommandAutoTranslate,
-            CommandMarketplace
         )
 
         commands.forEach {

@@ -26,8 +26,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import kotlin.Pair;
-import net.ccbluex.liquidbounce.api.models.cosmetics.CosmeticCategory;
-import net.ccbluex.liquidbounce.features.cosmetic.CosmeticService;
 import net.ccbluex.liquidbounce.features.module.modules.render.*;
 import net.ccbluex.liquidbounce.render.engine.type.Color4b;
 import net.minecraft.client.Minecraft;
@@ -67,15 +65,6 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
 
 
 
-
-    @ModifyReturnValue(method = "isEntityUpsideDown(Lnet/minecraft/world/entity/LivingEntity;)Z", at = @At("RETURN"))
-    private static boolean injectShouldFlipUpsideDown(boolean original, LivingEntity entity) {
-        if (!(entity instanceof AbstractClientPlayer)) {
-            return original;
-        }
-
-        return original || CosmeticService.INSTANCE.hasCosmetic(entity.getUUID(), CosmeticCategory.DINNERBONE);
-    }
 
     // Chams
 

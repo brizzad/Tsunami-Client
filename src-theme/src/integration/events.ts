@@ -34,9 +34,6 @@ export interface EventMap {
     targetChange: TargetChangeEvent;
     blockCountChange: BlockCountChangeEvent;
     bedStateChange: BedStateChangeEvent;
-    clientChatStateChange: ClientChatStateChangeEvent;
-    clientChatMessage: ClientChatMessageEvent;
-    clientChatError: ClientChatErrorEvent;
     accountManagerMessage: AccountManagerMessageEvent;
     accountManagerLogin: AccountManagerLoginEvent;
     accountManagerAddition: AccountManagerAdditionEvent;
@@ -231,24 +228,6 @@ export interface ModuleActivationEvent {
 
 export interface GameModeChangeEvent {
     gameMode: "survival" | "creative" | "adventure" | "spectator";
-}
-
-export interface ClientChatStateChangeEvent {
-    state: "connecting" | "connected" | "logon" | "loggedIn" | "disconnected" | "authenticationFailed";
-}
-
-export interface ClientChatMessageEvent {
-    user: {
-        name: string;
-        uuid: string;
-    };
-    message: string;
-    chatGroup: "PublicChat" | "PrivateChat";
-    // Not "public"/"private" because the EnumChoiceSerializer in Kotlin ignores @SerializedName annotations, bug?
-}
-
-export interface ClientChatErrorEvent {
-    error: string;
 }
 
 export interface SessionEvent {

@@ -22,10 +22,8 @@ import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.api.core.renderScope
-import net.ccbluex.liquidbounce.api.models.marketplace.MarketplaceItemType
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.types.Config
-import net.ccbluex.liquidbounce.features.marketplace.MarketplaceManager
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
@@ -142,18 +140,6 @@ object ThemeManager : Config("theme") {
                     logger.error("Failed to load theme '${file.name}'.", err)
                 }
             }
-
-        // 2nd priority
-        MarketplaceManager.getSubscribedItemsOfType(MarketplaceItemType.THEME).forEach { item ->
-            runCatching {
-                val installationFolder = item.getInstallationFolder() ?: return@forEach
-                val relativeFile = installationFolder.relativeTo(MarketplaceManager.marketplaceRoot)
-                Theme.load(Theme.Origin.MARKETPLACE, relativeFile)
-                    .addIfUnloaded()
-            }.onFailure { err ->
-                logger.error("Failed to load theme '${item.name}'.", err)
-            }
-        }
 
         includedTheme?.let { theme -> themes += theme }
 

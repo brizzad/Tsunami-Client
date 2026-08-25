@@ -110,8 +110,10 @@ const add = (check, rel, detail) => findings.push(`${check}\t${rel.replace(/\\/g
       else if (closes) inBlock = false;
       if (skip) return;
       if (!hostRe.test(line)) return;
-      // Only care when it appears as a URL in code.
-      if (!/https?:\/\//.test(line)) return;
+      // Only care when it appears as a URL in code. Any scheme, not just http:
+      // requiring https? here missed wss://chat.liquidbounce.net, which the
+      // client connected to on startup, enabled by default, for months.
+      if (!/[a-z][a-z0-9+.-]*:\/\//i.test(line)) return;
       add("phone-home", rel, `${i + 1}: ${line.trim().replace(/\s+/g, " ").slice(0, 100)}`);
     });
   }

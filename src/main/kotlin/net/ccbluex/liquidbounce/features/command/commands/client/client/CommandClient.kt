@@ -43,8 +43,6 @@ object CommandClient : Command.Factory {
             .subcommand(CommandClientAppearanceSubcommand.appearanceCommand())
             .subcommand(CommandClientPrefixSubcommand.prefixCommand())
             .subcommand(CommandClientDestructSubcommand.destructCommand())
-            .subcommand(CommandClientAccountSubcommand.accountCommand())
-            .subcommand(CommandClientCosmeticsSubcommand.cosmeticsCommand())
             .subcommand(CommandClientConfigSubcommand.configCommand())
             .build()
     }

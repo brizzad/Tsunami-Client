@@ -26,14 +26,12 @@ import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.clie
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.componentRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.globalRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.localStorageRoutes
-import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.marketplaceRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.moduleRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.proxyRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.screenRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.sessionRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.spooferRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.themeRoutes
-import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client.userRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.features.browserRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.features.protocolRoutes
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.features.reconnectRoutes
@@ -46,7 +44,6 @@ import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.worldL
 
 internal fun Route.registerInteropFunctions() = route("/api/v1/client") {
     clientRoutes()
-    userRoutes()
     localStorageRoutes()
     themeRoutes()
     screenRoutes()
@@ -66,5 +63,4 @@ internal fun Route.registerInteropFunctions() = route("/api/v1/client") {
     serverListRoutes()
     textureRoutes()
     worldListRoutes()
-    marketplaceRoutes()
 }

@@ -35,7 +35,6 @@ import io.ktor.server.websocket.pingPeriod
 import io.ktor.server.websocket.webSocket
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.config.gson.interopGson
-import net.ccbluex.liquidbounce.features.marketplace.MarketplaceManager
 import net.ccbluex.liquidbounce.integration.interop.middleware.AuthPlugin
 import net.ccbluex.liquidbounce.integration.interop.middleware.isWebSocketAuthenticated
 import net.ccbluex.liquidbounce.integration.interop.protocol.event.SocketEventListener
@@ -142,7 +141,6 @@ object ClientInteropServer {
 
                     // Static file serving
                     staticFiles("/local", ThemeManager.themesFolder)
-                    staticFiles("/marketplace", MarketplaceManager.marketplaceRoot)
 
                     singlePageApplication {
                         applicationRoute = "/${Theme.Origin.RESOURCE.tag}/${LiquidBounce.CLIENT_NAME.lowercase()}"

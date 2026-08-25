@@ -22,18 +22,14 @@ package net.ccbluex.liquidbounce.injection.mixins.minecraft.network;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.authlib.GameProfile;
-import net.ccbluex.liquidbounce.features.cosmetic.CapeCosmeticsManager;
 import net.ccbluex.liquidbounce.features.misc.HideAppearance;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleSkinChanger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.core.ClientAsset;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.PlayerSkin;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(PlayerInfo.class)
@@ -42,11 +38,6 @@ public abstract class MixinPlayerInfo {
     @Shadow
     @Final
     private GameProfile profile;
-
-    @Unique
-    private boolean capeTextureLoading = false;
-    @Unique
-    private Identifier capeTexture = null;
 
     @ModifyReturnValue(method = "getSkin", at = @At("RETURN"))
     @SuppressWarnings({"ConstantConditions", "EqualsBetweenInconvertibleTypes", "RedundantCast"})
@@ -68,12 +59,6 @@ public abstract class MixinPlayerInfo {
             }
         }
 
-        if (capeTexture != null) {
-            return new PlayerSkin(original.body(), new ClientAsset.ResourceTexture(capeTexture, capeTexture),
-                    original.elytra(), original.model(), original.secure());
-        }
-
-        liquid_bounce$fetchCapeTexture();
         return original;
     }
 
@@ -82,14 +67,5 @@ public abstract class MixinPlayerInfo {
         return b || ModuleSkinChanger.INSTANCE.getRunning();
     }
 
-    @Unique
-    private void liquid_bounce$fetchCapeTexture() {
-        if (capeTextureLoading) {
-            return;
-        }
-
-        capeTextureLoading = true;
-        CapeCosmeticsManager.INSTANCE.loadPlayerCape(this.profile, id -> capeTexture = id);
-    }
 
 }

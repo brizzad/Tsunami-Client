@@ -61,6 +61,23 @@ class ApiConfig(
         const val CLIENT_CDN = "https://cdn.tsunami.invalid"
 
         /**
+         * Whether a Tsunami backend exists for the client to talk to.
+         *
+         * It does not. The launcher repo's docs/backend-contract.md specifies
+         * one, but nothing serves it, and every endpoint here resolves to
+         * .invalid deliberately.
+         *
+         * Features needing the backend check this and skip, rather than making
+         * a request that can only fail. Upstream attempted them all on every
+         * launch, so a fresh client logged four stack traces before the main
+         * menu appeared: update check, cosmetics, auto configs, and the
+         * endpoint probe itself.
+         *
+         * Flip to true once a backend exists.
+         */
+        const val BACKEND_CONFIGURED = false
+
+        /**
          * Client-account OAuth. Unreachable, and the client id below is a
          * placeholder: the upstream value identified CCBlueX's own OAuth
          * application, which is not ours to authenticate against.
@@ -106,6 +123,11 @@ class ApiConfig(
                 RandomStringUtils.secure().nextAlphanumeric(16)
             )
             logger.info("API Session Token: $sessionToken")
+
+            if (!BACKEND_CONFIGURED) {
+                logger.info("Skipping API endpoint lookup: no Tsunami backend is configured.")
+                return ApiConfig(API_URLS[0], sessionToken = sessionToken)
+            }
 
             // We trust LiquidLauncher to have found the correct API URL
             val propertyUrl = System.getProperty("net.ccbluex.liquidbounce.api.url")

@@ -27,7 +27,6 @@ import net.ccbluex.liquidbounce.config.types.group.ValueGroup
 import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.event.CancellableEvent
 import net.ccbluex.liquidbounce.event.Event
-import net.ccbluex.liquidbounce.features.chat.packet.AxoUser
 import net.ccbluex.liquidbounce.features.misc.proxy.Proxy
 import net.ccbluex.liquidbounce.integration.interop.protocol.event.WebSocketEvent
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.PlayerData
@@ -101,51 +100,6 @@ class BlockCountChangeEvent(val nextBlock: Block?, val count: Int?) : Event(), W
 
 @Tag("bedStateChange")
 class BedStateChangeEvent(val bedStates: Collection<BedState>) : Event(), WebSocketEvent
-
-@Tag("clientChatStateChange")
-class ClientChatStateChange(val state: State) : Event(), WebSocketEvent {
-    enum class State {
-        @SerializedName("connecting")
-        CONNECTING,
-
-        @SerializedName("connected")
-        CONNECTED,
-
-        @SerializedName("logon")
-        LOGGING_IN,
-
-        @SerializedName("loggedIn")
-        LOGGED_IN,
-
-        @SerializedName("disconnected")
-        DISCONNECTED,
-
-        @SerializedName("authenticationFailed")
-        AUTHENTICATION_FAILED,
-    }
-}
-
-@Tag("clientChatMessage")
-class ClientChatMessageEvent(
-    val user: AxoUser,
-    val message: String,
-    val chatGroup: ChatGroup,
-) : Event(), WebSocketEvent {
-    enum class ChatGroup(override val tag: String) : Tagged {
-        @SerializedName("public")
-        PUBLIC_CHAT("PublicChat"),
-
-        @SerializedName("private")
-        PRIVATE_CHAT("PrivateChat"),
-    }
-}
-
-@Tag("clientChatError")
-class ClientChatErrorEvent(val error: String) : Event(), WebSocketEvent
-
-@Tag("clientChatJwtToken")
-// Do not define as WebSocket event, because it contains sensitive data
-class ClientChatJwtTokenEvent(val jwt: String) : Event()
 
 @Tag("accountManagerMessage")
 class AccountManagerMessageEvent(val message: String) : Event(), WebSocketEvent

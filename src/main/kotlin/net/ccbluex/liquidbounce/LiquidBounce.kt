@@ -31,7 +31,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import net.ccbluex.liquidbounce.api.core.ApiConfig
 import net.ccbluex.liquidbounce.api.core.ioScope
-import net.ccbluex.liquidbounce.api.models.auth.ClientAccount
 import net.ccbluex.liquidbounce.api.services.client.ClientUpdate
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.autoconfig.AutoConfig
@@ -45,11 +44,8 @@ import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.account.AccountManager
 import net.ccbluex.liquidbounce.features.blink.BlinkManager
 import net.ccbluex.liquidbounce.features.command.CommandManager
-import net.ccbluex.liquidbounce.features.cosmetic.ClientAccountManager
-import net.ccbluex.liquidbounce.features.cosmetic.CosmeticService
 import net.ccbluex.liquidbounce.features.creativetab.tabs.HeadsCreativeModeTab
 import net.ccbluex.liquidbounce.features.global.GlobalManager
-import net.ccbluex.liquidbounce.features.marketplace.MarketplaceManager
 import net.ccbluex.liquidbounce.features.misc.FriendManager
 import net.ccbluex.liquidbounce.features.misc.proxy.ProxyManager
 import net.ccbluex.liquidbounce.features.module.ModuleManager
@@ -280,10 +276,8 @@ object LiquidBounce : EventListener {
         InventoryManager
         EnderChestInventoryTracker
         ActiveServerList
-        ConfigSystem.root(ClientAccountManager)
         ConfigSystem.root(SpooferManager)
         ConfigSystem.root(GlobalManager)
-        ConfigSystem.root(MarketplaceManager)
         PostRotationExecutor
         ServerObserver
         ItemImageAtlas
@@ -327,12 +321,6 @@ object LiquidBounce : EventListener {
                 logger.info("[Update] Update available: $clientVersion -> ${update.lbVersion}")
             }
             launch {
-                // Load cosmetics
-                CosmeticService.refreshCarriers(force = true) {
-                    logger.info("Successfully loaded ${CosmeticService.carriers.size} cosmetics carriers.")
-                }
-            }
-            launch {
                 // Download player heads
                 HeadsCreativeModeTab.heads.getFinalState()
             }
@@ -346,25 +334,6 @@ object LiquidBounce : EventListener {
             // so simply not touching it at startup makes the lookup happen only if
             // a feature actually reads it — and the proxy features that do are
             // themselves out of scope for Tsunami.
-            launch {
-                ConfigSystem.load(ClientAccountManager)
-                if (ClientAccount.ENV_ACCOUNT != null) {
-                    ClientAccountManager.clientAccount = ClientAccount.ENV_ACCOUNT
-                }
-
-                if (ClientAccountManager.clientAccount != ClientAccount.EMPTY_ACCOUNT) {
-                    runCatching {
-                        ClientAccountManager.clientAccount.renew()
-                    }.onFailure {
-                        logger.error("Failed to renew client account token.", it)
-                        ClientAccountManager.clientAccount = ClientAccount.EMPTY_ACCOUNT
-                    }.onSuccess {
-                        logger.info("Successfully renewed client account token.")
-                    }
-
-                    ConfigSystem.store(ClientAccountManager)
-                }
-            }
         }
 
         logger.info("API initialization done.")
@@ -383,8 +352,6 @@ object LiquidBounce : EventListener {
         ClientInteropServer.start()
         if (!ClientInteropServer.isSkipping) {
             ThemeManager.init()
-            // Preload marketplace items
-            ConfigSystem.load(MarketplaceManager)
             ConfigSystem.load(ThemeManager)
             ThemeManager.load()
         }
@@ -398,15 +365,6 @@ object LiquidBounce : EventListener {
             BrowserBackendManager.makeDependenciesAvailable(this)
 
 
-            launch("Marketplace") { task ->
-                runCatching {
-                    MarketplaceManager.updateAll(task)
-                }.onFailure { exception ->
-                    logger.error("Failed to update marketplace items.", exception)
-                }
-
-                task.isCompleted = true
-            }
         }
 
         // Prepare glyph manager

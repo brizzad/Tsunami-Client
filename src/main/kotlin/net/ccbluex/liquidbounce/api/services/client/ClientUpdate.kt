@@ -21,6 +21,7 @@ package net.ccbluex.liquidbounce.api.services.client
 import com.vdurmont.semver4j.Semver
 import kotlinx.coroutines.async
 import net.ccbluex.liquidbounce.LiquidBounce
+import net.ccbluex.liquidbounce.api.core.ApiConfig
 import net.ccbluex.liquidbounce.api.core.ioScope
 import net.ccbluex.liquidbounce.utils.client.GitInfo
 import net.ccbluex.liquidbounce.utils.client.logger
@@ -30,6 +31,11 @@ import java.time.format.DateTimeFormatter
 object ClientUpdate {
 
     val update = ioScope.async {
+        if (!ApiConfig.BACKEND_CONFIGURED) {
+            logger.info("Update check skipped: no Tsunami backend is configured.")
+            return@async null
+        }
+
         runCatching {
             val newestBuild = runCatching {
                 ClientApi.requestNewestBuildEndpoint(

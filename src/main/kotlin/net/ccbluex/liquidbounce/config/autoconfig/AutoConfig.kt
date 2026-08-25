@@ -20,6 +20,7 @@ package net.ccbluex.liquidbounce.config.autoconfig
 
 import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.LiquidBounce
+import net.ccbluex.liquidbounce.api.core.ApiConfig
 import net.ccbluex.liquidbounce.api.models.client.AutoSettings
 import net.ccbluex.liquidbounce.api.services.client.ClientApi
 import net.ccbluex.liquidbounce.api.types.enums.AutoSettingsStatusType
@@ -82,7 +83,10 @@ object AutoConfig {
      *
      * @return successfully reloaded or not
      */
-    suspend fun reloadConfigs(): Boolean = try {
+    suspend fun reloadConfigs(): Boolean = if (!ApiConfig.BACKEND_CONFIGURED) {
+        logger.info("Auto configs unavailable: no Tsunami backend is configured.")
+        false
+    } else try {
         configs = ClientApi.requestSettingsList()
         true
     } catch (e: Exception) {
