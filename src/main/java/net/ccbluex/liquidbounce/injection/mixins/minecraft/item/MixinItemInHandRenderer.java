@@ -24,11 +24,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSwordBlock;
 import net.ccbluex.liquidbounce.features.module.modules.render.animations.ModuleAnimations;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleSilentHotbar;
 import net.ccbluex.liquidbounce.features.module.modules.render.animations.SwingAnimations;
-import net.ccbluex.liquidbounce.utils.client.SilentHotbar;
 import net.ccbluex.liquidbounce.utils.item.ItemCategorizationsKt;
 import net.ccbluex.liquidbounce.utils.render.FirstPersonShieldTint;
 import net.minecraft.client.Minecraft;
@@ -95,7 +92,7 @@ public abstract class MixinItemInHandRenderer {
     ) {
         AbstractClientPlayer player = Minecraft.getInstance().player;
 
-        if (player == null || !ModuleAnimations.INSTANCE.getRunning() || !SwingAnimations.INSTANCE.getEnabled() || ModuleSwordBlock.shouldAnimateSwordBlock(player)) {
+        if (player == null || !ModuleAnimations.INSTANCE.getRunning() || !SwingAnimations.INSTANCE.getEnabled()) {
             return;
         }
 
@@ -161,13 +158,6 @@ public abstract class MixinItemInHandRenderer {
         }
     }
 
-    @Inject(method = "submitArmWithItem", at = @At("HEAD"), cancellable = true)
-    private void hideShield(AbstractClientPlayer player, float frameInterp, float xRot, InteractionHand hand, float attack, ItemStack itemStack, float inverseArmHeight, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int lightCoords, CallbackInfo ci) {
-        if (hand == InteractionHand.OFF_HAND && player == Minecraft.getInstance().player &&
-            ModuleSwordBlock.INSTANCE.shouldHideOffhand(itemStack)) {
-            ci.cancel();
-        }
-    }
 
     @ModifyArg(method = "submitArmWithItem", at = @At(
             value = "INVOKE",
@@ -182,24 +172,7 @@ public abstract class MixinItemInHandRenderer {
         return equipProgress;
     }
 
-    @ModifyExpressionValue(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getMainHandItem()Lnet/minecraft/world/item/ItemStack;"))
-    private ItemStack injectSilentHotbar(ItemStack original) {
-        if (ModuleSilentHotbar.INSTANCE.getRunning()) {
-            // noinspection DataFlowIssue
-            return minecraft.player.getInventory().getNonEquipmentItems().get(SilentHotbar.INSTANCE.getClientsideSlot());
-        }
 
-        return original;
-    }
-
-    @ModifyExpressionValue(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getItemSwapScale(F)F"))
-    private float injectSilentHotbarNoCooldown(float original) {
-        if (ModuleSilentHotbar.INSTANCE.getRunning() && ModuleSilentHotbar.INSTANCE.getNoCooldownProgress() && SilentHotbar.INSTANCE.isSlotModified()) {
-            return 1f;
-        }
-
-        return original;
-    }
 
     @Inject(method = "itemUsed", at = @At("HEAD"), cancellable = true)
     private void injectIgnorePlace(InteractionHand hand, CallbackInfo ci) {
@@ -226,55 +199,8 @@ public abstract class MixinItemInHandRenderer {
         return y;
     }
 
-    @ModifyExpressionValue(method = "submitArmWithItem", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/world/item/ItemStack;getUseAnimation()Lnet/minecraft/world/item/ItemUseAnimation;",
-        ordinal = 0
-    ))
-    private ItemUseAnimation hookUseAction(ItemUseAnimation original, @Local(argsOnly = true, name = "itemStack") ItemStack itemStack, @Local(argsOnly = true, name = "player") AbstractClientPlayer player) {
-        if (ModuleSwordBlock.shouldAnimateSwordBlock(player, itemStack)) {
-            return ItemUseAnimation.BLOCK;
-        }
-        return original;
-    }
 
-    @ModifyExpressionValue(method = "submitArmWithItem", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/player/AbstractClientPlayer;isUsingItem()Z",
-        ordinal = 1
-    ))
-    private boolean hookIsUseItem(boolean original, @Local(argsOnly = true, name = "player") AbstractClientPlayer player) {
-        if (ModuleSwordBlock.shouldAnimateSwordBlock(player)) {
-            return true;
-        }
 
-        return original;
-    }
-
-    @ModifyExpressionValue(method = "submitArmWithItem", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/player/AbstractClientPlayer;getUsedItemHand()Lnet/minecraft/world/InteractionHand;",
-        ordinal = 1
-    ))
-    private InteractionHand hookActiveHand(InteractionHand original, @Local(argsOnly = true, name = "player") AbstractClientPlayer player) {
-        if (ModuleSwordBlock.shouldAnimateSwordBlock(player)) {
-            return InteractionHand.MAIN_HAND;
-        }
-
-        return original;
-    }
-
-    @ModifyExpressionValue(method = "submitArmWithItem", at = @At(
-        value = "INVOKE",
-        target = "Lnet/minecraft/client/player/AbstractClientPlayer;getUseItemRemainingTicks()I",
-        ordinal = 2
-    ))
-    private int hookItemUseItem(int original, @Local(argsOnly = true, name = "player") AbstractClientPlayer player) {
-        if (ModuleSwordBlock.shouldAnimateSwordBlock(player)) {
-            return 7200;
-        }
-        return original;
-    }
 
 
 }

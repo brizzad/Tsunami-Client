@@ -21,9 +21,6 @@ package net.ccbluex.liquidbounce.injection.mixins.minecraft.render.blockentity;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.ccbluex.liquidbounce.common.StorageEspOutlineContext;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleStorageESP;
-import net.ccbluex.liquidbounce.render.engine.type.Color4b;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -36,38 +33,5 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(BlockEntityRenderDispatcher.class)
 public abstract class MixinBlockEntityRenderDispatcher {
 
-    /**
-     * Inject StorageESP glow effect
-     *
-     * @author 1zuna
-     */
-    @WrapOperation(
-            method = "submit",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/blockentity/BlockEntityRenderer;submit(Lnet/minecraft/client/renderer/blockentity/state/BlockEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V")
-    )
-    private <S extends BlockEntityRenderState> void injectStorageEspGlow(
-        BlockEntityRenderer<?, S> renderer, S state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector,
-        CameraRenderState camera, Operation<Void> original
-    ) {
-        Color4b outlineColor = Color4b.TRANSPARENT;
-        var client = Minecraft.getInstance();
-        if (ModuleStorageESP.GlowMode.INSTANCE.getRunning() && client.level != null) {
-            var type = ModuleStorageESP.categorize(client.level.getBlockEntity(state.blockPos));
-
-            if (type != null && type.shouldRender(state.blockPos)) {
-                var color = type.getColor();
-
-                if (!color.isTransparent()) {
-                    outlineColor = color;
-                }
-            }
-        }
-
-        if (outlineColor.isTransparent()) {
-            original.call(renderer, state, poseStack, submitNodeCollector, camera);
-        } else {
-            StorageEspOutlineContext.render(outlineColor.argb(), () -> original.call(renderer, state, poseStack, submitNodeCollector, camera));
-        }
-    }
 
 }

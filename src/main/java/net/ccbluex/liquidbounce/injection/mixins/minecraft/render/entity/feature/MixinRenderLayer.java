@@ -23,8 +23,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleLogoffSpot;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleTrueSight;
 import net.ccbluex.liquidbounce.render.engine.type.Color4b;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
@@ -45,48 +43,6 @@ public abstract class MixinRenderLayer {
     @Unique
     private static final int ESP_TRUE_SIGHT_REQUIREMENT_COLOR = new Color4b(255, 255, 255, 120).argb();
 
-    @WrapOperation(method = "renderColoredCutoutModel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/OrderedSubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;ILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V"))
-    private static <S> void injectTrueSight(
-        OrderedSubmitNodeCollector instance,
-        Model<? super S> model,
-        S state,
-        PoseStack matrices,
-        RenderType renderLayer,
-        int light,
-        int overlay,
-        int tintedColor,
-        TextureAtlasSprite sprite,
-        int outlineColor,
-        ModelFeatureRenderer.CrumblingOverlay crumblingOverlay,
-        Operation<Void> original
-    ) {
-        if (state instanceof LivingEntityRenderState rs) {
-            var trueSightModule = ModuleTrueSight.INSTANCE;
-            var trueSight = trueSightModule.getRunning() && trueSightModule.getEntities();
-            if (ModuleTrueSight.canRenderEntities(rs)) {
-                tintedColor = trueSight ? trueSightModule.getEntityFeatureLayerColor().argb() : ESP_TRUE_SIGHT_REQUIREMENT_COLOR;
-            }
-            if (ModuleLogoffSpot.INSTANCE.isLogoffEntity(rs)) {
-                tintedColor = ESP_TRUE_SIGHT_REQUIREMENT_COLOR;
-            }
-        }
-        original.call(
-            instance, model,
-            state, matrices,
-            renderLayer, light,
-            overlay, tintedColor,
-            sprite, outlineColor,
-            crumblingOverlay
-        );
-    }
 
-    @WrapOperation(method = "renderColoredCutoutModel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/rendertype/RenderTypes;entityCutout(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;"))
-    private static RenderType injectTrueSight(
-        Identifier texture, Operation<RenderType> original, @Local(argsOnly = true, name = "state") LivingEntityRenderState state) {
-        if (ModuleTrueSight.canRenderEntities(state) || ModuleLogoffSpot.INSTANCE.isLogoffEntity(state)) {
-            return RenderTypes.entityTranslucentCullItemTarget(texture);
-        }
-        return original.call(texture);
-    }
 
 }

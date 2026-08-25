@@ -23,8 +23,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.PlayerFluidCollisionCheckEvent;
-import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleNoPush;
-import net.ccbluex.liquidbounce.features.module.modules.movement.NoPushBy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -54,14 +52,5 @@ public abstract class MixinEntityFluidInteraction {
         }
     }
 
-    @ModifyExpressionValue(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FluidState;getFlow(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;"))
-    private Vec3 hookNoPushInLiquids(Vec3 original, @Local(argsOnly = true, name = "entity") Entity entity) {
-        if (entity != Minecraft.getInstance().player) {
-            return original;
-        }
-
-        return ModuleNoPush.canPush(NoPushBy.LIQUIDS)
-            ? original : Vec3.ZERO;
-    }
 
 }

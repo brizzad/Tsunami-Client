@@ -21,7 +21,6 @@ package net.ccbluex.liquidbounce.injection.mixins.minecraft.network;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.ccbluex.liquidbounce.features.module.modules.movement.noslow.modes.shared.NoSlowSharedInvalidHand;
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager;
 import net.ccbluex.liquidbounce.utils.aiming.data.Rotation;
 import net.ccbluex.liquidbounce.utils.network.UseItemPacketRotation;
@@ -64,9 +63,6 @@ public abstract class MixinServerboundUseItemPacket {
         this.xRot = rotation.xRot();
     }
 
-    /**
-     * @see NoSlowSharedInvalidHand
-     */
     @WrapOperation(method = "write", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/FriendlyByteBuf;writeEnum(Ljava/lang/Enum;)Lnet/minecraft/network/FriendlyByteBuf;"))
     private static FriendlyByteBuf writeEnum(FriendlyByteBuf instance, Enum<?> value, Operation<FriendlyByteBuf> original) {
         return value == null ? instance.writeVarInt(-1) : original.call(instance, value);

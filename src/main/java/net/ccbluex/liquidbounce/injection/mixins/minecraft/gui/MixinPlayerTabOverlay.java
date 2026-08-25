@@ -18,7 +18,6 @@
  */
 package net.ccbluex.liquidbounce.injection.mixins.minecraft.gui;
 
-import static net.ccbluex.liquidbounce.utils.entity.EntityExtensionsKt.shortName;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
@@ -27,11 +26,8 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
 import net.ccbluex.liquidbounce.features.misc.FriendManager;
-import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleAntiStaff;
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleBetterTab;
 import net.ccbluex.liquidbounce.features.module.modules.misc.Visibility;
-import net.ccbluex.liquidbounce.utils.text.PlainText;
-import net.ccbluex.liquidbounce.utils.text.TextBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
@@ -183,22 +179,5 @@ public abstract class MixinPlayerTabOverlay {
         original.call(instance, x0, y0, x1, y1, drawColor);
     }
 
-    @ModifyReturnValue(method = "getNameForDisplay", at = @At("RETURN"))
-    private Component modifyPlayerName(Component original, PlayerInfo entry) {
-        var components = new TextBuilder(original);
-
-        if (ModuleBetterTab.INSTANCE.getRunning() && ModuleBetterTab.INSTANCE.getShowGameMode()) {
-            var playerGameMode = entry.getGameMode();
-            var gameModeText = PlainText.of(" [" + shortName(playerGameMode) + "]");
-            components.add(gameModeText);
-        }
-
-        if (ModuleAntiStaff.INSTANCE.shouldShowAsStaffOnTab(entry.getProfile().name())) {
-            var staffText = PlainText.of(" - (Staff)", TextColor.fromRgb(CommonColors.SOFT_RED));
-            components.add(staffText);
-        }
-
-        return components.build();
-    }
 
 }

@@ -28,12 +28,8 @@ import net.ccbluex.liquidbounce.event.events.OverlayMessageEvent;
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent;
 import net.ccbluex.liquidbounce.event.events.PerspectiveEvent;
 import net.ccbluex.liquidbounce.features.misc.HideAppearance;
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSwordBlock;
-import net.ccbluex.liquidbounce.features.module.modules.player.ModuleReach;
 import net.ccbluex.liquidbounce.features.module.modules.render.DoRender;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleAntiBlind;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeCam;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud;
 import net.ccbluex.liquidbounce.features.module.modules.render.crosshair.ModuleCrosshair;
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponent;
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentManager;
@@ -126,8 +122,8 @@ public abstract class MixinHud {
 
     @Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
     private void hookFreeCamRenderCrosshairInThirdPerson(GuiGraphicsExtractor context, DeltaTracker tickCounter, CallbackInfo ci) {
-        if ((ModuleFreeCam.INSTANCE.getRunning() && ModuleFreeCam.INSTANCE.shouldDisableCameraInteract())
-                || HudComponentManager.isTweakEnabled(HudComponentTweak.DISABLE_CROSSHAIR) || ModuleCrosshair.INSTANCE.getEnabled()) {
+        if (HudComponentManager.isTweakEnabled(HudComponentTweak.DISABLE_CROSSHAIR)
+                || ModuleCrosshair.INSTANCE.getEnabled()) {
             ci.cancel();
         }
     }
@@ -199,10 +195,6 @@ public abstract class MixinHud {
         }
     }
 
-    @ModifyExpressionValue(method = "extractItemHotbar", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;isEmpty()Z"))
-    private boolean hookOffhandItem(boolean original) {
-        return original || ModuleSwordBlock.INSTANCE.shouldHideOffhand() && ModuleSwordBlock.INSTANCE.getHideShieldSlot();
-    }
 
     @Unique
     private void extractHotbarForHud(GuiGraphicsExtractor context, DeltaTracker tickCounter, HudComponent hudComponent) {
@@ -230,7 +222,7 @@ public abstract class MixinHud {
         }
 
         ItemStack offHandStack = playerEntity.getOffhandItem();
-        if (!hookOffhandItem(offHandStack.isEmpty())) {
+        if (!offHandStack.isEmpty()) {
             this.extractSlot(context, xCenter - offset - 32, (int) y, tickCounter, playerEntity, offHandStack, seed);
         }
     }
@@ -269,19 +261,5 @@ public abstract class MixinHud {
         }
     }
 
-    @ModifyReceiver(
-        method = "extractCrosshair",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/item/component/AttackRange;isInRange(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/phys/Vec3;)Z"
-        )
-    )
-    private AttackRange injectReachAttackRange(AttackRange instance, LivingEntity entity, Vec3 pos) {
-        if (ModuleReach.INSTANCE.getRunning()) {
-            return ModuleReach.INSTANCE.getEntity().adjustAttackRange(instance);
-        }
-
-        return instance;
-    }
 
 }

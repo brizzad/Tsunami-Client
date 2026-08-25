@@ -26,15 +26,9 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.ccbluex.liquidbounce.common.ChunkUpdateFlag;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.*;
-import net.ccbluex.liquidbounce.features.module.modules.combat.crystalaura.trigger.triggers.*;
-import net.ccbluex.liquidbounce.features.module.modules.exploit.disabler.disablers.DisablerSpigotSpam;
 import net.ccbluex.liquidbounce.features.module.modules.misc.betterchat.ModuleBetterChat;
 import net.ccbluex.liquidbounce.features.module.modules.player.Limit;
 import net.ccbluex.liquidbounce.features.module.modules.player.ModuleAntiExploit;
-import net.ccbluex.liquidbounce.features.module.modules.player.ModuleNoRotateSet;
-import net.ccbluex.liquidbounce.utils.aiming.RotationManager;
-import net.ccbluex.liquidbounce.utils.aiming.data.Rotation;
-import net.ccbluex.liquidbounce.utils.kotlin.Priority;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.multiplayer.ClientCommonPacketListenerImpl;
@@ -85,35 +79,11 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
         });
     }
 
-    @Inject(method = "handleTeleportEntity", at = @At("RETURN"))
-    private void hookOnEntityPosition(ClientboundTeleportEntityPacket packet, CallbackInfo ci) {
-        EntityMoveTrigger.INSTANCE.notify(packet);
-    }
 
-    @Inject(method = "handleBlockUpdate", at = @At("RETURN"))
-    private void hookOnBlockUpdate(ClientboundBlockUpdatePacket packet, CallbackInfo ci) {
-        BlockChangeTrigger.INSTANCE.notify(packet);
-    }
 
-    @Inject(method = "handleChunkBlocksUpdate", at = @At("RETURN"))
-    private void hookOnChunkDeltaUpdate(ClientboundSectionBlocksUpdatePacket packet, CallbackInfo ci) {
-        BlockChangeTrigger.INSTANCE.postChunkUpdateHandler(packet);
-    }
 
-    @Inject(method = "handleAddEntity", at = @At("RETURN"))
-    private void hookOnEntitySpawn(ClientboundAddEntityPacket packet, CallbackInfo ci) {
-        CrystalSpawnTrigger.INSTANCE.notify(packet);
-    }
 
-    @Inject(method = "handleSoundEntityEvent", at = @At("RETURN"))
-    private void hookOnPlaySoundFromEntity(ClientboundSoundEntityPacket packet, CallbackInfo ci) {
-        ExplodeSoundTrigger.INSTANCE.notify(packet);
-    }
 
-    @Inject(method = "handleRemoveEntities", at = @At("RETURN"))
-    private void hookOnEntitiesDestroy(ClientboundRemoveEntitiesPacket packet, CallbackInfo ci) {
-        CrystalDestroyTrigger.INSTANCE.notify(packet);
-    }
 
     @ModifyExpressionValue(method = "setTitleText", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ClientboundSetTitleTextPacket;text()Lnet/minecraft/network/chat/Component;"))
     private @Nullable Component hookOnTitle(@Nullable Component original, @Cancellable CallbackInfo ci) {
@@ -229,53 +199,10 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
         }
     }
 
-    @Unique
-    private final ThreadLocal<Rotation> rotationThreadLocal = ThreadLocal.withInitial(() -> null);
-
-    @Inject(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientPacketListener;setValuesFromPositionPacket(Lnet/minecraft/world/entity/PositionMoveRotation;Ljava/util/Set;Lnet/minecraft/world/entity/Entity;Z)Z"))
-    private void injectPlayerPositionLook(
-        ClientboundPlayerPositionPacket packet, CallbackInfo ci, @Local(name = "player") Player player) {
-        rotationThreadLocal.set(new Rotation(player.getYRot(), player.getXRot(), true));
-    }
-
-    @Inject(method = "handleMovePlayer", at = @At("RETURN"))
-    private void injectNoRotateSet(ClientboundPlayerPositionPacket packet, CallbackInfo ci, @Local(name = "player") Player player) {
-        if (!ModuleNoRotateSet.INSTANCE.getRunning() || Minecraft.getInstance().gui.screen() instanceof LevelLoadingScreen) {
-            return;
-        }
-
-        var prevRotation = this.rotationThreadLocal.get();
-        if (prevRotation == null) {
-            return;
-        }
-        this.rotationThreadLocal.remove();
-
-        if (ModuleNoRotateSet.INSTANCE.getMode().getActiveMode() == ModuleNoRotateSet.ResetRotation.INSTANCE) {
-            // Changes your server side rotation and then resets it with provided settings
-            var rotationTarget = ModuleNoRotateSet.ResetRotation.INSTANCE.getRotations().toRotationTarget(
-                    new Rotation(player.getYRot(), player.getXRot(), true),
-                    null,
-                    true,
-                    null
-            );
-            RotationManager.INSTANCE.setRotationTarget(rotationTarget, Priority.NOT_IMPORTANT, ModuleNoRotateSet.INSTANCE);
-        }
-
-        // Increase yaw and pitch by a value so small that the difference cannot be seen,
-        // just to update the rotation server-side.
-        player.setYRot(prevRotation.yRot() + 0.000001f);
-        player.setXRot(prevRotation.xRot() + 0.000001f);
-    }
 
     @ModifyVariable(method = "sendChat", at = @At("HEAD"), argsOnly = true, name = "content")
     private String handleSendMessage(String content) {
-        var result = ModuleBetterChat.INSTANCE.modifyMessage(content);
-
-        if (DisablerSpigotSpam.INSTANCE.getRunning()) {
-            return DisablerSpigotSpam.INSTANCE.getMessage() + " " + result;
-        }
-
-        return result;
+        return ModuleBetterChat.INSTANCE.modifyMessage(content);
     }
 
 }

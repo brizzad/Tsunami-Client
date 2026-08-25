@@ -21,8 +21,6 @@ package net.ccbluex.liquidbounce.injection.mixins.minecraft.gui;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleItemScroller;
-import net.ccbluex.liquidbounce.features.module.modules.movement.inventorymove.ModuleInventoryMove;
-import net.ccbluex.liquidbounce.features.module.modules.player.cheststealer.features.FeatureSilentScreen;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterInventory;
 import net.ccbluex.liquidbounce.injection.mixins.minecraft.client.MixinMouseHandlerAccessor;
 import net.minecraft.client.MouseHandler;
@@ -75,17 +73,6 @@ public abstract class MixinAbstractContainerScreen<T extends AbstractContainerMe
     @Shadow
     protected int topPos;
 
-    @Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V", at = @At("HEAD"), cancellable = true)
-    private void cancelMouseClick(Slot slot, int slotId, int button, ContainerInput actionType, CallbackInfo ci) {
-        var inventoryMove = ModuleInventoryMove.INSTANCE;
-        if ((AbstractContainerScreen<?>) (Object) this instanceof InventoryScreen && inventoryMove.getRunning() && inventoryMove.getDoNotAllowClicking()) {
-            ci.cancel();
-        }
-
-        if (FeatureSilentScreen.INSTANCE.getShouldHide()) {
-            ci.cancel();
-        }
-    }
 
     // Before `if (itemStack.isEmpty() && slot.isActive()) {`
     @Inject(method = "extractSlot", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;isEmpty()Z", ordinal = 0))

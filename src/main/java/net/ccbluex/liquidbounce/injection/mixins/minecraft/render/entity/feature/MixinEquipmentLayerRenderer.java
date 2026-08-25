@@ -20,8 +20,6 @@
 package net.ccbluex.liquidbounce.injection.mixins.minecraft.render.entity.feature;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChams;
-import net.ccbluex.liquidbounce.interfaces.EntityRenderStateAddition;
 import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -33,23 +31,5 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(EquipmentLayerRenderer.class)
 public abstract class MixinEquipmentLayerRenderer {
 
-    @ModifyArg(
-        method = "renderLayers(Lnet/minecraft/client/resources/model/EquipmentClientInfo$LayerType;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;II)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/OrderedSubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IIILnet/minecraft/client/renderer/texture/TextureAtlasSprite;ILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V"
-        ),
-        index = 3
-    )
-    private <S> RenderType renderArmorWithChams(
-        RenderType renderType,
-        @Local(argsOnly = true, name = "state") S state
-    ) {
-        if (state instanceof LivingEntityRenderState livingState) {
-            Entity entity = ((EntityRenderStateAddition) livingState).liquid_bounce$getEntity();
-            return ModuleChams.INSTANCE.remapIfNeeded(renderType, entity);
-        }
 
-        return renderType;
-    }
 }

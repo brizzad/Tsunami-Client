@@ -29,7 +29,6 @@ import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.GameRenderEvent;
 import net.ccbluex.liquidbounce.event.events.PerspectiveEvent;
 import net.ccbluex.liquidbounce.event.events.WorldRenderEvent;
-import net.ccbluex.liquidbounce.features.module.modules.fun.ModuleDankBobbing;
 import net.ccbluex.liquidbounce.features.module.modules.render.*;
 import net.ccbluex.liquidbounce.features.module.modules.render.customambience.ModuleCustomAmbience;
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager;
@@ -143,25 +142,6 @@ public abstract class MixinGameRenderer {
         return fogMode;
     }
 
-    @WrapOperation(
-        method = "renderItemInHand",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher;renderAllFeatures(Lnet/minecraft/client/renderer/SubmitNodeStorage;)V"
-        )
-    )
-    private void drawItemCharmsOnHandFeatureExecution(
-        net.minecraft.client.renderer.feature.FeatureRenderDispatcher instance,
-        net.minecraft.client.renderer.SubmitNodeStorage submitNodeStorage,
-        Operation<Void> original
-    ) {
-        ModuleItemChams.Lightmap.INSTANCE.applyToTexture(this.lightmap.getTextureView());
-        try {
-            original.call(instance, submitNodeStorage);
-        } finally {
-            ModuleItemChams.Lightmap.INSTANCE.resetTexture(this.lightmap.getTextureView());
-        }
-    }
 
     @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
     private void injectHurtCam(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
@@ -170,43 +150,6 @@ public abstract class MixinGameRenderer {
         }
     }
 
-    /**
-     * Keeps the vanilla 26.1 walk interpolation inputs while applying the custom bobbing strength.
-     *
-     * @see net.minecraft.client.renderer.GameRenderer#bobView(net.minecraft.client.renderer.state.level.CameraRenderState, com.mojang.blaze3d.vertex.PoseStack)
-     * @see net.minecraft.client.Camera#extractRenderState(net.minecraft.client.renderer.state.level.CameraRenderState, float)
-     * @see net.minecraft.client.renderer.state.level.CameraEntityRenderState#backwardsInterpolatedWalkDistance
-     * @see net.minecraft.client.renderer.state.level.CameraEntityRenderState#bob
-     */
-    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
-    private void injectBobView(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
-        if (ModuleNoBob.INSTANCE.getRunning() ||
-            ModuleTracers.INSTANCE.getRunning() ||
-            (ModuleItemESP.INSTANCE.getRunning() && ModuleItemESP.INSTANCE.getShowTracers()) ||
-            ModuleStorageESP.INSTANCE.showTracers()) {
-
-            ci.cancel();
-            return;
-        }
-
-        if (!ModuleDankBobbing.INSTANCE.getRunning()) {
-            return;
-        }
-
-        final var entityRenderState = cameraState.entityRenderState;
-        if (!entityRenderState.isPlayer) {
-            return;
-        }
-
-        float additionalBobbing = ModuleDankBobbing.INSTANCE.getMotion();
-        float g = entityRenderState.backwardsInterpolatedWalkDistance;
-        float h = entityRenderState.bob;
-        poseStack.translate(Mth.sin(g * Mth.PI) * h * 0.5f, -Math.abs(Mth.cos(g * Mth.PI) * h), 0.0f);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(h * Mth.PI) * h * (3.0F + additionalBobbing)));
-        poseStack.mulPose(Axis.XP.rotationDegrees(Math.abs(Mth.cos(h * Mth.PI - (0.2F + additionalBobbing)) * h) * 5.0F));
-
-        ci.cancel();
-    }
 
     @Inject(method = "displayItemActivation", at = @At("HEAD"), cancellable = true)
     private void hookShowFloatingItem(ItemStack floatingItem, CallbackInfo ci) {

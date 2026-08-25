@@ -25,16 +25,8 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.PlayerSafeWalkEvent;
 import net.ccbluex.liquidbounce.features.command.commands.ingame.fakeplayer.FakePlayer;
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleAutoWeapon;
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleKeepSprint;
-import net.ccbluex.liquidbounce.features.module.modules.combat.criticals.modes.CriticalsNoGround;
-import net.ccbluex.liquidbounce.features.module.modules.exploit.ModuleAntiReducedDebugInfo;
-import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleNoClip;
 import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleSprint;
-import net.ccbluex.liquidbounce.features.module.modules.player.ModuleReach;
-import net.ccbluex.liquidbounce.features.module.modules.player.nofall.modes.NoFallNoGround;
 import net.ccbluex.liquidbounce.features.module.modules.render.hitfx.ModuleHitFX;
-import net.ccbluex.liquidbounce.features.module.modules.world.ModuleNoSlowBreak;
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager;
 import net.ccbluex.liquidbounce.utils.aiming.features.MovementCorrection;
 import net.minecraft.sounds.SoundEvent;
@@ -94,12 +86,6 @@ public abstract class MixinPlayer extends MixinLivingEntity {
         return rotation.yRot();
     }
 
-    @Inject(method = "isReducedDebugInfo", at = @At("HEAD"), cancellable = true)
-    private void injectReducedDebugInfo(CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-        if (ModuleAntiReducedDebugInfo.INSTANCE.getRunning()) {
-            callbackInfoReturnable.setReturnValue(false);
-        }
-    }
 
     @Inject(method = "isMobilityRestricted", at = @At("HEAD"), cancellable = true)
     private void hookSprintIgnoreBlindness(CallbackInfoReturnable<Boolean> cir) {
@@ -108,115 +94,15 @@ public abstract class MixinPlayer extends MixinLivingEntity {
         }
     }
 
-    @Inject(method = "tick", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/player/Player;isSpectator()Z",
-            ordinal = 1,
-            shift = At.Shift.BEFORE))
-    private void hookNoClip(CallbackInfo ci) {
-        var clip = ModuleNoClip.INSTANCE;
-        if (!this.noPhysics && clip.getRunning() && !clip.paused()) {
-            this.noPhysics = true;
-        }
-    }
-
-    @ModifyExpressionValue(method = "getDestroySpeed", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/player/Player;hasEffect(Lnet/minecraft/core/Holder;)Z"))
-    private boolean injectFatigueNoSlow(boolean original) {
-        if (liquid_bounce$isClientPlayer() && ModuleNoSlowBreak.getMiningFatigue()) {
-            return false;
-        }
-
-        return original;
-    }
 
 
-    @ModifyExpressionValue(method = "getDestroySpeed", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/player/Player;isEyeInFluid(Lnet/minecraft/tags/TagKey;)Z"))
-    private boolean injectWaterNoSlow(boolean original) {
-        if (liquid_bounce$isClientPlayer() && ModuleNoSlowBreak.getWater()) {
-            return false;
-        }
 
-        return original;
-    }
 
-    @ModifyExpressionValue(method = "getDestroySpeed", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/player/Player;onGround()Z"))
-    private boolean injectOnAirNoSlow(boolean original) {
-        if (liquid_bounce$isClientPlayer()) {
-            if (ModuleNoSlowBreak.getOnAir()) {
-                return true;
-            }
 
-            if (NoFallNoGround.INSTANCE.getRunning()) {
-                return false;
-            }
 
-            if (CriticalsNoGround.INSTANCE.getRunning()) {
-                return false;
-            }
-        }
 
-        return original;
-    }
 
-    @ModifyArgs(method = "causeExtraKnockback", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;multiply(DDD)Lnet/minecraft/world/phys/Vec3;"))
-    private void hookSlowVelocity(Args args) {
-        if (liquid_bounce$isClientPlayer() && ModuleKeepSprint.INSTANCE.getRunning()) {
-            double motion = ModuleKeepSprint.INSTANCE.getMotion();
-            args.set(0, motion); // x
-            args.set(2, motion); // z
-        }
-    }
 
-    /**
-     * for: attack, pierce
-     */
-    @WrapWithCondition(method = "causeExtraKnockback", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;setSprinting(Z)V", ordinal = 0))
-    private boolean hookSlowVelocity(Player instance, boolean b) {
-        if (liquid_bounce$isClientPlayer()) {
-            ModuleKeepSprint.INSTANCE.setSprinting(b);
-            return !ModuleKeepSprint.INSTANCE.getRunning() || b;
-        }
-
-        return true;
-    }
-
-    @ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;isSprinting()Z"))
-    private boolean hookSlowVelocity(boolean original) {
-        if (liquid_bounce$isClientPlayer() && ModuleKeepSprint.INSTANCE.getRunning()) {
-            return ModuleKeepSprint.INSTANCE.getSprinting();
-        }
-
-        return original;
-    }
-
-    @ModifyReturnValue(method = "entityInteractionRange", at = @At("RETURN"))
-    private double hookEntityInteractionRange(double original) {
-        if (liquid_bounce$isClientPlayer() && ModuleReach.INSTANCE.getRunning()) {
-            return ModuleReach.INSTANCE.getEntity().getInteractionRange();
-        }
-
-        return original;
-    }
-
-    @ModifyReturnValue(method = "blockInteractionRange", at = @At("RETURN"))
-    private double hookBlockInteractionRange(double original) {
-        if (liquid_bounce$isClientPlayer() && ModuleReach.INSTANCE.getRunning()) {
-            return ModuleReach.INSTANCE.getBlockRangeIncrease() + original;
-        }
-
-        return original;
-    }
-
-    @ModifyExpressionValue(method = "getCurrentItemAttackStrengthDelay", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;getAttributeValue(Lnet/minecraft/core/Holder;)D"))
-    private double hookAutoWeaponAttackSpeed(double original) {
-        if (liquid_bounce$isClientPlayer() && ModuleReach.INSTANCE.getRunning()) {
-            return original;
-        }
-
-        return ModuleAutoWeapon.INSTANCE.getAttackSpeed(original);
-    }
 
     /*
      * Sadly, mixins don't allow capturing parameters when redirecting,

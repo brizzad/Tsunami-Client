@@ -21,7 +21,6 @@ package net.ccbluex.liquidbounce.injection.mixins.minecraft.gui;
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.additions.ScreenAddition;
 import net.ccbluex.liquidbounce.features.misc.HideAppearance;
-import net.ccbluex.liquidbounce.features.module.modules.player.cheststealer.features.FeatureSilentScreen;
 import net.ccbluex.liquidbounce.features.module.modules.render.DoRender;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleAntiBlind;
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager;
@@ -89,12 +88,6 @@ public abstract class MixinScreen implements ScreenAddition {
         }
     }
 
-    @Inject(method = "extractRenderStateWithTooltipAndSubtitles", at = @At("HEAD"), cancellable = true)
-    private void cancelRenderByChestStealer(CallbackInfo ci) {
-        if (LiquidBounce.INSTANCE.isInitialized() && FeatureSilentScreen.INSTANCE.getShouldHide()) {
-            ci.cancel();
-        }
-    }
 
     @Inject(method = "extractBackground", at = @At("HEAD"), cancellable = true)
     private void renderBackgroundTexture(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {

@@ -25,11 +25,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.*;
-import net.ccbluex.liquidbounce.features.module.modules.exploit.ModuleNoPitchLimit;
-import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleAntiBounce;
-import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleNoPose;
-import net.ccbluex.liquidbounce.features.module.modules.movement.noslow.modes.slime.NoSlowSlime;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeCam;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -79,20 +74,7 @@ public abstract class MixinEntity {
         return (Object) this == Minecraft.getInstance().player;
     }
 
-    @ModifyExpressionValue(method = "isSuppressingBounce", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;isShiftKeyDown()Z"))
-    private boolean hookAntiBounce(boolean original) {
-        return ModuleAntiBounce.INSTANCE.getRunning() || original;
-    }
 
-    @ModifyExpressionValue(method = "restituteMovementAfterCollisions", at = @At(value = "INVOKE", target = "Ljava/lang/Math;max(DD)D", remap = false))
-    private double hookSlimeBounce(double original, @Local(argsOnly = true, name = "effectState") BlockState effectState) {
-        // TODO(26.2): Re-check the old exact Y-velocity conditions after vanilla moved slime bounce into Entity restitution.
-        if (NoSlowSlime.INSTANCE.getRunning() && effectState.getBlock() instanceof SlimeBlock) {
-            return 0.0;
-        }
-
-        return original;
-    }
 
     /**
      * Hook entity margin modification event
@@ -104,20 +86,7 @@ public abstract class MixinEntity {
         callback.setReturnValue(marginEvent.getMargin());
     }
 
-    /**
-     * Hook no pitch limit exploit
-     */
-    @WrapOperation(method = {"turn", "absSnapRotationTo"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Mth;clamp(FFF)F"))
-    public float hookNoPitchLimit1(float value, float min, float max, Operation<Float> original) {
-        boolean noLimit = ModuleNoPitchLimit.INSTANCE.getRunning();
-        return noLimit ? value : original.call(value, min, max);
-    }
 
-    @WrapOperation(method = "setXRot", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/Entity;xRot:F", opcode = Opcodes.PUTFIELD))
-    public void hookNoPitchLimit2(Entity instance, float clamped, Operation<Void> original, @Local(argsOnly = true, name = "xRot") float xRot) {
-        boolean noLimit = ModuleNoPitchLimit.INSTANCE.getRunning();
-        original.call(instance, noLimit ? xRot : clamped);
-    }
 
     @ModifyExpressionValue(method = "moveRelative", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getInputVector(Lnet/minecraft/world/phys/Vec3;FF)Lnet/minecraft/world/phys/Vec3;"))
     public Vec3 hookVelocity(Vec3 original, @Local(argsOnly = true, name = "input") Vec3 input, @Local(argsOnly = true, name = "speed") float speed) {
@@ -201,21 +170,6 @@ public abstract class MixinEntity {
         return original;
     }
 
-    @Inject(method = "setPose", at = @At("HEAD"), cancellable = true)
-    private void setPose(Pose pose, CallbackInfo ci) {
-        /* Cancel pose if needed */
-        if (liquid_bounce$isClientPlayer() && ModuleNoPose.INSTANCE.shouldCancelPose(pose))
-            ci.cancel();
-    }
 
-    @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
-    private void hookFreeCamRotation(double xo, double yo, CallbackInfo ci) {
-        if ((Object) this != Minecraft.getInstance().player) return;
-
-        if (ModuleFreeCam.PositionState.INSTANCE.getAvailable()) {
-            ModuleFreeCam.PositionState.INSTANCE.rotation(xo * 0.15f, yo * 0.15f);
-            ci.cancel();
-        }
-    }
 
 }

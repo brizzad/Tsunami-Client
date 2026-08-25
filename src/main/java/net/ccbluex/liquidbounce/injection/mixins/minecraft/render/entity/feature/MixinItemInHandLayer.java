@@ -22,8 +22,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChams;
-import net.ccbluex.liquidbounce.interfaces.EntityRenderStateAddition;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
@@ -34,25 +32,5 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(ItemInHandLayer.class)
 public abstract class MixinItemInHandLayer {
 
-    @WrapOperation(
-        method = "submitArmWithItem",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/item/ItemStackRenderState;submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;III)V"
-        )
-    )
-    private void trackHeldItemEntityContext(
-        ItemStackRenderState instance,
-        PoseStack poseStack,
-        SubmitNodeCollector submitNodeCollector,
-        int lightCoords,
-        int overlayCoords,
-        int outlineColor,
-        Operation<Void> original,
-        @Local(argsOnly = true, name = "state") ArmedEntityRenderState state
-    ) {
-        ModuleChams.INSTANCE.withHeldItemContext(((EntityRenderStateAddition) state).liquid_bounce$getEntity(),
-            () -> original.call(instance, poseStack, submitNodeCollector, lightCoords, overlayCoords, outlineColor));
-    }
 
 }

@@ -20,8 +20,6 @@
 package net.ccbluex.liquidbounce.injection.mixins.minecraft.render.entity.feature;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChams;
-import net.ccbluex.liquidbounce.interfaces.EntityRenderStateAddition;
 import net.minecraft.client.renderer.entity.layers.CapeLayer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -32,20 +30,5 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(CapeLayer.class)
 public abstract class MixinCapeLayer {
 
-    @ModifyArg(
-        method = "submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/client/renderer/entity/state/AvatarRenderState;FF)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IIILnet/minecraft/client/renderer/feature/ModelFeatureRenderer$CrumblingOverlay;)V"
-        ),
-        index = 3
-    )
-    private RenderType renderCapeWithChams(
-        RenderType renderType,
-        @Local(argsOnly = true, name = "state") AvatarRenderState state
-    ) {
-        var entity = ((EntityRenderStateAddition) state).liquid_bounce$getEntity();
-        return ModuleChams.INSTANCE.remapIfNeeded(renderType, entity);
-    }
 
 }

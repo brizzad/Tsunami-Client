@@ -24,7 +24,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
 import net.caffeinemc.mods.sodium.client.render.model.MutableQuadViewImpl;
 import net.ccbluex.liquidbounce.common.XRayBlockRenderContext;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleXRay;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.core.BlockPos;
@@ -40,31 +39,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BlockRenderer.class)
 public abstract class MixinSodiumBlockRenderer {
 
-    @WrapMethod(method = "renderModel")
-    private void wrapXRayTransparentBackground(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin,
-            Operation<Void> original) {
-        ModuleXRay module = ModuleXRay.INSTANCE;
-        if (!module.getRunning()) {
-            original.call(model, state, pos, origin);
-            return;
-        }
 
-        XRayBlockRenderContext.renderTransparentBackground(module.transparentBackgroundAlpha(state),
-            () -> original.call(model, state, pos, origin));
-    }
-
-    @Inject(method = "renderModel", at = @At("HEAD"), cancellable = true)
-    private void injectXRaySkipHiddenBlocks(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin,
-            CallbackInfo ci) {
-        ModuleXRay module = ModuleXRay.INSTANCE;
-        if (!module.getRunning()) {
-            return;
-        }
-
-        if (module.shouldSkipRender(state, pos)) {
-            ci.cancel();
-        }
-    }
 
     @ModifyExpressionValue(method = "processQuad", at = @At(value = "FIELD", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;forceOpaque:Z", opcode = Opcodes.GETFIELD))
     private boolean injectXRayTransparentBackgroundDisableForceOpaque(boolean original) {
