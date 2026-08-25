@@ -34,11 +34,19 @@ class ApiConfig(
     companion object {
 
         /**
-         * API URLs for LiquidBounce
+         * API hosts, tried in order.
+         *
+         * Deliberately unreachable. Tsunami has no backend, and the upstream
+         * entries here pointed at CCBlueX production: left in place the client
+         * silently talks to their servers on every start. RFC 2606 reserves
+         * .invalid so this can never resolve and fails closed.
+         *
+         * Replace with the real host once one exists. Note the launcher can
+         * override this at runtime via the
+         * net.ccbluex.liquidbounce.api.url system property.
          */
         private val API_URLS = arrayOf(
-            "https://api.liquidbounce.net",
-            "https://api.ccbluex.net",
+            "https://api.tsunami.invalid",
 
             // Non-secure connection requires additional confirmation from the user,
             // as they are vulnerable to MITM attacks and data leaks.
@@ -49,11 +57,21 @@ class ApiConfig(
             // "http://nossl.api.liquidbounce.net"
         )
 
-        const val CLIENT_CDN = "https://cloud.liquidbounce.net/LiquidBounce"
+        /** Asset CDN. Unreachable for the same reason as [API_URLS]. */
+        const val CLIENT_CDN = "https://cdn.tsunami.invalid"
 
-        const val AUTH_BASE_URL = "https://auth.liquidbounce.net/application/o"
+        /**
+         * Client-account OAuth. Unreachable, and the client id below is a
+         * placeholder: the upstream value identified CCBlueX's own OAuth
+         * application, which is not ours to authenticate against.
+         *
+         * The launcher-side equivalent of this whole layer was deleted with
+         * the premium tier; the client half is still wired up and wants the
+         * same treatment.
+         */
+        const val AUTH_BASE_URL = "https://auth.tsunami.invalid/application/o"
         const val AUTH_AUTHORIZE_URL = "$AUTH_BASE_URL/authorize/"
-        const val AUTH_CLIENT_ID = "J2hzqzCxch8hfOPRFNINOZV5Ma4X4BFdZpMjAVEW"
+        const val AUTH_CLIENT_ID = "TSUNAMI_OAUTH_CLIENT_ID_PLACEHOLDER"
 
         /**
          * This makes sense because we want forks to be able to use this API and not only the official client.
@@ -61,7 +79,16 @@ class ApiConfig(
          */
         const val API_BRANCH = "nextgen"
 
-        private const val AVATAR_BASE_URL = "https://avatar.liquidbounce.net/avatar"
+        /**
+         * Player head renders.
+         *
+         * This is a data flow, not just a dead link: upstream sent the player
+         * UUID or username to CCBlueX every time a head was drawn. The same
+         * leak was fixed in the launcher by rendering the head locally from
+         * Mojang's own profile data, and this should follow. Until then it
+         * points nowhere and heads fall back to the default skin.
+         */
+        private const val AVATAR_BASE_URL = "https://avatar.tsunami.invalid/avatar"
         const val AVATAR_UUID_URL = "$AVATAR_BASE_URL/%s/100"
         const val AVATAR_USERNAME_URL = "$AVATAR_BASE_URL/%s"
 

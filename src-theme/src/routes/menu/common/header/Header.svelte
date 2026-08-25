@@ -1,5 +1,5 @@
 <script lang="ts">
-    import LiquidBounceLogo from "../../../../components/LiquidBounceLogo.svelte";
+    import TsunamiLogo from "../../../../components/TsunamiLogo.svelte";
     import Account from "./account/Account.svelte";
     import AnimatedLogo from "./AnimatedLogo.svelte";
     import Notifications from "./Notifications.svelte";
@@ -62,7 +62,7 @@
             <AnimatedLogo/>
         </div>
         <div class="logo" class:visible={!showAnniversaryLogo} aria-hidden={showAnniversaryLogo}>
-            <LiquidBounceLogo
+            <TsunamiLogo
                     width="261.263px"
                     height="98px"
                     badgeFill="var(--accent-color)"

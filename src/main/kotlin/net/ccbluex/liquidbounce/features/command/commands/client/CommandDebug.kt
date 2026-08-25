@@ -24,10 +24,7 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import net.ccbluex.liquidbounce.LiquidBounce
-import net.ccbluex.liquidbounce.api.core.HttpClient
-import net.ccbluex.liquidbounce.api.core.HttpMethod
-import net.ccbluex.liquidbounce.api.core.asForm
-import net.ccbluex.liquidbounce.api.core.parse
+import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.autoconfig.AutoConfig.serializeAutoConfig
 import net.ccbluex.liquidbounce.config.gson.publicGson
 import net.ccbluex.liquidbounce.config.gson.serializer.minecraft.accountType
@@ -47,7 +44,9 @@ import net.minecraft.ChatFormatting
 import net.minecraft.SharedConstants
 import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Style
-import java.net.URI
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.EnumSet
 
 /**
@@ -56,7 +55,7 @@ import java.util.EnumSet
  * with their issues.
  *
  * This command will create a JSON file with all the information
- * and send it to the CCBlueX Paste API.
+ * and write it to a file beside the client config.
  */
 object CommandDebug : Command.Factory {
 
@@ -74,19 +73,20 @@ object CommandDebug : Command.Factory {
                 serializeAutoConfig(it)
             }
             val autoConfig = buffer.readUtf8()
-            val autoConfigPaste = uploadToPaste(autoConfig)
+            val autoConfigFile = writeReport("autoconfig", autoConfig)
             buffer.clear()
 
-            val debugJson = createDebugJson(autoConfigPaste)
+            val debugJson = createDebugJson(autoConfigFile.absolutePath)
             buffer.outputStream().writer().use {
                 gson.toJson(debugJson, it)
             }
-            val paste = uploadToPaste(buffer.readUtf8())
+            val reportFile = writeReport("debug", buffer.readUtf8())
             buffer.clear()
 
+            val path = reportFile.absolutePath
             chat(
-                "Debug information has been uploaded to: ".asPlainText(ChatFormatting.GREEN),
-                paste.asPlainText(Style.EMPTY + ChatFormatting.YELLOW + ClickEvent.OpenUrl(URI(paste))),
+                "Debug information written to: ".asPlainText(ChatFormatting.GREEN),
+                path.asPlainText(Style.EMPTY + ChatFormatting.YELLOW + ClickEvent.CopyToClipboard(path)),
             )
         }
         .build()
@@ -168,13 +168,17 @@ object CommandDebug : Command.Factory {
     }
 
     /**
-     * Uploads the given content to the CCBlueX Paste API
-     * and returns the URL of the paste.
+     * Writes the report to a file beside the client config and returns its path.
+     *
+     * Upstream POSTed this to paste.ccbluex.net, which put the user's config,
+     * loaded scripts and target settings on a third-party host under a public
+     * URL. Keeping it on disk lets the user decide whether to share it, and
+     * with whom.
      */
-    private suspend fun uploadToPaste(content: String): String {
-        val form = "content=$content"
-        return HttpClient.request("https://paste.ccbluex.net/api.php", HttpMethod.POST, body = form.asForm())
-                .parse<String>()
+    private fun writeReport(name: String, content: String): File {
+        val folder = File(ConfigSystem.rootFolder, "debug").apply { mkdirs() }
+        val stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now())
+        return File(folder, "$name-$stamp.txt").apply { writeText(content) }
     }
 
 }

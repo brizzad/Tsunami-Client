@@ -181,7 +181,7 @@ tasks.processResources {
     dependsOn("buildTheme")
 
     from("src-theme/dist") {
-        into("resources/liquidbounce/themes/liquidbounce")
+        into("resources/liquidbounce/themes/tsunami")
     }
 
     val modVersion = providers.gradleProperty("mod_version")
@@ -410,7 +410,7 @@ tasks.register<Copy>("copyZipInclude") {
 tasks.named<Jar>("sourcesJar") {
     dependsOn("buildTheme", "generateGitProperties")
     from("src-theme/dist") {
-        into("resources/liquidbounce/themes/liquidbounce")
+        into("resources/liquidbounce/themes/tsunami")
     }
 }
 

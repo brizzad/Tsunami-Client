@@ -137,4 +137,18 @@ public abstract class MixinEntityRenderer<T extends Entity, S extends EntityRend
         return operation.call(entity);
     }
 
+
+    /**
+     * AntiBlind's falling-block suppression.
+     *
+     * Upstream shared this injection with CombineMobs; removing CombineMobs
+     * took the AntiBlind branch with it. Restored on its own.
+     */
+    @Inject(method = "shouldRender", at = @At("HEAD"), cancellable = true)
+    private void shouldRenderAntiBlind(T entity, Frustum frustum, double x, double y, double z,
+                                       CallbackInfoReturnable<Boolean> cir) {
+        if (entity instanceof FallingBlockEntity && !ModuleAntiBlind.canRender(DoRender.FALLING_BLOCKS)) {
+            cir.setReturnValue(false);
+        }
+    }
 }

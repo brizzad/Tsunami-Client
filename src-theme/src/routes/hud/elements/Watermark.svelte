@@ -1,8 +1,8 @@
 <script lang="ts">
-    import LiquidBounceLogo from "../../../components/LiquidBounceLogo.svelte";
+    import TsunamiLogo from "../../../components/TsunamiLogo.svelte";
 </script>
 
-<LiquidBounceLogo
+<TsunamiLogo
     width="165px"
     height="61.8917px"
     badgeFill="var(--accent-color)"

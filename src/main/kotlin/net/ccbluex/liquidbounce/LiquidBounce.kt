@@ -33,7 +33,6 @@ import net.ccbluex.liquidbounce.api.core.ApiConfig
 import net.ccbluex.liquidbounce.api.core.ioScope
 import net.ccbluex.liquidbounce.api.models.auth.ClientAccount
 import net.ccbluex.liquidbounce.api.services.client.ClientUpdate
-import net.ccbluex.liquidbounce.api.thirdparty.IpInfoApi
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.autoconfig.AutoConfig
 import net.ccbluex.liquidbounce.config.types.Config
@@ -107,8 +106,14 @@ object LiquidBounce : EventListener {
      *
      * WARNING: Please read the GNU General Public License
      */
-    const val CLIENT_NAME = "LiquidBounce"
-    const val CLIENT_AUTHOR = "CCBlueX"
+    const val CLIENT_NAME = "Tsunami"
+
+    /**
+     * Upstream is CCBlueX/LiquidBounce, which this is a fork of, and the GPL
+     * headers throughout the tree keep their copyright. This names who ships
+     * *this* build.
+     */
+    const val CLIENT_AUTHOR = "Tsunami contributors"
 
     private object Client : Config("Client") {
         val version = text("Version", GitInfo.version())
@@ -336,9 +341,12 @@ object LiquidBounce : EventListener {
                 // Load configs
                 AutoConfig.reloadConfigs()
             }
-            launch {
-                IpInfoApi.original
-            }
+            // Upstream eagerly resolved IpInfoApi here, which sent a request to
+            // ipinfo.io on every start and returned the user's public IP, city,
+            // region and ISP before anything asked for it. The value is AsyncLazy,
+            // so simply not touching it at startup makes the lookup happen only if
+            // a feature actually reads it — and the proxy features that do are
+            // themselves out of scope for Tsunami.
             launch {
                 ConfigSystem.load(ClientAccountManager)
                 if (ClientAccount.ENV_ACCOUNT != null) {

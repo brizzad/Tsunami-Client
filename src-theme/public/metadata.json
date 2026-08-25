@@ -1,10 +1,10 @@
 {
-  "id": "liquidbounce",
-  "name": "LiquidBounce",
+  "id": "tsunami",
+  "name": "Tsunami",
   "version": "0.1.0",
-  "authors": ["CCBlueX"],
+  "authors": ["Tsunami contributors"],
   "colors": {
-    "Accent": "#4677ff",
+    "Accent": "#1fa8ff",
     "Tint": "#000000"
   },
   "screens": [

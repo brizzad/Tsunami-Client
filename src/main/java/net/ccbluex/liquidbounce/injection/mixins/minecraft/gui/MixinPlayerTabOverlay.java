@@ -25,6 +25,9 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
+import static net.ccbluex.liquidbounce.utils.entity.EntityExtensionsKt.shortName;
+import net.ccbluex.liquidbounce.utils.text.PlainText;
+import net.ccbluex.liquidbounce.utils.text.TextBuilder;
 import net.ccbluex.liquidbounce.features.misc.FriendManager;
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleBetterTab;
 import net.ccbluex.liquidbounce.features.module.modules.misc.Visibility;
@@ -180,4 +183,21 @@ public abstract class MixinPlayerTabOverlay {
     }
 
 
+
+    /**
+     * BetterTab's game-mode suffix.
+     *
+     * Upstream shared this with AntiStaff; removing AntiStaff took BetterTab's
+     * suffix with it. Restored without the staff marker.
+     */
+    @ModifyReturnValue(method = "getNameForDisplay", at = @At("RETURN"))
+    private Component modifyPlayerName(Component original, PlayerInfo entry) {
+        if (!ModuleBetterTab.INSTANCE.getRunning() || !ModuleBetterTab.INSTANCE.getShowGameMode()) {
+            return original;
+        }
+
+        var components = new TextBuilder(original);
+        components.add(PlainText.of(" [" + shortName(entry.getGameMode()) + "]"));
+        return components.build();
+    }
 }

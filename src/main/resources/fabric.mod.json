@@ -2,31 +2,20 @@
   "schemaVersion": 1,
   "id": "liquidbounce",
   "version": "${version}",
-  "name": "LiquidBounce",
-  "description": "A free mixin-based injection hacked-client for Minecraft using the Fabric modding toolchain.",
+  "name": "Tsunami",
+  "description": "An open-source Minecraft client focused on performance and quality-of-life, forked from CCBlueX/LiquidBounce.",
   "authors": [
-    "CCBlueX"
+    "Tsunami contributors"
   ],
   "contributors": $contributors,
-  "contact": {
-    "homepage": "https://liquidbounce.net/",
-    "sources": "https://github.com/CCBlueX/LiquidBounce/",
-    "issues": "https://github.com/CCBlueX/LiquidBounce/issues",
-    "email": "support@liquidbounce.net"
-  },
+  "contact": {},
   "license": "GNU General Public License v3.0",
   "icon": "resources/liquidbounce/icon_64x64.png",
   "environment": "client",
   "entrypoints": {
     "main": []
   },
-  "custom": {
-    "modmenu": {
-      "links": {
-        "liquidbounce.generic.forum": "https://forums.ccbluex.net/"
-      }
-    }
-  },
+  "custom": {},
   "mixins": [
     "liquidbounce.mixins.json"
   ],

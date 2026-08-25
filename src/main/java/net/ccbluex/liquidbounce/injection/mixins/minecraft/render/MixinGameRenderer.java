@@ -25,6 +25,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleNoBob;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.GameRenderEvent;
 import net.ccbluex.liquidbounce.event.events.PerspectiveEvent;
@@ -177,4 +178,18 @@ public abstract class MixinGameRenderer {
         return PerspectiveEvent.INSTANCE.getPerspective();
     }
 
+
+    /**
+     * NoBob.
+     *
+     * Upstream shared this injection with DankBobbing, Tracers and the ESP
+     * modules; removing those took NoBob's only hook with it. Restored with
+     * just the NoBob condition.
+     */
+    @Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
+    private void injectNoBob(CameraRenderState cameraState, PoseStack poseStack, CallbackInfo ci) {
+        if (ModuleNoBob.INSTANCE.getRunning()) {
+            ci.cancel();
+        }
+    }
 }

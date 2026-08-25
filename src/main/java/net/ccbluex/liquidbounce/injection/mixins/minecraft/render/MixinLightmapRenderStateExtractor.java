@@ -19,6 +19,7 @@
 
 package net.ccbluex.liquidbounce.injection.mixins.minecraft.render;
 
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFullBright;
 import net.ccbluex.liquidbounce.features.module.modules.render.DoRender;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleAntiBlind;
 import net.minecraft.client.renderer.LightmapRenderStateExtractor;
@@ -38,4 +39,25 @@ public abstract class MixinLightmapRenderStateExtractor {
         return ModuleAntiBlind.canRender(DoRender.DARKNESS) ? darknessEffectScaleOption : 0f;
     }
 
+
+    /**
+     * FullBright's gamma override.
+     *
+     * Upstream shared this injection with XRay under the name
+     * injectXRayFullBright, so removing XRay took FullBright's gamma with it.
+     * Only the XRay half is gone.
+     *
+     * Target:
+     * <pre>
+     *     float brightnessOption = ((Double)this.minecraft.options.gamma().get()).floatValue();
+     * </pre>
+     */
+    @ModifyVariable(method = "extract", at = @At(value = "STORE"), name = "brightnessOption")
+    private float injectFullBrightGamma(float brightnessOption) {
+        if (ModuleFullBright.FullBrightGamma.INSTANCE.getRunning()) {
+            return ModuleFullBright.FullBrightGamma.INSTANCE.getGamma();
+        }
+
+        return brightnessOption;
+    }
 }

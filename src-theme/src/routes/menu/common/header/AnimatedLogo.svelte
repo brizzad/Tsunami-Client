@@ -1,15 +1,14 @@
 <script lang="ts">
-    import LiquidBounceLogo from "../../../../components/LiquidBounceLogo.svelte";
+    import TsunamiLogo from "../../../../components/TsunamiLogo.svelte";
 
     const idBase = `lb-logo-${Math.random().toString(36).slice(2, 9)}`;
     const bannerGradientId = `${idBase}-banner`;
     const bannerTextGradientId = `${idBase}-banner-text`;
 
-    const anniversary = (new Date()).getFullYear() - 2016;
 </script>
 
 <div class="animated-logo">
-    <LiquidBounceLogo
+    <TsunamiLogo
         width="261.263px"
         height="98px"
         badgeFill={`url(#${bannerGradientId})`}
@@ -47,13 +46,13 @@
                 />
             </linearGradient>
         </svelte:fragment>
-    </LiquidBounceLogo>
+    </TsunamiLogo>
 
     <div class="divider"></div>
 
     <div class="message">
-        <div>Thank you for <span>{anniversary} Years</span></div>
-        <div>of LiquidBounce!</div>
+        <div>Performance and <span>quality of life</span></div>
+        <div>for Minecraft.</div>
     </div>
 </div>
 
