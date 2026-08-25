@@ -70,10 +70,20 @@ function stillPresent(rel, code) {
 
 const findings = [];
 let file = null;
+let removedFrom = null;
 
 for (const line of diff.split("\n")) {
-  if (line.startsWith("+++ b/")) {
-    file = line.slice(6);
+  // A deleted file's header is "+++ /dev/null", so tracking only "+++ b/"
+  // leaves `file` pointing at whichever file came before it, and every finding
+  // in the deleted file is reported against that innocent path. Worse, which
+  // path it lands on shifts whenever the diff order changes, so a baselined
+  // finding silently reappears as new. Fall back to the "--- a/" side.
+  if (line.startsWith("--- a/")) {
+    removedFrom = line.slice(6);
+    continue;
+  }
+  if (line.startsWith("+++ ")) {
+    file = line.startsWith("+++ b/") ? line.slice(6) : removedFrom;
     continue;
   }
   if (!file) continue;

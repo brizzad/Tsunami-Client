@@ -13,64 +13,73 @@ src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/network/MixinC
 src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/render/MixinGameRenderer.java	NoBob	if (ModuleNoBob.INSTANCE.getRunning() ||
 src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/render/entity/MixinEntityRenderer.java	TNTTimer	} else if (ModuleTNTTimer.INSTANCE.getRunning() && ModuleTNTTimer.INSTANCE.getEsp() && entity instanceof Prime
 src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/render/entity/MixinEntityRenderer.java	TNTTimer	} else if (entity instanceof PrimedTnt tntEntity && ModuleTNTTimer.INSTANCE.getRunning() && ModuleTNTTimer.INS
-src/main/kotlin/net/ccbluex/liquidbounce/config/ConfigSystem.kt	ClickGui	ModuleClickGui.sync()
-src/main/kotlin/net/ccbluex/liquidbounce/features/command/commands/client/CommandDebug.kt	ClickGui	ModuleClickGui.sync()
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.DebuggedBox(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.DebuggedBox(base, Color4b.GREEN.fade(0.4f))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.DebuggedBox(it.entity.box, Color4b.RED.with(a = 127))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.DebuggedBox(predictedBoundingBox, Color4b.BLUE.fade(0.4f))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.DebuggedBox(predictedBoundingBox, Color4b.GRAY.fade(0.4f))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.DebuggedPoint(position, Color4b.MAGENTA)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.DebuggedPoint(position, if (!isInAngle) Color4b.GREEN else Color4b.RED)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugGeometry(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(ModuleCriticals, "timeToCrit", ticksTillCrit)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(ModuleCrystalAura, "Highest ID", highestId)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(this, "HitsUntilJump", hitsUntilJump)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(this, "IsFallDamage", isFallDamage)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(this, "UntilJump", ticksUntilJump)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(this, "VelocityX", velocityX)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(this, "VelocityY", velocityY)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	ModuleDebug.debugParameter(this, "VelocityZ", velocityZ)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	debugGeometry("Box") { ModuleDebug.DebuggedBox(point.box, Color4b.ORANGE.with(a = 90)) }
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	debugGeometry("Exiting") { ModuleDebug.DebuggedPoint(futurePos, Color4b.RED, 0.4) }
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	debugGeometry("Point") { ModuleDebug.DebuggedPoint(point.pos, Color4b.WHITE, size = 0.1) }
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/ModuleManager.kt	Debug	get() = ModuleCrystalAura.running && ModuleDebug.running
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/misc/ModuleNotifier.kt	Debug	ModuleDebug.DebuggedPoint(center, Color4b.BLUE, 0.05)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	ClickGui	NORMAL("Normal", { !it.isInEditBox() && !ModuleClickGui.isInSearchBar }),
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	ModuleDebug.DebuggedBox(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	ModuleDebug.debugGeometry(ModuleNoFall, "Ground", ModuleDebug.DebuggedPoint(player.position(),
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	ModuleDebug.debugParameter(ModuleStep, "StepHeight", stepHeight)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	ModuleDebug.debugParameter(this, "DirectionalInput", directionalInput)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	ModuleDebug.debugParameter(this, "Position", PositionState.pos)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	ModuleDebug.debugParameter(this, "Rotation", PositionState.rot)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	ModuleDebug.debugParameter(this, "Velocity", velocity)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	if (ModuleDebug.running && startMilliseconds != 0L && canAutoClose) {
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Debug	if (ModuleDebug.running) {
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/ModuleItemTags.kt	FreeLook	&& (!requireFreeLook || ModuleFreeLook.running)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/ModuleItemTags.kt	FreeLook	&& (mc.options.cameraType != CameraType.FIRST_PERSON || ModuleFreeLook.running)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebugCollection(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedBox(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedBox(AABB(blockPos), Color4b.GREEN.alpha(100))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedBox(AABB(pos), Color4b(133, 155, 255, alpha))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedBox(initialPosition.outlineBox.move(initialPosition), Color4b.GREEN.alpha(50))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedBox(path.firstBlock.outlineBox.move(path.firstBlock), Color4b.BLUE.alpha(50))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedBox(target.dimensions.makeBoundingBox(positions.last()), Color4b.RED.with(a = 127))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedLine(optimalLine, if (lastBlocksLine == null) Color4b.RED else Color4b.GREEN)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedLineSegment(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedPoint(BlockPos.of(pos).center, Color4b.RED.with(a = 100))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedPoint(path.info.targetPoint, Color4b.RED.alpha(100))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedPoint(predictedPos, Color4b.GREEN, size = 0.1)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.DebuggedPoint(rayTraceResult.location, Color4b.RED.alpha(150))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.debugGeometry(
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.debugParameter(ModuleScaffold, "Telly-Speed", "%.2f".format(player.horizontalSpeed))
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	ModuleDebug.debugParameter(ModuleScaffold, "TicksUntilDestination", ticks)
-src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/wings/WingsMode.kt	Debug	if (ModuleDebug.running) {
-src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/RotationsValueGroup.kt	Debug	ModuleDebug.debugParameter(this, "DeltaPitch", totalDelta.deltaPitch)
-src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/RotationsValueGroup.kt	Debug	ModuleDebug.debugParameter(this, "DeltaYaw", totalDelta.deltaYaw)
-src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/RotationsValueGroup.kt	Debug	ModuleDebug.debugParameter(this, "Output [0]", output[0])
-src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/RotationsValueGroup.kt	Debug	ModuleDebug.debugParameter(this, "Output [1]", output[1])
-src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/RotationsValueGroup.kt	Debug	ModuleDebug.debugParameter(this, "Time", "${time.toString(DurationUnit.MILLISECONDS, 2)} ms")
+src/main/kotlin/net/ccbluex/liquidbounce/deeplearn/ModelManager.kt	ClickGui	ModuleClickGui.sync()
+src/main/kotlin/net/ccbluex/liquidbounce/features/command/commands/deeplearn/CommandModels.kt	ClickGui	ModuleClickGui.sync()
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/ModuleAimbot.kt	Debug	debugGeometry("Box") { ModuleDebug.DebuggedBox(point.box, Color4b.ORANGE.with(a = 90)) }
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/ModuleAimbot.kt	Debug	debugGeometry("Point") { ModuleDebug.DebuggedPoint(point.pos, Color4b.WHITE, size = 0.1) }
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/aimbot/DroneControlScreen.kt	Debug	ModuleDebug.DebuggedBox(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/aimbot/DroneControlScreen.kt	Debug	ModuleDebug.DebuggedBox(it.entity.box, Color4b.RED.with(a = 127))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/aimbot/DroneControlScreen.kt	Debug	ModuleDebug.debugGeometry(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/criticals/modes/CriticalsJump.kt	Debug	ModuleDebug.debugParameter(ModuleCriticals, "timeToCrit", ticksTillCrit)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/PredictFeature.kt	Debug	ModuleDebug.DebuggedBox(predictedBoundingBox, Color4b.BLUE.fade(0.4f))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/PredictFeature.kt	Debug	ModuleDebug.DebuggedBox(predictedBoundingBox, Color4b.GRAY.fade(0.4f))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/PredictFeature.kt	Debug	ModuleDebug.debugGeometry(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/SubmoduleIdPredict.kt	Debug	ModuleDebug.debugParameter(ModuleCrystalAura, "Highest ID", highestId)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/destroy/SubmoduleCrystalDestroyer.kt	Debug	ModuleDebug.DebuggedBox(base, Color4b.GREEN.fade(0.4f))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/destroy/SubmoduleCrystalDestroyer.kt	Debug	ModuleDebug.debugGeometry(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/post/CrystalAuraSpeedDebugger.kt	Debug	ModuleDebug.debugParameter(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/crystalaura/post/CrystalAuraSpeedDebugger.kt	Debug	get() = ModuleCrystalAura.running && ModuleDebug.running
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/killaura/KillAuraClicker.kt	Debug	debugGeometry("Exiting") { ModuleDebug.DebuggedPoint(futurePos, Color4b.RED, 0.4) }
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/killaura/ModuleKillAura.kt	Debug	debugGeometry("Box") { ModuleDebug.DebuggedBox(point.box, Color4b.ORANGE.with(a = 90)) }
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/killaura/ModuleKillAura.kt	Debug	debugGeometry("Point") { ModuleDebug.DebuggedPoint(point.pos, Color4b.WHITE, size = 0.1) }
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/killaura/features/KillAuraFightBot.kt	Debug	ModuleDebug.DebuggedPoint(position, Color4b.MAGENTA)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/killaura/features/KillAuraFightBot.kt	Debug	ModuleDebug.DebuggedPoint(position, if (!isInAngle) Color4b.GREEN else Color4b.RED)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/killaura/features/KillAuraFightBot.kt	Debug	ModuleDebug.debugGeometry(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityIntave.kt	Debug	ModuleDebug.debugParameter(this, "IsFallDamage", isFallDamage)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityIntave.kt	Debug	ModuleDebug.debugParameter(this, "VelocityX", velocityX)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityIntave.kt	Debug	ModuleDebug.debugParameter(this, "VelocityY", velocityY)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityIntave.kt	Debug	ModuleDebug.debugParameter(this, "VelocityZ", velocityZ)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "HitsUntilJump", hitsUntilJump)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "IsFallDamage", isFallDamage)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "UntilJump", ticksUntilJump)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "VelocityX", velocityX)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "VelocityY", velocityY)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "VelocityZ", velocityZ)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSafeWalk.kt	Debug	ModuleDebug.DebuggedPoint(center, Color4b.BLUE, 0.05)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/inventorymove/ModuleInventoryMove.kt	ClickGui	NORMAL("Normal", { !it.isInEditBox() && !ModuleClickGui.isInSearchBar }),
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/step/ModuleStep.kt	Debug	ModuleDebug.debugParameter(ModuleStep, "StepHeight", stepHeight)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/player/antivoid/ModuleAntiVoid.kt	Debug	ModuleDebug.DebuggedBox(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/player/autoshop/ModuleAutoShop.kt	Debug	if (ModuleDebug.running && startMilliseconds != 0L && canAutoClose) {
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/player/autoshop/ModuleAutoShop.kt	Debug	if (ModuleDebug.running) {
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/player/nofall/modes/NoFallBlink.kt	Debug	ModuleDebug.debugGeometry(ModuleNoFall, "Ground", ModuleDebug.DebuggedPoint(player.position(),
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/ModuleFreeCam.kt	Debug	ModuleDebug.debugParameter(this, "DirectionalInput", directionalInput)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/ModuleFreeCam.kt	Debug	ModuleDebug.debugParameter(this, "Position", PositionState.pos)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/ModuleFreeCam.kt	Debug	ModuleDebug.debugParameter(this, "Rotation", PositionState.rot)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/ModuleFreeCam.kt	Debug	ModuleDebug.debugParameter(this, "Velocity", velocity)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/cameraclip/ModuleCameraClip.kt	FreeLook	&& (!requireFreeLook || ModuleFreeLook.running)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/render/cameraclip/ModuleCameraClip.kt	FreeLook	&& (mc.options.cameraType != CameraType.FIRST_PERSON || ModuleFreeLook.running)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/ModuleBedDefender.kt	Debug	ModuleDebug.DebugCollection(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/ModuleBedDefender.kt	Debug	ModuleDebug.DebuggedPoint(BlockPos.of(pos).center, Color4b.RED.with(a = 100))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/autofarm/ModuleAutoFarm.kt	Debug	ModuleDebug.DebuggedBox(AABB(blockPos), Color4b.GREEN.alpha(100))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/autofarm/ModuleAutoFarm.kt	Debug	ModuleDebug.DebuggedPoint(rayTraceResult.location, Color4b.RED.alpha(150))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/fucker/ModuleFucker.kt	Debug	ModuleDebug.DebuggedBox(initialPosition.outlineBox.move(initialPosition), Color4b.GREEN.alpha(50))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/fucker/ModuleFucker.kt	Debug	ModuleDebug.DebuggedBox(path.firstBlock.outlineBox.move(path.firstBlock), Color4b.BLUE.alpha(50))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/fucker/ModuleFucker.kt	Debug	ModuleDebug.DebuggedPoint(path.info.targetPoint, Color4b.RED.alpha(100))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/ModuleScaffold.kt	Debug	ModuleDebug.DebuggedLineSegment(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/ModuleScaffold.kt	Debug	ModuleDebug.DebuggedPoint(predictedPos, Color4b.GREEN, size = 0.1)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/ScaffoldMovementPlanner.kt	Debug	ModuleDebug.DebuggedBox(AABB(pos), Color4b(133, 155, 255, alpha))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/ScaffoldMovementPlanner.kt	Debug	ModuleDebug.DebuggedLine(optimalLine, if (lastBlocksLine == null) Color4b.RED else Color4b.GREEN)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/ScaffoldMovementPlanner.kt	Debug	if (ModuleDebug.running) {
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/features/ScaffoldJumpStrafe.kt	Debug	ModuleDebug.debugParameter(ModuleScaffold, "Telly-Speed", "%.2f".format(player.horizontalSpeed))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/features/ScaffoldLedgeFeature.kt	Debug	ModuleDebug.debugParameter(ModuleScaffold, "TicksUntilDestination", ticks)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/traps/traps/TrapPlayerSimulation.kt	Debug	ModuleDebug.DebuggedBox(
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/traps/traps/TrapPlayerSimulation.kt	Debug	ModuleDebug.DebuggedBox(target.dimensions.makeBoundingBox(positions.last()), Color4b.RED.with(a = 127))
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/traps/traps/TrapPlayerSimulation.kt	Debug	ModuleDebug.debugGeometry(
+src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "DeltaPitch", totalDelta.deltaPitch)
+src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "DeltaYaw", totalDelta.deltaYaw)
+src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "Output [0]", output[0])
+src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "Output [1]", output[1])
+src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "Time", "${time.toString(DurationUnit.MILLISECONDS, 2)} ms")
 src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/projectiles/CydhranianProjectileAngleCalculator.kt	Debug	ModuleDebug.debugGeometry(
 src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/projectiles/CydhranianProjectileAngleCalculator.kt	Debug	ModuleProjectileAimbot, "inboundDirection", ModuleDebug.DebuggedLineSegment(
 src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/projectiles/ProjectileTargetPointFinder.kt	Debug	ModuleDebug.debugParameter(ModuleProjectileAimbot, "raytraceTime", "${formattedNumber}us")
