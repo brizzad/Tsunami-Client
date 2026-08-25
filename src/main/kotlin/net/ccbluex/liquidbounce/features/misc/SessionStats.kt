@@ -33,6 +33,7 @@ import net.ccbluex.liquidbounce.utils.entity.ping
 import net.ccbluex.liquidbounce.utils.text.hideSensitiveAddress
 import kotlin.math.hypot
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
  * Readouts a player wants on screen that are not part of the vanilla player
@@ -114,7 +115,11 @@ object SessionStats : EventListener {
         val player = mc.player ?: return@handler
         val now = System.currentTimeMillis()
 
-        reach = player.eyePosition.distanceTo(event.entity.position())
+        // To the nearest point of the hitbox, not to the entity origin.
+        // Origin distance reads about 1.5 blocks long on a normal hit, which
+        // would show 4.5 for a hit that vanilla only allows out to 3.0 - a
+        // reach display that lies in the direction of looking impressive.
+        reach = sqrt(event.entity.boundingBox.distanceToSqr(player.eyePosition))
 
         val sameTarget = comboTargetId == event.entity.id
         val inTime = now - lastHitAt <= COMBO_TIMEOUT_MS

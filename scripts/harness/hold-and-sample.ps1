@@ -114,6 +114,13 @@ $clickGap = [int](1000 / [Math]::Max(1, $ClicksPerSecond))
 $lastClick = Get-Date
 
 while ((Get-Date) -lt $deadline) {
+    # Re-assert both every iteration. Focus is not stable for the whole hold -
+    # something else takes the foreground mid-loop - and once the game is not
+    # focused GLFW stops seeing the key as held, so movement silently stops
+    # while the sampler happily keeps recording zeros.
+    [void][HS]::SetForegroundWindow($h)
+    if ($scanCode -ne 0) { [HS]::KeyDown($scanCode) }
+
     if ($Click -ne "" -and ((Get-Date) - $lastClick).TotalMilliseconds -ge $clickGap) {
         if ($Click -eq "left") { [HS]::ClickLeft() } else { [HS]::ClickRight() }
         $lastClick = Get-Date
