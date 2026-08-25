@@ -39,6 +39,7 @@ import net.minecraft.client.gui.screens.ChatScreen
 import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.HoverEvent
+import net.ccbluex.liquidbounce.LiquidBounce
 import net.minecraft.network.chat.MutableComponent
 import net.minecraft.network.chat.Style
 import net.minecraft.network.chat.TextColor
@@ -47,7 +48,11 @@ import java.io.File
 // Chat formatting
 private val clientPrefix: Component = "".asText()
     .withStyle(ChatFormatting.RESET, ChatFormatting.GRAY)
-    .append(gradientText("LiquidBounce", Color4b.fromHex("#4677ff"), Color4b.fromHex("#24AA7F")))
+    // Every chat line the client prints carries this prefix, so it read
+    // "LiquidBounce" on ours - in the users own chat log - until this used
+    // CLIENT_NAME. The gradient was their blue-to-green; this is the Tsunami
+    // accent, the same #1FA8FF the launcher and the theme use.
+    .append(gradientText(LiquidBounce.CLIENT_NAME, Color4b.fromHex("#1FA8FF"), Color4b.fromHex("#0069B4")))
     .append(" ▸ ".asText().withStyle(ChatFormatting.RESET, ChatFormatting.GRAY))
 
 fun regular(text: MutableComponent): MutableComponent = text.withStyle(ChatFormatting.GRAY)

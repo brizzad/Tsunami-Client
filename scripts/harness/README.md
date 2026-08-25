@@ -24,6 +24,7 @@ the client runs all three:
 | -------------- | ---------------------------------------------------- |
 | `phone-home`   | a CCBlueX host left in code                          |
 | `svg-xml`      | markup that will not parse, mainly `--` in a comment |
+| `anchors`      | a repair being undone at a spot already baselined     |
 | `kept-modules` | the strip deleting code a kept module needed         |
 
 Each one exists because that mistake was actually made and shipped, and in each
@@ -105,7 +106,9 @@ Holds a key (default `0x11` = W) and captures a burst, for measuring motion.
 
 ## Worked examples
 
-These are the two measurements that confirmed the restored modules.
+These are the four measurements that confirmed the restored modules. Each one
+is a before/after on the actual screen, because all four of these modules were
+once structurally fine and functionally dead at the same time.
 
 ### FullBright
 
@@ -143,3 +146,83 @@ item in screen space independently of the world, so the ratio isolates it:
 Roughly 4x versus roughly 1x. The ratio matters rather than the absolute
 numbers, because the two runs walk at different speeds. Ignore frames where the
 scene diff is near zero — the ratio is noise there.
+
+### BetterTab
+
+The tab list does not render in singleplayer at all unless there is more than
+one player or a scoreboard objective in the `list` slot. With one player and no
+objective, holding Tab shows nothing, which looks exactly like a broken module.
+Give it something to draw first:
+
+```
+/scoreboard objectives add tsu dummy
+/scoreboard objectives setdisplay list tsu
+```
+
+Then hold Tab with `burst.ps1 -Scan 0x0F` and read the name.
+
+|                 | player entry       |
+| --------------- | ------------------ |
+| BetterTab off   | `Player843` + ping bars |
+| BetterTab on    | `Player843 [C]` + `0ms` |
+
+The `[C]` is the game-mode suffix that `modifyPlayerName` appends, which is the
+part that was silently lost.
+
+|                          | mean pixel diff |
+| ------------------------ | --------------: |
+| tab-list region          |           43.66 |
+| control region, same frames |          0.18 |
+
+### AntiBlind
+
+Two things make this one easy to get wrong, and I got both wrong first.
+
+**`DoRender` lists what should still render, not what to hide.** `FallingBlocks`
+is selected by default, so turning AntiBlind on does *not* hide falling blocks.
+Deselect it first, or you will measure nothing and conclude the module is broken.
+
+**Falling blocks despawn on their own after 600 ticks.** A block vanishing
+between two captures is just as likely to be the timer as the module. Summon
+fresh and take both captures within a few seconds.
+
+Summon one that stays put:
+
+```
+/summon falling_block ^ ^ ^3 {NoGravity:1b}
+```
+
+Caret coordinates put it in front of wherever the camera is looking, which
+matters because `~` offsets will happily bury it inside a wall.
+
+|                       | mean pixel diff |
+| --------------------- | --------------: |
+| falling-block region  |           53.56 |
+| control region, same frames |         0.00 |
+
+The terrain sand block next to it stays visible throughout, which is the point:
+the module suppresses the *entity*, and is not just blanking a region.
+
+## Two traps that cost real time
+
+**Toggle modules over REST, not with keystrokes.** The client exposes it:
+
+```
+PUT    /api/v1/client/modules/toggle   {"name":"AntiBlind"}   enable
+DELETE /api/v1/client/modules/toggle   {"name":"AntiBlind"}   disable
+GET    /api/v1/client/modules/settings?name=AntiBlind         read settings
+PUT    /api/v1/client/modules/settings?name=AntiBlind         write them back
+```
+
+(append `?lb_code=<session>` to each; scrape it from the run log.)
+
+Changing state this way touches no input, so the camera cannot drift between
+the two captures. That is what makes a control-region diff of exactly 0.000
+possible, and without it you cannot tell a real change from a nudged mouse.
+
+**Confirm input is actually arriving before trusting any result.**
+`SetForegroundWindow` frequently does not take, and a run where no key ever
+reached the game produces a perfectly clean "no difference" that looks like a
+pass. Click the window's title bar first, in the *same* invocation as the keys
+that follow, and verify with something unmistakable - open chat and look for the
+cursor - before measuring anything.

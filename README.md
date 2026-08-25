@@ -1,21 +1,62 @@
 <div align="center">
 <p>
-    <img width="200" src="https://raw.githubusercontent.com/CCBlueX/LiquidCloud/master/LiquidBounce/liquidbounceLogo.svg">
+    <img width="200" src="src-theme/public/img/tsunami-logo.svg" alt="Tsunami">
 </p>
-
-[Website](https://liquidbounce.net) |
-[Forum](https://forums.ccbluex.net) |
-[Discord](https://liquidbounce.net/discord) |
-[YouTube](https://youtube.com/CCBlueX) |
-[X](https://x.com/CCBlueX)
 </div>
 
-LiquidBounce is a free and open-source mixin-based injection hacked client using the Fabric API for Minecraft.
+Tsunami is a free and open-source mixin-based Minecraft client built on the
+Fabric API, focused on performance and quality of life.
+
+It is a fork of [LiquidBounce](https://github.com/CCBlueX/LiquidBounce) by
+CCBlueX, with the cheats removed. What remains is the rendering, HUD,
+configuration and module framework, plus the modules that make the game nicer to
+play without playing it for you.
+
+## Scope
+
+The line Tsunami draws is whether a feature automates **skill expression** or
+merely removes **busywork**.
+
+Automating something that takes no skill is quality of life. Respawning after
+death is a keypress with no decision in it, so AutoRespawn belongs here.
+Automating something that decides an encounter is a cheat, however convenient.
+Swapping a totem into your off-hand at the right moment is a real skill that
+separates players, so it does not.
+
+Feature requests for combat or movement automation are out of scope, and so are
+reach, timing, and anything that reports false information to a server.
+
+## Why the mod id is still `liquidbounce`
+
+`src/main/resources/fabric.mod.json` declares `"id": "liquidbounce"`, and that
+is deliberate rather than a missed rename.
+
+The mod id is a resource namespace, not a brand. It is what every asset and
+translation key in the jar resolves against — `liquidbounce.module.*` in the
+language files, `resources/liquidbounce/**` on disk, and the paths the theme's
+HTTP server hands out. Renaming it means rewriting several thousand keys and
+every resource path in one commit, and getting one wrong produces a missing
+translation or a 404 at runtime rather than a build error.
+
+The user-visible name is set separately and is already Tsunami: `CLIENT_NAME` in
+`LiquidBounce.kt`, and `"name"` in the same `fabric.mod.json`.
+
+## Relationship to LiquidBounce
+
+Tsunami is a GPLv3 fork and stays one. Upstream keeps the credit for the
+framework this is built on.
+
+Anything that pointed at CCBlueX's infrastructure has been disconnected, because
+a fork silently talking to upstream's servers is both a privacy problem and
+theirs to pay for. Endpoints resolve to `.invalid`, the Discord application id
+is unset, and CI publishes nowhere. Where a real Tsunami destination does not
+exist yet, the value is left empty with a comment rather than pointed somewhere
+plausible. `scripts/audit.mjs` enforces this.
 
 ## Issues
 
-If you notice any bugs or missing features, you can let us know by opening an
-issue [here](https://github.com/CCBlueX/LiquidBounce/issues).
+Tsunami has no issue tracker yet. It is a fork in progress, not something to
+file LiquidBounce bugs against — please do not send Tsunami's bugs upstream.
 
 ## License
 
@@ -40,40 +81,43 @@ nor legally binding.
   application.**
 - **Your modified application must also be licensed under the GPL**
 
-## Setting up a Workspace
+## Setting up a workspace
 
-LiquidBounce uses Gradle; to make sure that it is installed properly, you can
-check [Gradle's website](https://gradle.org/install/). It also requires [Node.js](https://nodejs.org) to be installed for
-our [theme](https://github.com/CCBlueX/LiquidBounce/tree/nextgen/src-theme).
+Tsunami uses Gradle, and needs JDK 25 and [Node.js](https://nodejs.org) for the
+[theme](src-theme).
 
-1. Clone the repository using `git clone --recurse-submodules https://github.com/CCBlueX/LiquidBounce`.
-2. CD into the local repository. (`cd LiquidBounce`)
-3. Run `./gradlew genSources` for better development experience (Optional).
+1. Clone the repository with its submodules: `git clone --recurse-submodules <url>`
+2. `cd` into the local repository.
+3. Run `./gradlew genSources` for a better development experience (optional).
 4. Open the folder as a Gradle project in your preferred IDE.
-5. Run the client. (`./gradlew runClient`)
+5. Run the client: `./gradlew runClient`
+
+## Checks
+
+```sh
+node scripts/audit.mjs
+```
+
+Run before committing; a pre-commit hook and a CI workflow both run it. It
+checks for CCBlueX hosts left in code, SVGs that will not parse, and code that a
+kept module depends on going missing.
+
+Every check exists because that mistake was made here and shipped with a green
+build. Four modules once loaded, enabled and appeared in the HUD while doing
+nothing at all, because a mixin method they shared with a deleted module was
+removed whole. See [scripts/harness/README.md](scripts/harness/README.md) for
+how to verify a module actually does something, which is harder than it sounds
+and is not the same as it compiling.
 
 ## Additional libraries
 
 ### Mixins
 
-Mixins can be used to modify classes at runtime before they are loaded. LiquidBounce uses it to inject its code into the
+Mixins can be used to modify classes at runtime before they are loaded. Tsunami uses it to inject its code into the
 Minecraft client. This way, none of Mojang's copyrighted code is shipped. If you want to learn more about it, check out
 its [Documentation](https://docs.spongepowered.org/5.1.0/en/plugin/internals/mixins.html).
 
 ## Contributing
 
-We appreciate contributions. So if you want to support us, feel free to make changes to LiquidBounce's source code and
-submit a pull request.
-
-## Stats
-
-![Alt](https://repobeats.axiom.co/api/embed/ad3a9161793c4dfe50934cd4442d25dc3ca93128.svg "Repobeats analytics image")
-
-## Imprint
-
-**CCBlueX**  
-Vahrenwalder Str. 269A
-30179 Hanover
-Germany
-
-**Owner and responsible for the content:** Marco Beyer
+Contributions are welcome. Please read the scope section above first: a
+well-built feature that automates skill expression will still be declined.
