@@ -7,10 +7,10 @@ import type {
     MinecraftKeyboardKey,
     MinecraftMouseKey,
     PlayerData,
-    Proxy,
     Screen,
     Server,
     Session,
+    SessionStats,
     Setting,
     StatusEffect,
     TextComponent,
@@ -38,7 +38,6 @@ export interface EventMap {
     accountManagerLogin: AccountManagerLoginEvent;
     accountManagerAddition: AccountManagerAdditionEvent;
     accountManagerRemoval: AccountManagerRemovalEvent;
-    proxyCheckResult: ProxyCheckResultEvent;
     virtualScreen: VirtualScreenEvent;
     serverPinged: ServerPingedEvent;
     componentsUpdate: ComponentsUpdateEvent;
@@ -55,6 +54,7 @@ export interface EventMap {
     //UserInterfaceEvents.kt
     fps: FpsChangeEvent;
     clientPlayerData: ClientPlayerDataEvent;
+    sessionStats: SessionStatsEvent;
     clientPlayerEffect: ClientPlayerEffectEvent;
     clientPlayerInventory: ClientPlayerInventoryEvent;
     title: TitleEventTitle;
@@ -132,6 +132,10 @@ export interface ClientPlayerDataEvent {
     playerData: PlayerData;
 }
 
+export interface SessionStatsEvent {
+    session: SessionStats;
+}
+
 export interface ClientPlayerEffectEvent {
     effects: StatusEffect[];
 }
@@ -198,11 +202,6 @@ export interface PlayerInventory {
     main: ItemStack[];
     crafting: ItemStack[];
     enderChest: ItemStack[];
-}
-
-export interface ProxyCheckResultEvent {
-    proxy: Proxy | null;
-    error: string | null;
 }
 
 export interface SpaceSeperatedNamesChangeEvent {

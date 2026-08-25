@@ -22,6 +22,7 @@ package net.ccbluex.liquidbounce.event.events
 import net.ccbluex.liquidbounce.annotations.Tag
 import net.ccbluex.liquidbounce.event.CancellableEvent
 import net.ccbluex.liquidbounce.event.Event
+import net.ccbluex.liquidbounce.features.misc.SessionStatsData
 import net.ccbluex.liquidbounce.integration.interop.protocol.event.WebSocketEvent
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.PlayerData
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.PlayerInventoryData
@@ -39,6 +40,10 @@ class FpsLimitEvent(var fps: Int) : Event()
 @Tag("clientPlayerData")
 @Suppress("unused")
 class ClientPlayerDataEvent(val playerData: PlayerData) : Event(), WebSocketEvent
+
+@Tag("sessionStats")
+@Suppress("unused")
+class SessionStatsEvent(val session: SessionStatsData) : Event(), WebSocketEvent
 
 @Tag("clientPlayerEffect")
 @Suppress("unused")

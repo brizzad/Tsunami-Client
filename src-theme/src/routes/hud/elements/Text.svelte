@@ -1,10 +1,11 @@
 <script lang="ts">
-    import type {ClientPlayerDataEvent} from "../../../integration/events";
-    import type {PlayerData} from "../../../integration/types";
+    import type {ClientPlayerDataEvent, SessionStatsEvent} from "../../../integration/events";
+    import type {PlayerData, SessionStats} from "../../../integration/types";
     import {intToRgba, rgbaToHex} from "../../../integration/util";
     import {listen} from "../../../integration/ws";
 
     let playerData: PlayerData | null = null;
+    let session: SessionStats | null = null;
 
     export let settings: { [name: string]: any };
 
@@ -24,13 +25,21 @@
         playerData = event.playerData;
     });
 
-    function processText(text: string, playerData: PlayerData | null): string {
-        if (!text || !playerData) {
+    // Client readouts arrive on their own event, on their own cadence, and are
+    // reachable as {session.something} alongside the player placeholders.
+    listen("sessionStats", (event: SessionStatsEvent) => {
+        session = event.session;
+    });
+
+    function processText(text: string, playerData: PlayerData | null, session: SessionStats | null): string {
+        if (!text || (!playerData && !session)) {
             return text || "";
         }
 
+        const source = {...(playerData ?? {}), session} as PlayerData;
+
         return text.replace(PLACEHOLDER_PATTERN, (match, path: string) => {
-            const value = resolvePath(playerData, path);
+            const value = resolvePath(source, path);
 
             return value === null || value === undefined
                 ? match
@@ -96,7 +105,7 @@
     }
 
     $: cSettings = settings as HudTextSettings;
-    $: processedText = processText(cSettings.text, playerData);
+    $: processedText = processText(cSettings.text, playerData, session);
     $: textStyle = createTextStyle(cSettings);
 </script>
 

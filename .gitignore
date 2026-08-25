@@ -15,3 +15,8 @@
 .DS_Store
 *.log
 /.fabric/
+
+# Harness output. window.ps1 and friends write screenshots wherever they are
+# pointed, and a stray one was committed to the repo root once already.
+/shot.png
+/*.png

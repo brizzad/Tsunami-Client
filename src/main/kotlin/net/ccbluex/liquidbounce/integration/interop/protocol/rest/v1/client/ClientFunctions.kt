@@ -36,6 +36,8 @@ import net.ccbluex.liquidbounce.integration.interop.badRequest
 import net.ccbluex.liquidbounce.integration.interop.forbidden
 import net.ccbluex.liquidbounce.integration.interop.notFound
 import net.ccbluex.liquidbounce.utils.client.inGame
+import net.ccbluex.liquidbounce.config.gson.interopGson
+import net.ccbluex.liquidbounce.features.misc.SessionStats
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.usesViaFabricPlus
 import net.ccbluex.liquidbounce.utils.kotlin.Minecraft
@@ -43,6 +45,19 @@ import net.minecraft.util.Util
 import java.io.File
 import java.net.URI
 import java.util.Properties
+
+/**
+ * GET /api/v1/client/session
+ *
+ * The same readouts the sessionStats event pushes, on demand. The event is the
+ * live path the HUD uses; this exists so the readouts can be sampled without a
+ * WebSocket, which needs the auth cookie rather than the lb_code parameter.
+ *
+ * See scripts/harness/sample-session.mjs.
+ */
+private fun Route.getSessionStats() = get("/session") {
+    call.respond(interopGson.toJsonTree(SessionStats.snapshot()))
+}
 
 // GET /api/v1/client/info
 private fun Route.getClientInfo() = get("/info") {
@@ -178,6 +193,7 @@ private val POSSIBLE_URL_TARGETS: Map<String, URI> = buildMap {
 
 internal fun Route.clientRoutes() {
     getClientInfo()
+    getSessionStats()
     getUpdateInfo()
     postExit()
     putHudEditorState()

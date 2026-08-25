@@ -47,6 +47,7 @@ import net.ccbluex.liquidbounce.features.command.CommandManager
 import net.ccbluex.liquidbounce.features.creativetab.tabs.HeadsCreativeModeTab
 import net.ccbluex.liquidbounce.features.global.GlobalManager
 import net.ccbluex.liquidbounce.features.misc.FriendManager
+import net.ccbluex.liquidbounce.features.misc.SessionStats
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.spoofer.SpooferManager
 import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
@@ -274,6 +275,7 @@ object LiquidBounce : EventListener {
         InventoryManager
         EnderChestInventoryTracker
         ActiveServerList
+        SessionStats
         ConfigSystem.root(SpooferManager)
         ConfigSystem.root(GlobalManager)
         PostRotationExecutor

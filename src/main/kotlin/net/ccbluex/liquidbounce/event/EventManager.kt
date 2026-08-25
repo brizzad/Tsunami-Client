@@ -48,6 +48,7 @@ import net.ccbluex.liquidbounce.event.events.ClickGuiScaleChangeEvent
 import net.ccbluex.liquidbounce.event.events.ClickGuiValueChangeEvent
 import net.ccbluex.liquidbounce.event.events.ClientLanguageChangedEvent
 import net.ccbluex.liquidbounce.event.events.ClientPlayerDataEvent
+import net.ccbluex.liquidbounce.event.events.SessionStatsEvent
 import net.ccbluex.liquidbounce.event.events.ClientPlayerEffectEvent
 import net.ccbluex.liquidbounce.event.events.ClientPlayerInventoryEvent
 import net.ccbluex.liquidbounce.event.events.ClientShutdownEvent
@@ -222,6 +223,7 @@ internal val ALL_EVENT_CLASSES: Array<Class<out Event>> = arrayOf(
     FpsChangeEvent::class.java,
     FpsLimitEvent::class.java,
     ClientPlayerDataEvent::class.java,
+    SessionStatsEvent::class.java,
     ClientPlayerEffectEvent::class.java,
     RotationUpdateEvent::class.java,
     RefreshArrayListEvent::class.java,

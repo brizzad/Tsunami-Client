@@ -231,6 +231,7 @@ export interface PlayerData {
     maxAir: number;
     experienceLevel: number;
     experienceProgress: number;
+    ping: number;
     effects: StatusEffect[];
     mainHandStack: ItemStack;
     offHandStack: ItemStack;
@@ -347,27 +348,26 @@ export interface World {
     version: string;
 }
 
-export interface Proxy {
-    id: number;
-    host: string;
-    port: number;
-    type: 'HTTP' | 'SOCKS5';
-    forwardAuthentication: boolean;
-    favorite: boolean;
-    credentials: {
-        username: string;
-        password: string;
-    } | undefined;
-    ipInfo: {
-        city?: string;
-        country?: string;
-        ip: string;
-        loc?: string;
-        org?: string;
-        postal?: string;
-        region?: string;
-        timezone?: string;
-    } | undefined;
+/**
+ * Readouts the client measures for itself, pushed four times a second.
+ *
+ * Kept apart from PlayerData on purpose: that type is also built for the
+ * current target, so client-global values there would show the local
+ * player fps and cps on the target HUD.
+ */
+export interface SessionStats {
+    fps: number;
+    cps: { left: number; right: number };
+    combo: number;
+    bestCombo: number;
+    reach: number;
+    speed: number;
+    ping: number;
+    memory: { used: number; max: number; percent: number };
+    uptime: number;
+    day: number;
+    direction: { cardinal: string; axis: string };
+    server: { address: string; players: number };
 }
 
 export interface GameWindow {
