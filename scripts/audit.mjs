@@ -144,6 +144,9 @@ const add = (check, rel, detail) => findings.push(`${check}\t${rel.replace(/\\/g
 /* ------------------------------------------------------------------ *
  * anchors - code that must still be there
  * ------------------------------------------------------------------ */
+// Reported even when it passes: a check that prints nothing when healthy looks
+// exactly like a check that is no longer running.
+let anchorsChecked = 0;
 {
   const list = path.join(ROOT, "scripts/mixin-anchors.txt");
   if (fs.existsSync(list)) {
@@ -155,6 +158,7 @@ const add = (check, rel, detail) => findings.push(`${check}\t${rel.replace(/\\/g
 
     for (const entry of entries) {
       const [rel, fragment, why] = entry.split("|").map((s) => s.trim());
+      anchorsChecked++;
       if (!rel || !fragment) {
         add("anchors", "scripts/mixin-anchors.txt", `malformed entry: ${entry.slice(0, 60)}`);
         continue;
@@ -230,6 +234,7 @@ for (const f of unique) {
 
 console.log(`repo ${path.basename(ROOT)} | files ${files.length} | findings ${unique.length} | accepted ${baseline.size}`);
 for (const c of Object.keys(byCheck).sort()) console.log(`  ${c.padEnd(12)} ${byCheck[c]}`);
+if (anchorsChecked) console.log(`  anchors      ${anchorsChecked} checked`);
 if (delegated) console.log(`  kept-modules ${delegated.ok ? "pass" : "FAIL"}`);
 
 let bad = false;
