@@ -1,5 +1,4 @@
 blank_issues_enabled: false
-contact_links:
-  - name: 🗨 Discussions
-    url: https://forums.ccbluex.net/
-    about: Ask and answer questions.
+# Upstream linked CCBlueX's forum here. Tsunami has no forum or discussion
+# space yet, so there is nothing to link rather than something to invent.
+contact_links: []

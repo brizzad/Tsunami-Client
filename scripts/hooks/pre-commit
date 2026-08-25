@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Tsunami: refuse a commit that fails the static audit.
+#
+# Install:  cp scripts/hooks/pre-commit .git/hooks/pre-commit
+#           chmod +x .git/hooks/pre-commit
+#
+# This is the same check CI runs. It is here too because CI tells you after the
+# fact, and the bugs this catches are ones that look fine until someone plays
+# the game or reads a network log.
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "pre-commit: node is required to run the static audit." >&2
+  echo "Install node, or bypass deliberately with: git commit --no-verify" >&2
+  exit 1
+fi
+
+node scripts/audit.mjs || {
+  echo >&2
+  echo "pre-commit: static audit failed; commit refused." >&2
+  echo "Fix the finding, or accept it with: node scripts/audit.mjs --baseline" >&2
+  exit 1
+}

@@ -1,0 +1,27 @@
+name: Audit
+
+# The static audit, run on everything. Each check it performs exists because
+# that mistake was made in this fork and shipped: the build stayed green, the
+# app started, and nothing looked wrong. See scripts/audit.mjs.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The kept-modules check diffs against the upstream fork point, so it
+          # needs real history. A shallow clone makes it fail to find the commit.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Static audit
+        run: node scripts/audit.mjs

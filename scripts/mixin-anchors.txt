@@ -1,0 +1,21 @@
+# Code that must still be there, checked by presence rather than by diffing
+# upstream.
+#
+# The kept-modules check compares against the fork point, so it catches the
+# strip DELETING something. It cannot catch a REPAIR being undone: once a
+# removal at some spot is accepted into audit-baseline.txt, that spot is no
+# longer watched, and the fix written there afterwards is unprotected.
+#
+# That is not hypothetical. Deleting NoBob's restored guard and committing was
+# accepted by a clean audit, because upstream's own line at that spot was
+# already an accepted trim.
+#
+# Every entry below is a module that was silently broken once already: it
+# loaded, enabled and appeared in the HUD while doing nothing at all.
+#
+# Format: path | fragment that must appear | what breaks without it
+
+src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/render/MixinGameRenderer.java | ModuleNoBob.INSTANCE.getRunning() | NoBob stops cancelling view bob
+src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/render/MixinLightmapRenderStateExtractor.java | ModuleFullBright.FullBrightGamma.INSTANCE.getGamma() | FullBright stops overriding gamma
+src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/gui/MixinPlayerTabOverlay.java | ModuleBetterTab.INSTANCE.getShowGameMode() | BetterTab stops appending the game-mode suffix
+src/main/java/net/ccbluex/liquidbounce/injection/mixins/minecraft/render/entity/MixinEntityRenderer.java | ModuleAntiBlind.canRender(DoRender.FALLING_BLOCKS) | AntiBlind stops hiding falling blocks

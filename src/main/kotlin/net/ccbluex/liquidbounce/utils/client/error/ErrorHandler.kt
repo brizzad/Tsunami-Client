@@ -39,6 +39,18 @@ private val MAX_STACKTRACE_LINES = when (Util.getPlatform()) {
 }
 
 /**
+ * Where a fatal error can be reported, or null while Tsunami has no tracker.
+ *
+ * Upstream opened CCBlueX's new-issue form here, prefilled with their bug
+ * report template, so every Tsunami crash would have been filed against
+ * LiquidBounce - by our users, describing our fork's bugs.
+ *
+ * While this is null the dialog does not offer to report at all, rather than
+ * asking and then doing nothing. Set it once a Tsunami tracker exists.
+ */
+private val ISSUE_TRACKER_URL: String? = null
+
+/**
  * The ErrorHandler class is responsible for handling and reporting errors encountered by the application.
  */
 class ErrorHandler private constructor(
@@ -67,7 +79,7 @@ class ErrorHandler private constructor(
                 logger.error("An error occurred!", error)
 
                 if (buildAndShowMessage()) {
-                    browseUrl("https://github.com/CCBlueX/LiquidBounce/issues/new?template=bug_report.yml")
+                    ISSUE_TRACKER_URL?.let(::browseUrl)
                 }
 
                 exitProcess(1)
@@ -116,7 +128,7 @@ class ErrorHandler private constructor(
         append(
             """
                 Try restarting the client.
-                Please report this issue to the developers on GitHub if the error keeps occurring.
+                Please report this issue to the Tsunami developers if it keeps occurring.
 
                 Include the following information:
             """.trimIndent())
@@ -206,7 +218,8 @@ class ErrorHandler private constructor(
                 false
             }
 
-            needToReport -> {
+            // Only ask if there is somewhere for the answer to go.
+            needToReport && ISSUE_TRACKER_URL != null -> {
                 TinyFileDialogs.tinyfd_messageBox(
                     title,
                     message,

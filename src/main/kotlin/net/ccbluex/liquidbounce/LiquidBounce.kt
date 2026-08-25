@@ -221,8 +221,7 @@ object LiquidBounce : EventListener {
         // Check for AMD Vega iGPU
         if (HAS_AMD_VEGA_APU) {
             logger.info("AMD Vega iGPU detected, enabling different line smooth handling. " +
-                "If you believe this is a mistake, please create an issue at " +
-                "https://github.com/CCBlueX/LiquidBounce/issues.")
+                "If you believe this is a mistake, please report it to the Tsunami developers.")
         }
 
         // Do backup before loading configs

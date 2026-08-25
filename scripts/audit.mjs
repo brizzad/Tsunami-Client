@@ -15,6 +15,13 @@
  *                carried "var(--accent)" in a comment, which made them invalid
  *                XML. They rendered as broken images with nothing logged.
  *
+ *   anchors      Client only, when scripts/mixin-anchors.txt exists. Code that
+ *                must still be present, checked directly rather than by diffing
+ *                upstream, because kept-modules stops watching a spot once a
+ *                removal there is baselined - which leaves the repair made at
+ *                that spot unprotected. Deleting NoBob's restored guard passed
+ *                a clean audit for exactly that reason.
+ *
  *   kept-modules Client only, when scripts/keep.txt exists. A mixin method
  *                serving both a removed and a kept module was deleted whole,
  *                so four modules loaded, enabled and appeared in the HUD while
@@ -34,14 +41,29 @@ const ROOT = process.cwd();
 const BASELINE = path.join(ROOT, "scripts/audit-baseline-shared.txt");
 const WRITE = process.argv.includes("--baseline");
 
-/** Hosts CCBlueX operates. None of these are ours to talk to. */
+/**
+ * Hosts CCBlueX operates. None of these are ours to talk to.
+ *
+ * github.com/CCBlueX is here because CI is where a fork reaches back into
+ * upstream's infrastructure without anyone noticing - downloading their
+ * release assets, publishing to their npm scope. Attribution pointing at their
+ * repository is legitimate and belongs in the baseline; a build step that
+ * fetches from it does not.
+ */
 const CCBLUEX_HOSTS = [
   "liquidbounce.net",
   "ccbluex.net",
   "liquidproxy.net",
+  "github.com/CCBlueX",
 ];
 
-const SOURCE_EXT = new Set([".kt", ".java", ".rs", ".js", ".mjs", ".ts", ".svelte", ".json", ".toml"]);
+// .yml/.yaml matter as much as source: a fork inherits upstream's CI, and both
+// repos shipped workflows that POST the built artifact to CCBlueX's production
+// release API, plus a FUNDING file putting a sponsor button on our own repo
+// pointing at their donate page.
+const SOURCE_EXT = new Set([
+  ".kt", ".java", ".rs", ".js", ".mjs", ".ts", ".svelte", ".json", ".toml", ".yml", ".yaml",
+]);
 const SKIP_DIR = /(^|[\\/])(\.git|node_modules|build|dist|target|run|\.gradle|gen)([\\/]|$)/;
 
 function walk(dir, out = []) {
@@ -75,8 +97,18 @@ const add = (check, rel, detail) => findings.push(`${check}\t${rel.replace(/\\/g
     try { text = fs.readFileSync(abs, "utf8"); } catch { continue; }
     if (!hostRe.test(text)) continue;
 
+    // Track block comments as well as line ones. A Svelte or JS attribution
+    // header continues its lines with " - ", which no line-comment prefix
+    // matches, so every GPL header would otherwise report as a network call.
+    let inBlock = false;
+
     text.split("\n").forEach((line, i) => {
-      if (isComment(line)) return;
+      const opens = /<!--|\/\*/.test(line);
+      const closes = /-->|\*\//.test(line);
+      const skip = inBlock || opens || isComment(line);
+      if (opens && !closes) inBlock = true;
+      else if (closes) inBlock = false;
+      if (skip) return;
       if (!hostRe.test(line)) return;
       // Only care when it appears as a URL in code.
       if (!/https?:\/\//.test(line)) return;
@@ -106,6 +138,38 @@ const add = (check, rel, detail) => findings.push(`${check}\t${rel.replace(/\\/g
     }
     if (!/<svg[\s>]/.test(text)) add("svg-xml", rel, "no <svg> root element");
     else if (!/<\/svg>\s*$/.test(text.trim())) add("svg-xml", rel, "missing closing </svg>");
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * anchors - code that must still be there
+ * ------------------------------------------------------------------ */
+{
+  const list = path.join(ROOT, "scripts/mixin-anchors.txt");
+  if (fs.existsSync(list)) {
+    const entries = fs
+      .readFileSync(list, "utf8")
+      .split("\n")
+      .map((l) => l.replace(/\r$/, "").trim())
+      .filter((l) => l && !l.startsWith("#"));
+
+    for (const entry of entries) {
+      const [rel, fragment, why] = entry.split("|").map((s) => s.trim());
+      if (!rel || !fragment) {
+        add("anchors", "scripts/mixin-anchors.txt", `malformed entry: ${entry.slice(0, 60)}`);
+        continue;
+      }
+      const abs = path.join(ROOT, rel);
+      if (!fs.existsSync(abs)) {
+        add("anchors", rel, `file is gone - ${why || "anchor missing"}`);
+        continue;
+      }
+      // Compare with whitespace squashed, so reformatting is not a failure.
+      const squash = (s) => s.replace(/\s+/g, " ");
+      if (!squash(fs.readFileSync(abs, "utf8")).includes(squash(fragment))) {
+        add("anchors", rel, `missing "${fragment}" - ${why || "anchor missing"}`);
+      }
+    }
   }
 }
 

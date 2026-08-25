@@ -8,11 +8,11 @@ body:
       value: |
         🧐 **Guidelines:**
         
-        - Search through [existing issues](https://github.com/CCBlueX/LiquidBounce/issues?q=is%3Aopen+is%3Aissue) first to ensure that this feature has not been requested before.
+        - Search through the existing issues first to ensure that this feature has not been requested before.
         - Write a descriptive title for your issue. Avoid generic or vague titles such as "Some suggestions" or "Ideas for improvement".
         - Keep your issue focused on one single problem. If you have multiple feature requests, please create separate issues for each of them.
         - Provide as much context as possible in the details section. Include screenshots, screen recordings, links, references, or anything else you may consider relevant.
-        - If you want to ask a question instead of requesting a feature, please use the [forum](https://forums.ccbluex.net/) instead.
+        - Keep in mind that Tsunami is a performance and quality-of-life client. Requests for combat or movement automation are out of scope.
 
   - type: textarea
     attributes:
