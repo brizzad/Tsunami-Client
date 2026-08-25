@@ -18,6 +18,7 @@ FullBright
 GUICloser
 Hats
 HitFX
+Hitboxes
 Hud
 InventoryTracker
 ItemScroller
