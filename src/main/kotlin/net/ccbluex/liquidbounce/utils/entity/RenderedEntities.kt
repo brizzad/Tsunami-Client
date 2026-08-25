@@ -26,7 +26,6 @@ import net.ccbluex.liquidbounce.event.events.PerspectiveEvent
 import net.ccbluex.liquidbounce.event.events.WorldChangeEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.global.GlobalSettingsTarget
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleCombineMobs
 import net.ccbluex.liquidbounce.utils.client.inGame
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.combat.Targets
@@ -81,14 +80,8 @@ object RenderedEntities : Collection<LivingEntity> by entities, EventListener {
     private fun refresh() {
         entities.clear()
 
-        val shouldCheckCombineMobs = ModuleCombineMobs.running
-
         for (entity in mc.level?.entitiesForRendering() ?: return) {
             if (entity is LivingEntity && entity.shouldBeShown()) {
-                if (shouldCheckCombineMobs && ModuleCombineMobs.trackEntity(entity, true)) {
-                    continue
-                }
-
                 entities += entity
             }
         }

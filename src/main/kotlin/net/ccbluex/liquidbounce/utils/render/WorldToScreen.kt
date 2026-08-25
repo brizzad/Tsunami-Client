@@ -18,7 +18,6 @@
  */
 package net.ccbluex.liquidbounce.utils.render
 
-import net.ccbluex.liquidbounce.features.module.modules.combat.aimbot.ModuleProjectileAimbot
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug.debugParameter
 import net.ccbluex.liquidbounce.render.engine.type.Rect
 import net.ccbluex.liquidbounce.render.engine.type.Vec3f
@@ -109,10 +108,6 @@ object WorldToScreen {
 
         val relativePos = cacheVec3f.set(transformedPos)
             .mulProject(this.projModelViewMatrix.invert(cacheMat4f))
-
-        ModuleProjectileAimbot.debugParameter("s2w") {
-            relativePos.toString(NumberFormat.getInstance())
-        }
 
         return Line(cameraPos, relativePos.toVec3d())
     }

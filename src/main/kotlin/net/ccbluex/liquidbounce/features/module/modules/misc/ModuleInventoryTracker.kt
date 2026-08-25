@@ -27,7 +27,6 @@ import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.command.commands.module.CommandInvsee
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleCategories
-import net.ccbluex.liquidbounce.features.module.modules.misc.antibot.ModuleAntiBot
 import net.ccbluex.liquidbounce.utils.inventory.ViewedInventoryScreen
 import net.ccbluex.liquidbounce.utils.text.asPlainText
 import net.minecraft.ChatFormatting
@@ -63,7 +62,7 @@ object ModuleInventoryTracker : ClientModule("InventoryTracker", ModuleCategorie
     @Suppress("unused")
     val playerEquipmentChangeHandler = handler<EntityEquipmentChangeEvent> { event ->
         val player = event.entity
-        if (player !is RemotePlayer || ModuleAntiBot.isBot(player)) return@handler
+        if (player !is RemotePlayer) return@handler
 
         val updatedSlot = event.equipmentSlot
         if (updatedSlot.type === ANIMAL_ARMOR) return@handler

@@ -34,7 +34,6 @@ import net.ccbluex.liquidbounce.event.events.ModuleActivationEvent
 import net.ccbluex.liquidbounce.event.events.ModuleToggleEvent
 import net.ccbluex.liquidbounce.event.events.NotificationEvent
 import net.ccbluex.liquidbounce.event.events.RefreshArrayListEvent
-import net.ccbluex.liquidbounce.features.module.modules.misc.antibot.ModuleAntiBot
 import net.ccbluex.liquidbounce.lang.LanguageManager
 import net.ccbluex.liquidbounce.lang.translation
 import net.ccbluex.liquidbounce.script.ScriptApiRequired
@@ -141,9 +140,6 @@ open class ClientModule(
             // Might not include the enabled state of the module depending on the category
             if (category == ModuleCategories.MISC || category == ModuleCategories.FUN ||
                 category == ModuleCategories.RENDER) {
-                if (this is ModuleAntiBot) {
-                    return@also
-                }
                 value.doNotIncludeAlways()
             }
         }.notAnOption().onChanged { newState ->

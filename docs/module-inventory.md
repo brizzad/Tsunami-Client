@@ -14,38 +14,46 @@ be argued back out.
 
 | Verdict | Modules | Share | Lines |
 | --- | ---: | ---: | ---: |
-| Keep | 33 | 14% | 4,696 |
-| Review | 12 | 5% | 1,666 |
-| Remove | 193 | 81% | 30,763 |
+| Keep | 44 | 18% | 6,199 |
+| Review | 0 | 0% | 0 |
+| Remove | 194 | 82% | 30,926 |
 
-Roughly 81% of the module surface goes. That is the fork in
+Roughly 82% of the module surface goes. That is the fork in
 one number: Tsunami is not LiquidBounce with a new coat of paint, it is the
-framework plus a different 45 modules.
+framework plus a different 44 modules.
 
 ---
 
-## Keep (33)
+## Keep (44)
 
 Each of these maps onto something the brief actually asks for, or is framework
 the client cannot run without.
 
 | Module | Category | Why | Upstream description |
 | --- | --- | --- | --- |
+| `Animations` | render | Read the source: viewmodel customisation (hand position, scale, swing length), not animation spoofing. My earlier note was wrong. | Allows you to modify many of game's animations. |
 | `AntiBlind` | render | brief: fire overlay reduction — visibility while burning (toggle) | Protects you from potentially annoying screen effects that obscure your view. |
+| `AntiExploit` | player | Defensive against malicious servers. Fits the trust positioning directly. | Prevents the server from exploiting client-side bugs. |
+| `AutoF5` | render | Zero-skill convenience. Confers no advantage. | Automatically enables F5 mode when opening the inventory or a chest. |
+| `AutoRespawn` | player | Zero-skill automation — no advantage, only saves a click. | Automatically respawns you after dying. |
 | `BetterChat` | misc | brief: chat customization | Improvements to the in-game chat. |
+| `BetterInventory` | render | Read the source: cooldown display, tooltip scale, render offsets. Visual only. | Additional inventory-related visual features. |
 | `BetterTab` | misc | brief: boss bar/scoreboard/tab list customization | Multiple improvements to the tab list. |
 | `BetterTitle` | misc | brief: titles customization | Improvements to the title and subtitle. |
 | `BlockOutline` | render | brief: block outline/overlay | Changes the way Minecraft highlights blocks. |
 | `ClickGui` | render | The module/settings GUI. Core framework — the reason LiquidBounce was chosen as the base. | — |
 | `Crosshair` | render | brief: crosshair customization | Changes the style of your crosshair. |
 | `CustomAmbience` | render | brief: weather/time changer | Allows you to override the world ambience. |
+| `DamageParticles` | render | Displays damage that already happened. Information, not automation. | Show health changes of entities. |
 | `Debug` | render | Developer tooling. Harmless and useful while building the fork. | Only of interest to developers. |
 | `FreeLook` | render | brief: freelook/perspective | Allows you to move the camera freely around your character. |
 | `FullBright` | render | brief: fullbright/gamma | Makes the world a brighter place. |
+| `GUICloser` | misc | Closes matching server GUIs. User control over their own screen; no combat bearing. | — |
 | `Hats` | render | brief: cosmetics system (hats) | Render a hat above the player's head. |
 | `HitFX` | render | brief: hit color | Hitting a target triggers a special effect. |
 | `Hud` | render | The in-game HUD framework. Everything in the HUD & Visual scope hangs off this. | Shows an in-game overlay with various useful tools. |
 | `InventoryTracker` | misc | brief: item physics/counter/tracker | Tracks the inventories of other players. |
+| `ItemScroller` | misc | Drag-to-move items in containers — the same feature as masa's well-known ItemScroller mod. | Quickly moves items in the inventory with the SHIFT and LMB pressed |
 | `ItemTags` | render | brief: item counter/tracker | Display icons and quantities labels for dropped items. |
 | `JumpEffect` | render | Cosmetic only. | Shows an effect beneath your feet when jumping. |
 | `Macros` | misc | brief: macros/keybinds | Lets you execute chat messages or item actions using custom keybinds. |
@@ -54,9 +62,12 @@ the client cannot run without.
 | `NoBob` | render | brief: motion blur toggle | Disables the view bobbing effect. |
 | `NoFov` | render | brief: FOV changer | — |
 | `NoHurtCam` | render | brief: damage tint | Disables the camera effect when getting hurt. |
+| `NoSwing` | render | Hides your own swing animation. Client-side visual preference; the module it used to mask (KillAura) is gone. | Disables the hand swing animation. |
+| `Notifier` | misc | Join/leave/gamemode/consumption chat notices. Informational. | Notifies you about all kinds of events. |
 | `Particles` | render | brief: particle toggle | Displays particles when attacking an entity. |
 | `QuickPerspectiveSwap` | render | brief: freelook/perspective | Allows you to quickly change the game's perspective. |
 | `SkinChanger` | render | brief: skin manager | Hides the player's real skin client-side (useful for videos). |
+| `SmoothCamera` | render | Camera smoothing, third-person by default. Vanilla ships the same thing as cinematic camera. | Makes your camera move smoother. |
 | `Sneak` | movement | brief: toggle sneak/sprint. Needs auditing — upstream may bundle sneak-while-moving behaviour. | Automatically makes you sneak constantly. |
 | `Sprint` | movement | brief: toggle sneak/sprint. Needs auditing — upstream may bundle omni-sprint behaviour. | Makes you sprint automatically. |
 | `TextFieldProtect` | misc | Privacy feature — keeps typed text off screen. Fits the positioning. | Hides rendered text of text field widget when it matches certain patterns. |
@@ -67,29 +78,17 @@ the client cannot run without.
 
 ---
 
-## Review (12)
+## Review (0)
 
 Plausible QoL, but either not in the brief or clean-looking with a
 cheat-adjacent edge. I did not want to silently decide these.
 
 | Module | Category | The question | Upstream description |
 | --- | --- | --- | --- |
-| `Animations` | render | Upstream uses this for animation spoofing as well as cosmetics. Salvageable only if the spoofing settings go. | Allows you to modify many of game's animations. |
-| `AntiExploit` | player | Defensive: protects against malicious servers. Fits the trust positioning if it is genuinely defensive. | Prevents the server from exploiting client-side bugs. |
-| `AutoF5` | render | Auto third-person when opening a container. Convenience, but not in the brief. | Automatically enables F5 mode when opening the inventory or a chest. |
-| `AutoRespawn` | player | Automates the respawn button. Trivially QoL, but it is still automation — same category as the excluded auto-totem. | Automatically respawns you after dying. |
-| `BetterInventory` | render | "Inventory-related visual features" — needs reading to see whether any of it is automation. | Additional inventory-related visual features. |
-| `DamageParticles` | render | Damage numbers. HUD info, but arguably a combat readability advantage. | Show health changes of entities. |
-| `GUICloser` | misc | Closes GUIs under some conditions. Could be QoL or could be an anti-detection behaviour. | — |
-| `ItemScroller` | misc | Inventory manipulation shortcuts. QoL in most clients; check it is not automated moving. | Quickly moves items in the inventory with the SHIFT and LMB pressed |
-| `MiddleClickAction` | misc | Bindable middle-click. Likely fine, overlaps with Macros. | Allows you to perform actions with middle clicks. |
-| `NoSwing` | render | Hides the swing animation client-side. Visual only, but it hides your own attacks from you. | Disables the hand swing animation. |
-| `Notifier` | misc | Client notifications. Check what it notifies about — upstream may tie it to cheat events. | Notifies you about all kinds of events. |
-| `SmoothCamera` | render | Camera smoothing. Reads as cosmetic; verify it does not smooth aim. | Makes your camera move smoother. |
 
 ---
 
-## Remove (193)
+## Remove (194)
 
 Cheats, exploits, wallhacks and automation. Whole categories go without
 argument: every module under `exploit`, `world`, `fun`, and all of
@@ -107,9 +106,9 @@ argument: every module under `exploit`, `world`, `fun`, and all of
 
 `DankBobbing`, `Derp`, `HandDerp`, `Notebot`, `SkinDerp`, `Twerk`, `Vomit`
 
-**misc** — 17 of 28
+**misc** — 18 of 28
 
-`AntiBot`, `AntiCheatDetect`, `AntiStaff`, `AutoAccount`, `AutoChatGame`, `AutoConfig`, `AutoPearl`, `BookBot`, `DebugRecorder`, `EasyPearl`, `ElytraSwap`, `FlagCheck`, `PacketLogger`, `ReportHelper`, `Spammer`, `TargetLock`, `Teams`
+`AntiBot`, `AntiCheatDetect`, `AntiStaff`, `AutoAccount`, `AutoChatGame`, `AutoConfig`, `AutoPearl`, `BookBot`, `DebugRecorder`, `EasyPearl`, `ElytraSwap`, `FlagCheck`, `MiddleClickAction`, `PacketLogger`, `ReportHelper`, `Spammer`, `TargetLock`, `Teams`
 
 **movement** — 37 of 39
 

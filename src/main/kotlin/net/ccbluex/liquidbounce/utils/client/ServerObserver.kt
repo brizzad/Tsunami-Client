@@ -27,8 +27,6 @@ import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.events.ServerConnectEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.event.waitMatchesWithTimeout
-import net.ccbluex.liquidbounce.features.module.modules.exploit.ModulePlugins
-import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleAntiCheatDetect
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIORITY
 import net.ccbluex.liquidbounce.utils.text.asPlainText
 import net.minecraft.ChatFormatting
@@ -147,7 +145,6 @@ object ServerObserver : EventListener {
      * This can be used to get a list of plugins on the server.
      *
      * @see [ServerboundCommandSuggestionPacket]
-     * @see [ModulePlugins]
      */
     suspend fun captureCommandSuggestions(timeout: Duration): Boolean {
         this.plugins = null
@@ -267,7 +264,6 @@ object ServerObserver : EventListener {
             is ClientboundPingPacket -> if (isCapturingTransactions) {
                 transactions.add(packet.id)
                 if (transactions.size >= 5) {
-                    ModuleAntiCheatDetect.completed()
                     isCapturingTransactions = false
                 }
             }

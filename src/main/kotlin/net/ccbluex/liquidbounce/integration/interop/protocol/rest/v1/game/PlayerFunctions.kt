@@ -24,8 +24,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import net.ccbluex.fastutil.mapToArray
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSwordBlock.hideShieldSlot
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSwordBlock.shouldHideOffhand
 import net.ccbluex.liquidbounce.features.module.modules.misc.nameprotect.ModuleNameProtect
 import net.ccbluex.liquidbounce.features.module.modules.misc.nameprotect.sanitizeForeignInput
 import net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.MixinHudAccessor
@@ -141,7 +139,7 @@ data class PlayerData(
             player.ping,
             player.activeEffects.toList(),
             player.mainHandItem,
-            if (player == mc.player && shouldHideOffhand() && hideShieldSlot) ItemStack.EMPTY else player.offhandItem,
+            player.offhandItem,
             player.armorItems.toList(),
             ScoreboardData.fromScoreboard(
                 player.level().scoreboard

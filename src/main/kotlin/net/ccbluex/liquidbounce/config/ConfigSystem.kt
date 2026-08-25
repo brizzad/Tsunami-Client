@@ -28,7 +28,6 @@ import net.ccbluex.liquidbounce.config.types.Config
 import net.ccbluex.liquidbounce.config.types.Value
 import net.ccbluex.liquidbounce.config.types.group.ModeValueGroup
 import net.ccbluex.liquidbounce.config.types.group.ValueGroup
-import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
 import net.ccbluex.liquidbounce.utils.client.clientLogger
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.io.createZipArchive
@@ -275,11 +274,6 @@ object ConfigSystem {
                 val valueName = valueObj["name"].asString
                 this.getOrPut(valueName) { ArrayDeque(1) }.addLast(valueObj)
             }
-        }
-
-        // Migration Code for KillAura's Range Values
-        if (valueGroup is ModuleKillAura) {
-            valueGroup.range.migrateFromValues(valuesByName)
         }
 
         for (value in valueGroup.inner) {

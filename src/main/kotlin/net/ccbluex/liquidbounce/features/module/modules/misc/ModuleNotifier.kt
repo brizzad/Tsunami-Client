@@ -29,7 +29,6 @@ import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.misc.FriendManager
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleCategories
-import net.ccbluex.liquidbounce.features.module.modules.misc.antibot.ModuleAntiBot
 import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.notification
 import net.ccbluex.liquidbounce.utils.client.regular
@@ -165,7 +164,7 @@ object ModuleNotifier : ClientModule("Notifier", ModuleCategories.MISC) {
     private val tickHandler = handler<PlayerTickEvent> {
         observedPlayers.clear()
         for (player in world.players()) {
-            if (player !is RemotePlayer || ModuleAntiBot.isBot(player)) {
+            if (player !is RemotePlayer) {
                 continue
             }
 

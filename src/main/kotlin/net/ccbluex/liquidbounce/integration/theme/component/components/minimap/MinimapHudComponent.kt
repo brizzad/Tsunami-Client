@@ -25,7 +25,6 @@ import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.misc.HideAppearance
-import net.ccbluex.liquidbounce.features.module.modules.render.esp.ModuleESP
 import net.ccbluex.liquidbounce.integration.theme.component.components.NativeHudComponent
 import net.ccbluex.liquidbounce.render.getBounds
 import net.ccbluex.liquidbounce.render.drawCustomElement
@@ -360,7 +359,7 @@ object MinimapHudComponent : NativeHudComponent("Minimap", false, Alignment(
         }
 
         for (entity in EntityValueGroup.entities) {
-            val color = ModuleESP.getColor(entity)
+            val color = Color4b.WHITE
 
             val pos = entity.interpolateCurrentPosition(tickDelta)
             val rot = entity.interpolateCurrentRotation(tickDelta)
@@ -421,7 +420,7 @@ object MinimapHudComponent : NativeHudComponent("Minimap", false, Alignment(
         val cos = rotation.fastCos()
 
         for (entity in EntityValueGroup.entities) {
-            val color = ModuleESP.getColor(entity)
+            val color = Color4b.WHITE
             val pos = entity.interpolateCurrentPosition(tickDelta)
 
             val dx = pos.x.toFloat() / 16.0F - playerPosX

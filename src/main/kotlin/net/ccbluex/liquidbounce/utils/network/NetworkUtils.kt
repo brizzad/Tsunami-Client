@@ -24,8 +24,7 @@ import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.event.TickLoopTaskExecutor
 import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.events.TransferOrigin
-import net.ccbluex.liquidbounce.features.module.modules.combat.crystalaura.SwitchMode
-import net.ccbluex.liquidbounce.features.module.modules.misc.ModulePacketLogger
+import net.ccbluex.liquidbounce.utils.inventory.SwitchMode
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.block.SwingMode
 import net.ccbluex.liquidbounce.utils.client.chat
@@ -245,7 +244,6 @@ fun sendPacketSilently(packet: Packet<*>) {
     // hack fix for the packet handler not being called on Rotation Manager for tracking
     val packetEvent = PacketEvent(TransferOrigin.OUTGOING, packet, false)
     RotationManager.packetHandler.handler.accept(packetEvent)
-    ModulePacketLogger.onPacket(TransferOrigin.OUTGOING, packet)
     mc.connection?.connection?.send(packetEvent.packet, null)
 }
 

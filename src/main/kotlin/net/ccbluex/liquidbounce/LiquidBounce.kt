@@ -37,8 +37,6 @@ import net.ccbluex.liquidbounce.api.thirdparty.IpInfoApi
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.autoconfig.AutoConfig
 import net.ccbluex.liquidbounce.config.types.Config
-import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
-import net.ccbluex.liquidbounce.deeplearn.ModelManager
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.ClientShutdownEvent
@@ -392,22 +390,6 @@ object LiquidBounce : EventListener {
             // and then starts the browser through render thread.
             BrowserBackendManager.makeDependenciesAvailable(this)
 
-            // Initialize deep learning engine as task, because we cannot know if DJL will request
-            // resources from the internet.
-            launch("Deep Learning") { task ->
-                runCatching {
-                    DeepLearningEngine.init(task)
-                    ModelManager.load()
-                    DeepLearningEngine.markInitialized()
-                }.onFailure { exception ->
-                    task.subTasks.clear()
-                    DeepLearningEngine.markUnavailable()
-
-                    // LiquidBounce can still run without deep learning,
-                    // and we don't want to crash the client if it fails.
-                    logger.info("Failed to initialize deep learning.", exception)
-                }
-            }
 
             launch("Marketplace") { task ->
                 runCatching {

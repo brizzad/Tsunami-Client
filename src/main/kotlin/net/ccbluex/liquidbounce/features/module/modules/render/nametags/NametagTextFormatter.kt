@@ -21,8 +21,6 @@ package net.ccbluex.liquidbounce.features.module.modules.render.nametags
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import net.ccbluex.liquidbounce.config.types.group.ValueGroup
 import net.ccbluex.liquidbounce.config.types.list.Tagged
-import net.ccbluex.liquidbounce.features.module.modules.misc.antibot.ModuleAntiBot
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleCombineMobs
 import net.ccbluex.liquidbounce.utils.text.asPlainText
 import net.ccbluex.liquidbounce.utils.text.joinToText
 import net.ccbluex.liquidbounce.utils.client.player
@@ -103,11 +101,8 @@ internal object NametagTextFormatter : ValueGroup("Text") {
                     displayName.copy().withColor(nameColor)
                 } ?: displayName
 
-                val count = ModuleCombineMobs.getCombinedCount(entity)
                 return when {
-                    isBaby && count > 1 -> textOf(BABY_TEXT, coloredName, " ($count)".asPlainText(COUNT_STYLE))
                     isBaby -> textOf(BABY_TEXT, coloredName)
-                    count > 1 -> textOf(coloredName, " ($count)".asPlainText(COUNT_STYLE))
                     else -> coloredName
                 }
             }
@@ -166,7 +161,7 @@ internal object NametagTextFormatter : ValueGroup("Text") {
 
 }
 
-private val Entity.isBot get() = ModuleAntiBot.isBot(this)
+private val Entity.isBot get() = false
 
 private val Entity.nameColor: TextColor?
     get() = when {

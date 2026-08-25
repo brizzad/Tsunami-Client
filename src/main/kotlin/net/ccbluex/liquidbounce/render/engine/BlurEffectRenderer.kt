@@ -24,7 +24,6 @@ import com.mojang.blaze3d.textures.FilterMode
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.features.module.MinecraftShortcuts
-import net.ccbluex.liquidbounce.features.module.modules.player.cheststealer.features.FeatureSilentScreen
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.render.ClientRenderPipelines
 import net.ccbluex.liquidbounce.render.ClientUniformDefine
@@ -70,7 +69,7 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
     }
 
     private fun hasNoFullScreen(): Boolean =
-        mc.gui.screen() == null || mc.gui.screen() is ChatScreen || FeatureSilentScreen.shouldHide
+        mc.gui.screen() == null || mc.gui.screen() is ChatScreen
 
     fun shouldDrawBlur(): Boolean = inGame && hasNoFullScreen() &&
         ModuleHud.running && ModuleHud.isBlurEffectActive

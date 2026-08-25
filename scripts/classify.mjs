@@ -43,26 +43,34 @@ const KEEP = {
   InventoryTracker: "brief: item physics/counter/tracker",
   TextFieldProtect: "Privacy feature — keeps typed text off screen. Fits the positioning.",
 
+
+  // Resolved from review. The line Nathan drew: automating a zero-skill action
+  // is QoL; automating a skill expression is a cheat. Auto-totem replaces a
+  // reaction that decides fights, so it stays excluded. Clicking respawn,
+  // opening a container in third person, or dragging items decides nothing.
+  AutoRespawn: "Zero-skill automation — no advantage, only saves a click.",
+  AutoF5: "Zero-skill convenience. Confers no advantage.",
+  Animations: "Read the source: viewmodel customisation (hand position, scale, swing length), not animation spoofing. My earlier note was wrong.",
+  BetterInventory: "Read the source: cooldown display, tooltip scale, render offsets. Visual only.",
+  DamageParticles: "Displays damage that already happened. Information, not automation.",
+  SmoothCamera: "Camera smoothing, third-person by default. Vanilla ships the same thing as cinematic camera.",
+  NoSwing: "Hides your own swing animation. Client-side visual preference; the module it used to mask (KillAura) is gone.",
+  GUICloser: "Closes matching server GUIs. User control over their own screen; no combat bearing.",
+  ItemScroller: "Drag-to-move items in containers — the same feature as masa's well-known ItemScroller mod.",
+  Notifier: "Join/leave/gamemode/consumption chat notices. Informational.",
+  AntiExploit: "Defensive against malicious servers. Fits the trust positioning directly.",
   Sprint: "brief: toggle sneak/sprint. Needs auditing — upstream may bundle omni-sprint behaviour.",
   Sneak: "brief: toggle sneak/sprint. Needs auditing — upstream may bundle sneak-while-moving behaviour.",
 };
 
 // REVIEW: plausible QoL but not clearly in the brief, or clean-looking with a
 // cheat-adjacent edge. Nathan's call, not mine.
-const REVIEW = {
-  Animations: "Upstream uses this for animation spoofing as well as cosmetics. Salvageable only if the spoofing settings go.",
-  AutoF5: "Auto third-person when opening a container. Convenience, but not in the brief.",
-  BetterInventory: "\"Inventory-related visual features\" — needs reading to see whether any of it is automation.",
-  DamageParticles: "Damage numbers. HUD info, but arguably a combat readability advantage.",
-  SmoothCamera: "Camera smoothing. Reads as cosmetic; verify it does not smooth aim.",
-  NoSwing: "Hides the swing animation client-side. Visual only, but it hides your own attacks from you.",
-  GUICloser: "Closes GUIs under some conditions. Could be QoL or could be an anti-detection behaviour.",
-  ItemScroller: "Inventory manipulation shortcuts. QoL in most clients; check it is not automated moving.",
-  MiddleClickAction: "Bindable middle-click. Likely fine, overlaps with Macros.",
-  Notifier: "Client notifications. Check what it notifies about — upstream may tie it to cheat events.",
-  AntiExploit: "Defensive: protects against malicious servers. Fits the trust positioning if it is genuinely defensive.",
-  AutoRespawn: "Automates the respawn button. Trivially QoL, but it is still automation — same category as the excluded auto-totem.",
-};
+const REVIEW = {};
+
+// REMOVED after reading the source, despite looking like plain QoL:
+//   MiddleClickAction — carries StopOnSubmit pitch ranges and a pickUpRange,
+//   i.e. rotation manipulation. A bindable middle click would be fine; aiming
+//   for the player is skill replacement.
 
 const classify = (m) =>
   KEEP[m.module] ? "KEEP" : REVIEW[m.module] ? "REVIEW" : "REMOVE";

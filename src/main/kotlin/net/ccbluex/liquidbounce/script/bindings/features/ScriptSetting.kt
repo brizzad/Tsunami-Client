@@ -26,7 +26,6 @@ import net.ccbluex.liquidbounce.config.types.list.ChoiceListValue
 import net.ccbluex.liquidbounce.config.types.list.MultiChoiceListValue
 import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.config.types.list.Tagged.Companion.asTagged
-import net.ccbluex.liquidbounce.deeplearn.ModelManager.list
 import net.ccbluex.liquidbounce.script.asArray
 import net.ccbluex.liquidbounce.script.asDoubleArray
 import net.ccbluex.liquidbounce.script.asIntArray
@@ -125,14 +124,6 @@ object ScriptSetting {
         val default = value.getMember("default").asString()
 
         return value(name, default, ValueType.TEXT)
-    }
-
-    @JvmName("textArray")
-    fun textArray(value: PolyglotValue): Value<MutableList<String>> {
-        val name = value.getMember("name").asString()
-        val default = value.getMember("default").asArray<String>()
-
-        return list(name, default.toMutableList(), ValueType.TEXT)
     }
 
     @JvmName("choose")

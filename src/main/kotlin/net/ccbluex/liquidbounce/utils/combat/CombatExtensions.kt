@@ -28,8 +28,6 @@ import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.AttackEntityEvent
 import net.ccbluex.liquidbounce.features.global.GlobalSettingsTarget
-import net.ccbluex.liquidbounce.features.module.modules.combat.criticals.ModuleCriticals
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeCam
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeLook
 import net.ccbluex.liquidbounce.utils.block.SwingMode
 import net.ccbluex.liquidbounce.utils.client.interaction
@@ -59,6 +57,7 @@ import net.minecraft.world.entity.animal.fish.WaterAnimal
 import net.minecraft.world.entity.item.ItemEntity
 import net.minecraft.world.entity.monster.Enemy
 import net.minecraft.world.entity.monster.Monster
+import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow
 import net.minecraft.world.level.GameType
@@ -118,7 +117,7 @@ private fun Set<Targets>.shouldAttack(entity: Entity): Boolean {
 private fun Set<Targets>.shouldShow(entity: Entity): Boolean {
     if (entity === player || entity.hasPassenger(player)) {
         return Targets.SELF in this &&
-            (mc.options.cameraType !== CameraType.FIRST_PERSON || ModuleFreeCam.enabled || ModuleFreeLook.enabled)
+            (mc.options.cameraType !== CameraType.FIRST_PERSON || ModuleFreeLook.enabled)
     }
 
     val info = EntityTaggingManager.getTag(entity).targetingInfo
@@ -287,7 +286,7 @@ fun attackEntity(entity: Entity, swing: SwingMode, keepSprint: Boolean = false) 
                     this.magicCrit(entity)
                 }
 
-                if (ModuleCriticals.wouldDoCriticalHit(true)) {
+                if (wouldDoCriticalHit()) {
                     world.playSound(
                         null, x, y, z, SoundEvents.PLAYER_ATTACK_CRIT,
                         soundSource, 1.0f, 1.0f
@@ -310,3 +309,20 @@ fun attackEntity(entity: Entity, swing: SwingMode, keepSprint: Boolean = false) 
         }
     }
 }
+
+/**
+ * Whether an attack right now would land as a vanilla critical hit.
+ *
+ * Lifted out of the removed ModuleCriticals, minus its Fly and LiquidWalk
+ * clauses. These are vanilla rules, not cheat logic, and [attackEntity] needs
+ * them to replicate the crit particle and sound.
+ */
+private fun Player.wouldDoCriticalHit(): Boolean =
+    fallDistance > 0.0f &&
+        !onGround() &&
+        !onClimbable() &&
+        !isInWater &&
+        !isPassenger &&
+        !abilities.flying &&
+        !hasEffect(MobEffects.BLINDNESS) &&
+        getAttackStrengthScale(0.5f) > 0.9f
