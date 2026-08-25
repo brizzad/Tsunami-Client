@@ -6,7 +6,6 @@
   "priority": 1337,
   "mixinPriority": 1337,
   "client": [
-    "authlib.MixinMinecraftClient",
     "authlib.MixinYggdrasilMinecraftSessionServiceAccessor",
     "blaze3d.MixinGLX",
     "blaze3d.MixinRenderPass",

@@ -64,14 +64,12 @@
                     <ChildButton title="Realms" icon="realms" {parentHovered}
                                  on:click={() => openScreen("multiplayer_realms")}/>
                 </MainButton>
-                <MainButton title="Tsunami" icon="liquidbounce" on:click={toggleButtons} index={2}/>
+                <MainButton title="Tsunami" icon="tsunami" on:click={toggleButtons} index={2}/>
                 <MainButton title="Options" icon="options" on:click={() => openScreen("options")} index={3}/>
             {:else if clientButtonsShown}
-                <MainButton title="Proxy Manager" icon="proxymanager" on:click={() => openScreen("proxymanager")}
-                            index={0}/>
-                <MainButton title="Click GUI" icon="clickgui" on:click={() => openScreen("clickgui")} index={1}/>
+                <MainButton title="Click GUI" icon="clickgui" on:click={() => openScreen("clickgui")} index={0}/>
                 <!-- <MainButton title="Scripts" icon="scripts" index={2}/> -->
-                <MainButton title="Back" icon="back-large" on:click={toggleButtons} index={2}/>
+                <MainButton title="Back" icon="back-large" on:click={toggleButtons} index={1}/>
             {/if}
         </div>
 

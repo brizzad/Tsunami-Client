@@ -20,7 +20,6 @@ package net.ccbluex.liquidbounce.api.thirdparty
 
 import net.ccbluex.liquidbounce.api.core.AsyncLazy
 import net.ccbluex.liquidbounce.api.core.BaseApi
-import net.ccbluex.liquidbounce.features.misc.proxy.ProxyManager
 import net.ccbluex.liquidbounce.utils.client.logger
 
 /**
@@ -30,11 +29,13 @@ import net.ccbluex.liquidbounce.utils.client.logger
 object IpInfoApi : BaseApi("https://ipinfo.io") {
 
     /**
-     * Information about the current IP address of the user. This can change depending on if the
-     * user is using a proxy through the Proxy Manager.
+     * Information about the current IP address of the user.
+     *
+     * Upstream let the Proxy Manager override this. With that feature removed
+     * nothing can change the address mid-session, so this is just [original].
      */
     val current: IpData?
-        get() = ProxyManager.currentProxy?.ipInfo ?: original
+        get() = original
 
     /**
      * Information about the current IP address of the user. This does not change during use.

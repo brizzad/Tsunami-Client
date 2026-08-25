@@ -18,16 +18,12 @@
  */
 package net.ccbluex.liquidbounce.injection.mixins.minecraft.network;
 
-import io.netty.channel.ChannelPipeline;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.PacketEvent;
-import net.ccbluex.liquidbounce.event.events.PipelineEvent;
 import net.ccbluex.liquidbounce.event.events.TransferOrigin;
-import net.minecraft.network.BandwidthDebugMonitor;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import net.minecraft.server.RunningOnDifferentThreadException;
 import org.spongepowered.asm.mixin.Mixin;
@@ -87,17 +83,6 @@ public abstract class MixinConnection {
         EventManager.INSTANCE.callEvent(event);
         if (event.isCancelled()) {
             ci.cancel();
-        }
-    }
-
-    /**
-     * Hook proxy
-     */
-    @Inject(method = "configureSerialization", at = @At("HEAD"))
-    private static void hookProxy(ChannelPipeline pipeline, PacketFlow side, boolean local, BandwidthDebugMonitor packetSizeLogger, CallbackInfo ci) {
-        if (side == PacketFlow.CLIENTBOUND) {
-            final PipelineEvent event = new PipelineEvent(pipeline, local);
-            EventManager.INSTANCE.callEvent(event);
         }
     }
 

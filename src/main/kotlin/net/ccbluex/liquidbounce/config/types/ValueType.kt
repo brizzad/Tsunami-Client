@@ -80,7 +80,6 @@ enum class ValueType(
 
     // Client Types
     FRIEND,
-    PROXY,
     ACCOUNT,
     SUBSCRIBED_ITEM,
 

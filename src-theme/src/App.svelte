@@ -11,7 +11,6 @@
     import Multiplayer from "./routes/menu/multiplayer/Multiplayer.svelte";
     import AltManager from "./routes/menu/altmanager/AltManager.svelte";
     import Singleplayer from "./routes/menu/singleplayer/Singleplayer.svelte";
-    import ProxyManager from "./routes/menu/proxymanager/ProxyManager.svelte";
     import None from "./routes/none/None.svelte";
     import Disconnected from "./routes/menu/disconnected/Disconnected.svelte";
     import Browser from "./routes/browser/Browser.svelte";
@@ -26,7 +25,6 @@
         "/multiplayer": Multiplayer,
         "/altmanager": AltManager,
         "/singleplayer": Singleplayer,
-        "/proxymanager": ProxyManager,
     };
 
     const routes = {

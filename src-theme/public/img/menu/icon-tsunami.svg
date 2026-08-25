@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  - Tsunami menu mark. Same wave as the launcher and the wordmark.
+  -
+  - Stroked rather than filled, unlike most icons here, because the curl reads
+  - as a wave at 34px only if it stays an open line.
+  -
+  - Do not write a CSS token name literally in this comment: XML forbids a
+  - double hyphen inside one, which would make the file invalid and render it
+  - as a broken image with nothing logged.
+  -->
+<svg xmlns="http://www.w3.org/2000/svg" width="34px" height="34px" viewBox="0 0 100 100"
+     role="img" aria-label="Tsunami">
+  <g fill="none" stroke="#fff" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 58C12 30 34 12 58 12c18 0 30 12 30 28 0 12-9 21-21 21-9 0-16-7-16-16"/>
+    <g opacity="0.55">
+      <path d="M6 77q11-10 22 0t22 0 22 0 22 0"/>
+      <path d="M6 91q11-10 22 0t22 0 22 0 22 0"/>
+    </g>
+  </g>
+</svg>

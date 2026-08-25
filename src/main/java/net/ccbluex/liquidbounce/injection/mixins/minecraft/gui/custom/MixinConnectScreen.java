@@ -23,7 +23,6 @@ import net.ccbluex.liquidbounce.api.thirdparty.IpInfoApi;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.ServerConnectEvent;
 import net.ccbluex.liquidbounce.features.misc.HideAppearance;
-import net.ccbluex.liquidbounce.features.misc.proxy.ProxyManager;
 import net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.MixinScreen;
 import net.ccbluex.liquidbounce.utils.text.PlainText;
 import net.ccbluex.liquidbounce.utils.text.TextList;
@@ -70,10 +69,9 @@ public abstract class MixinConnectScreen extends MixinScreen {
          * Make a text demonstration of the connection status
          * This is useful for debugging the connection trace
          *
-         * Looks like this: Client <> Proxy <> Server
+         * Looks like this: Client <> Server
          *
          * For Client, it should show the actual client IP
-         * For Proxy, it should show the proxy IP
          * For Server, it should show the server IP
          */
 
@@ -134,12 +132,7 @@ public abstract class MixinConnectScreen extends MixinScreen {
         }
         textParts.add(spacer);
 
-        var socket = PlainText.of(
-            socketAddr,
-            ProxyManager.INSTANCE.getCurrentProxy() != null
-                ? ChatFormatting.GOLD // No proxy - shows server address
-                : ChatFormatting.RED // Proxy good
-        );
+        var socket = PlainText.of(socketAddr, ChatFormatting.GOLD);
         textParts.add(socket);
         textParts.add(spacer);
 

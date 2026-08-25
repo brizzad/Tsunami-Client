@@ -89,7 +89,6 @@ import net.ccbluex.liquidbounce.event.events.OverlayMessageEvent
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.events.PerspectiveEvent
-import net.ccbluex.liquidbounce.event.events.PipelineEvent
 import net.ccbluex.liquidbounce.event.events.PlayerAfterJumpEvent
 import net.ccbluex.liquidbounce.event.events.PlayerFluidCollisionCheckEvent
 import net.ccbluex.liquidbounce.event.events.PlayerInteractItemEvent
@@ -108,7 +107,6 @@ import net.ccbluex.liquidbounce.event.events.PlayerStrideEvent
 import net.ccbluex.liquidbounce.event.events.PlayerTickEvent
 import net.ccbluex.liquidbounce.event.events.PlayerUseMultiplier
 import net.ccbluex.liquidbounce.event.events.PlayerVelocityStrafe
-import net.ccbluex.liquidbounce.event.events.ProxyCheckResultEvent
 import net.ccbluex.liquidbounce.event.events.RefreshArrayListEvent
 import net.ccbluex.liquidbounce.event.events.ResourceReloadEvent
 import net.ccbluex.liquidbounce.event.events.RotationUpdateEvent
@@ -207,7 +205,6 @@ internal val ALL_EVENT_CLASSES: Array<Class<out Event>> = arrayOf(
     PlayerStepEvent::class.java,
     PlayerStepSuccessEvent::class.java,
     FluidPushEvent::class.java,
-    PipelineEvent::class.java,
     PacketEvent::class.java,
     ClientStartEvent::class.java,
     ClientShutdownEvent::class.java,
@@ -237,7 +234,6 @@ internal val ALL_EVENT_CLASSES: Array<Class<out Event>> = arrayOf(
     GameModeChangeEvent::class.java,
     ComponentsUpdateEvent::class.java,
     ResourceReloadEvent::class.java,
-    ProxyCheckResultEvent::class.java,
     ScaleFactorChangeEvent::class.java,
     DrawOutlinesEvent::class.java,
     OverlayMessageEvent::class.java,

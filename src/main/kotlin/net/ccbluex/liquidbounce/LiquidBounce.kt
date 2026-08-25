@@ -47,7 +47,6 @@ import net.ccbluex.liquidbounce.features.command.CommandManager
 import net.ccbluex.liquidbounce.features.creativetab.tabs.HeadsCreativeModeTab
 import net.ccbluex.liquidbounce.features.global.GlobalManager
 import net.ccbluex.liquidbounce.features.misc.FriendManager
-import net.ccbluex.liquidbounce.features.misc.proxy.ProxyManager
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.spoofer.SpooferManager
 import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
@@ -264,7 +263,6 @@ object LiquidBounce : EventListener {
         // Feature managers
         ModuleManager
         CommandManager
-        ProxyManager
         AccountManager
 
         // Utility managers
@@ -331,9 +329,9 @@ object LiquidBounce : EventListener {
             // Upstream eagerly resolved IpInfoApi here, which sent a request to
             // ipinfo.io on every start and returned the user's public IP, city,
             // region and ISP before anything asked for it. The value is AsyncLazy,
-            // so simply not touching it at startup makes the lookup happen only if
-            // a feature actually reads it — and the proxy features that do are
-            // themselves out of scope for Tsunami.
+            // so simply not touching it at startup makes the lookup happen only
+            // when a feature actually reads it, which now means the theme's
+            // session panel and the server hosting lookup.
         }
 
         logger.info("API initialization done.")
