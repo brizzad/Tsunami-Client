@@ -13,24 +13,44 @@ looking at the screen.
 ## Static — run this on every change
 
 ```sh
-node scripts/audit-mixins.mjs
+node scripts/audit.mjs
 ```
 
-Diffs every `.java` and `.kt` file against upstream and reports any **removed
-line that names a module we kept**. Exits non-zero on anything unreviewed, so
-it can gate CI.
+The single entry point, and the same file in both repos. Its checks enable
+themselves based on what the repo contains, so the launcher runs two of them and
+the client runs all three:
 
-Correct trims — dropping one condition from an expression shared with a removed
-module — legitimately delete a line naming a kept module. Those live in
-`scripts/audit-baseline.txt`. After reviewing a new finding and confirming the
-module still works:
+| check          | catches                                              |
+| -------------- | ---------------------------------------------------- |
+| `phone-home`   | a CCBlueX host left in code                          |
+| `svg-xml`      | markup that will not parse, mainly `--` in a comment |
+| `kept-modules` | the strip deleting code a kept module needed         |
+
+Each one exists because that mistake was actually made and shipped, and in each
+case the build was green and the app started fine. `kept-modules` delegates to
+`audit-mixins.mjs`, which diffs every `.java` and `.kt` file against upstream and
+reports any **removed line naming a module we kept**; set `TSUNAMI_UPSTREAM` to
+compare against a different commit (defaults to the fork point).
+
+Exits non-zero on anything unreviewed, so it can gate CI.
+
+Two kinds of finding are expected rather than wrong: a correct trim that drops
+one condition from an expression shared with a removed module, and a CCBlueX URL
+that is an outbound **link a user clicks** rather than an automatic call — those
+are pending real Tsunami destinations. Review a finding, confirm the module still
+works or that the URL really is just a link, then accept it:
 
 ```sh
-node scripts/audit-mixins.mjs --baseline
+node scripts/audit.mjs --baseline
 ```
 
-Set `TSUNAMI_UPSTREAM` to compare against a different upstream commit (defaults
-to the fork point).
+Accepted findings live in `scripts/audit-baseline-shared.txt` and
+`scripts/audit-baseline.txt`. Anything not listed there fails the audit.
+
+Do not trust a `Clean.` you have not tested. Both checks once passed against a
+fault they should have caught, because the line the test tried to corrupt was
+wrapped differently than assumed and the edit silently did nothing. Break
+something on purpose, confirm the audit fails, then put it back.
 
 ## Runtime — needs the client running
 

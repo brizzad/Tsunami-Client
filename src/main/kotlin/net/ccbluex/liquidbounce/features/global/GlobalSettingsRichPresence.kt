@@ -52,11 +52,24 @@ import java.util.concurrent.Executors
  */
 object GlobalSettingsRichPresence : ToggleableValueGroup(
     name = "RichPresence",
-    enabled = true,
+    // Off until Tsunami has a Discord application of its own; see [IPC_APP_ID].
+    enabled = false,
     aliases = listOf("DiscordPresence")
 ) {
 
-    private const val IPC_APP_ID = 443472046031110144L
+    /**
+     * Pending. Tsunami has no Discord application yet, so there is no id to put
+     * here, and 0 means "not configured" - [connectIpc] checks it before trying.
+     *
+     * It is deliberately not CCBlueX's id (443472046031110144). Rich presence
+     * was enabled by default upstream, so keeping their id would have broadcast
+     * their application name, icon and image assets from our client to every
+     * Discord friend of every user, automatically and with no user action.
+     *
+     * Once a Tsunami application exists: put its id here, restore [buttons],
+     * and set enabled = true above.
+     */
+    private const val IPC_APP_ID = 0L
 
     private val activityType by enumChoice("ActivityType", PresenceActivityType.COMPETING)
     private val statusDisplayType by enumChoice("StatusDisplayType", PresenceStatusDisplayType.NAME)
@@ -102,10 +115,12 @@ object GlobalSettingsRichPresence : ToggleableValueGroup(
     private val largeImage = tree(LargeImageConfig)
     private val smallImage = tree(SmallImageConfig)
 
-    private val buttons = listOf(
-        DiscordActivity.Button("Website", "https://liquidbounce.net"),
-        DiscordActivity.Button("LiquidProxy", "https://liquidproxy.net"),
-    )
+    /**
+     * Empty pending real Tsunami destinations. These render as clickable
+     * buttons on the presence card other people see, so pointing them at
+     * CCBlueX would advertise them from our client. See [IPC_APP_ID].
+     */
+    private val buttons = emptyList<DiscordActivity.Button>()
 
     // IPC Client
     private var ipcClient: DiscordIpcClient? = null
@@ -125,6 +140,12 @@ object GlobalSettingsRichPresence : ToggleableValueGroup(
     }
 
     private fun connectIpc() {
+        if (IPC_APP_ID == 0L) {
+            // Not configured; see [IPC_APP_ID]. Connecting with an invalid id
+            // only fails, so do not try, and do not nag about Discord for it.
+            return
+        }
+
         if (doNotTryToConnect || ipcClient?.state == DiscordIpcClient.State.CONNECTED) {
             return
         }
