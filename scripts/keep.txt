@@ -37,10 +37,12 @@ Nametags
 NoBob
 NoFov
 NoHurtCam
+NoServerResourcePack
 NoSwing
 Notifier
 Particles
 QuickPerspectiveSwap
+ServerIntegration
 ShieldStatus
 ShinyPots
 SkinChanger

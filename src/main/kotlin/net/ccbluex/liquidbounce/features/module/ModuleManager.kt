@@ -39,6 +39,8 @@ import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleItemScroller
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleMacros
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleDurabilityGuard
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleStopwatch
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleNoServerResourcePack
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleServerIntegration
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleNotifier
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleTextFieldProtect
 import net.ccbluex.liquidbounce.features.module.modules.misc.betterchat.ModuleBetterChat
@@ -324,6 +326,8 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleFoodInfo,
             ModuleDurabilityGuard,
             ModuleStopwatch,
+            ModuleNoServerResourcePack,
+            ModuleServerIntegration,
             ModuleBetterHitreg,
             ModuleShieldStatus,
             ModuleNametags,
