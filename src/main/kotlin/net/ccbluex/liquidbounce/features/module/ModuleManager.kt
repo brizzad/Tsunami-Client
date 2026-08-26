@@ -59,15 +59,11 @@ import net.ccbluex.liquidbounce.features.module.modules.render.customambience.Mo
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageParticles
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeLook
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitboxes
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleMlgHelper
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageTint
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChunkBorders
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBlockInfo
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleWaypoints
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShinyPots
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFoodInfo
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFullBright
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleItemTags
@@ -315,19 +311,15 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleItemTags,
             ModuleJumpEffect,
             ModuleHitFX,
-            ModuleHitboxes,
             ModuleMlgHelper,
             ModuleDamageTint,
             ModuleChunkBorders,
-            ModuleBlockInfo,
             ModuleWaypoints,
             ModuleShinyPots,
-            ModuleFoodInfo,
             ModuleDurabilityGuard,
             ModuleStopwatch,
             ModuleNoServerResourcePack,
             ModuleServerIntegration,
-            ModuleBetterHitreg,
             ModuleNametags,
             ModuleAutoF5,
             ModuleNoBob,

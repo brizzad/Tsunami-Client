@@ -25,7 +25,7 @@ Status meanings:
 | Armor status | present | HUD component |
 | Potion status | present | Effects HUD, with duration and amplifier |
 | Reach display | done | measured to the hitbox, not the entity origin |
-| Hitboxes | done | box edges 10.88 / 8.78 against 3.56 control |
+| Hitboxes | done | bundled: Combat Hitboxes `1.0.11` |
 | Hit color | present | `HitFX` |
 | Damage tint | done | edges 21.11 / 21.17, centre 0.000 |
 | Crosshair | present | `Crosshair` |
@@ -37,7 +37,7 @@ Status meanings:
 | Speedometer | done | walking mean 4.06 b/s against vanilla's 4.317 |
 | Shield status | done | bundled: Walksy's Shield Statuses `4.1.8+26.2` |
 | Potion timers | present | Effects HUD already shows both |
-| Better Hitreg | done | rendering only; see caveat below |
+| Better Hitreg | done | bundled: jasspir's Better Hitreg `1.0.7+26.2`, off by default |
 | ~~Auto-totem~~ | excluded | automates a reaction that decides fights |
 
 **Shield status is the upstream mod, not ours.** A first attempt drew a bar
@@ -47,10 +47,13 @@ down, so the state is where your eyes already are. That mod is MIT, mature and
 has millions of installs, so the version worth shipping was always the real
 one. The home-made module was deleted rather than left beside it.
 
-**Better Hitreg caveat.** Its effect only exists under network latency, and
-singleplayer has none, so there was nothing to measure. Verified structurally:
-it never cancels or rewrites the attack, and touches no packet. The benefit is
-unverified.
+**Five modules were written and then deleted for existing mods.** Shield
+Statuses, AppleSkin, Jade, Better Hitreg and Combat Hitboxes all do their job
+better than what was built here, and two of them were named in the request
+before a line was written. The habit that caused it is worth naming: reaching
+for "build it" when the question was "does this already exist". The audit that
+caught it is in the Modrinth column of every row above - if a row says
+"bundled", the answer was that it existed.
 
 ## Performance — 9/11
 
@@ -91,7 +94,7 @@ element renders under Vulkan cannot be done while it cannot be installed.
 | Smooth zoom | present | `Zoom` |
 | Item counter | done | `{session.held.count}` / `.total`, checked against 42 cobblestone |
 | Item tracker | present | `InventoryTracker` |
-| WAILA | done | `BlockInfo`; named deepslate diamond ore correctly |
+| WAILA | done | bundled: Jade `26.2.11+fabric` |
 | Shiny pots | done | potion slots 6.159, empty slots 0.000 |
 | Weather / time changer | present | `CustomAmbience`, visual only |
 | TNT countdown | present | `TNTTimer` |
@@ -100,7 +103,7 @@ element renders under Vulkan cannot be done while it cannot be installed.
 | Stopwatch | done | 0 → 3 → 6, then held at 6 when stopped |
 | Durability warning | done | combo 4 → 0.00, sword durability frozen |
 | Fire overlay reduction | present | `AntiBlind` → `FireOpacity` |
-| AppleSkin food HUD | done | saturation strip 3.874 against 0.614 control |
+| AppleSkin food HUD | done | bundled: AppleSkin `3.0.10+mc26.2` |
 | Minimap | present | **not** ported from Xaero's; see below |
 | **Motion blur** | **deferred** | needs a post-processing shader pipeline the client does not have |
 | **Item physics** | **deferred** | entity renderer surgery, the category that silently broke four modules |

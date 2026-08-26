@@ -4,11 +4,9 @@ AntiExploit
 AutoF5
 AutoRespawn
 BetterChat
-BetterHitreg
 BetterInventory
 BetterTab
 BetterTitle
-BlockInfo
 BlockOutline
 ChunkBorders
 ClickGui
@@ -18,13 +16,11 @@ DamageParticles
 DamageTint
 Debug
 DurabilityGuard
-FoodInfo
 FreeLook
 FullBright
 GUICloser
 Hats
 HitFX
-Hitboxes
 Hud
 InventoryTracker
 ItemScroller
