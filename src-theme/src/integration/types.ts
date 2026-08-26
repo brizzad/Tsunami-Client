@@ -365,6 +365,8 @@ export interface SessionStats {
     ping: number;
     memory: { used: number; max: number; percent: number };
     uptime: number;
+    stopwatch: number;
+    held: { count: number; total: number };
     day: number;
     direction: { cardinal: string; axis: string };
     server: { address: string; players: number };

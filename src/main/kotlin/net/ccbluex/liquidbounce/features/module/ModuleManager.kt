@@ -38,6 +38,7 @@ import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleInventoryTrac
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleItemScroller
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleMacros
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleDurabilityGuard
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleStopwatch
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleNotifier
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleTextFieldProtect
 import net.ccbluex.liquidbounce.features.module.modules.misc.betterchat.ModuleBetterChat
@@ -59,6 +60,7 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeLook
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitboxes
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleMlgHelper
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageTint
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChunkBorders
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFoodInfo
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShieldStatus
@@ -312,8 +314,10 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleHitboxes,
             ModuleMlgHelper,
             ModuleDamageTint,
+            ModuleChunkBorders,
             ModuleFoodInfo,
             ModuleDurabilityGuard,
+            ModuleStopwatch,
             ModuleBetterHitreg,
             ModuleShieldStatus,
             ModuleNametags,

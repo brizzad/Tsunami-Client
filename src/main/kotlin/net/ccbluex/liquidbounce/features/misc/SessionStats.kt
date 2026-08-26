@@ -80,6 +80,35 @@ object SessionStats : EventListener {
     var reach = 0.0
         private set
 
+    /**
+     * Stopwatch, started and stopped by ModuleStopwatch rather than by a
+     * command, so the HUD toggle and the timer are the same switch.
+     */
+    private var stopwatchStartedAt: Long? = null
+    private var stopwatchAccumulated = 0L
+
+    fun startStopwatch() {
+        if (stopwatchStartedAt == null) {
+            stopwatchStartedAt = System.currentTimeMillis()
+        }
+    }
+
+    fun stopStopwatch() {
+        stopwatchStartedAt?.let { stopwatchAccumulated += System.currentTimeMillis() - it }
+        stopwatchStartedAt = null
+    }
+
+    fun resetStopwatch() {
+        stopwatchAccumulated = 0L
+        stopwatchStartedAt = if (stopwatchStartedAt != null) System.currentTimeMillis() else null
+    }
+
+    private val stopwatchSeconds: Long
+        get() {
+            val running = stopwatchStartedAt?.let { System.currentTimeMillis() - it } ?: 0L
+            return (stopwatchAccumulated + running) / 1000
+        }
+
     private var fps = 0
     private var lastPos: Triple<Double, Double, Double>? = null
     private var speed = 0.0
@@ -184,6 +213,16 @@ object SessionStats : EventListener {
                 percent = (used.toDouble() / runtime.maxMemory() * 100.0).roundToInt()
             ),
             uptime = (System.currentTimeMillis() - startedAt) / 1000,
+            stopwatch = stopwatchSeconds,
+            held = HeldItemData(
+                count = player?.mainHandItem?.count ?: 0,
+                total = player?.let { p ->
+                    val held = p.mainHandItem
+                    if (held.isEmpty) 0 else p.inventory.nonEquipmentItems
+                        .filter { it.item == held.item }
+                        .sumOf { it.count }
+                } ?: 0
+            ),
             // Overworld clock rather than the local one, so the day counter keeps
             // counting while in the Nether or the End.
             day = (player?.level()?.overworldClockTime ?: 0L) / 24000L,
@@ -213,6 +252,12 @@ object SessionStats : EventListener {
 }
 
 data class CpsData(val left: Int, val right: Int)
+
+/**
+ * How much of the held item is in hand and how much of it is carried in total,
+ * which is the number that matters when you are part way through a wall.
+ */
+data class HeldItemData(val count: Int, val total: Int)
 
 data class MemoryData(val used: Long, val max: Long, val percent: Int)
 
@@ -244,6 +289,8 @@ data class SessionStatsData(
     val ping: Int,
     val memory: MemoryData,
     val uptime: Long,
+    val stopwatch: Long,
+    val held: HeldItemData,
     val day: Long,
     val direction: DirectionData,
     val server: ServerData,

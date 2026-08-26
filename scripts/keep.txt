@@ -9,6 +9,7 @@ BetterInventory
 BetterTab
 BetterTitle
 BlockOutline
+ChunkBorders
 ClickGui
 Crosshair
 CustomAmbience
@@ -44,6 +45,7 @@ SkinChanger
 SmoothCamera
 Sneak
 Sprint
+Stopwatch
 TNTTimer
 TextFieldProtect
 TotemEffect
