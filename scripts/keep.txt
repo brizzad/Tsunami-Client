@@ -50,5 +50,6 @@ Stopwatch
 TNTTimer
 TextFieldProtect
 TotemEffect
+Waypoints
 Wings
 Zoom
