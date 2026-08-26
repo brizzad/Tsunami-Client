@@ -24,7 +24,14 @@ Swapping a totem into your off-hand at the right moment is a real skill that
 separates players, so it does not.
 
 Feature requests for combat or movement automation are out of scope, and so are
-reach, timing, and anything that reports false information to a server.
+reach, timing, and anything that misrepresents your play to gain an advantage.
+
+The word "advantage" is doing real work there. NoServerResourcePack can tell a
+server that a resource pack loaded when it did not, which is untrue - but what
+it protects is which textures and sounds run on your own machine, and it wins
+you nothing in play. That mode is opt-in rather than default for exactly that
+reason. Anything that misreports your position, timing, reach or actions is a
+different thing entirely, and stays out.
 
 ## Why the mod id is still `liquidbounce`
 
