@@ -12,6 +12,7 @@ ClickGui
 Crosshair
 CustomAmbience
 DamageParticles
+DamageTint
 Debug
 FreeLook
 FullBright
@@ -34,6 +35,7 @@ NoSwing
 Notifier
 Particles
 QuickPerspectiveSwap
+ShieldStatus
 SkinChanger
 SmoothCamera
 Sneak
