@@ -18,7 +18,9 @@
  */
 package net.ccbluex.liquidbounce.injection.mixins.minecraft.item;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.ccbluex.liquidbounce.event.EventManager;
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShinyPots;
 import net.ccbluex.liquidbounce.event.events.ItemLoreQueryEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -48,6 +50,20 @@ public abstract class MixinItemStack {
         ItemLoreQueryEvent event = new ItemLoreQueryEvent(ItemStack.class.cast(this), (ArrayList<Component>) lore);
         EventManager.INSTANCE.callEvent(event);
         cir.setReturnValue(event.getLore());
+    }
+
+
+    /**
+     * ShinyPots draws the enchantment shimmer on potions so a bottle is
+     * findable in a hotbar of identically shaped bottles.
+     *
+     * Kept in its own method rather than folded into an existing injection:
+     * a method serving two features is how four modules were silently broken
+     * during the strip, when the one that was removed took the other with it.
+     */
+    @ModifyReturnValue(method = "hasFoil", at = @At("RETURN"))
+    private boolean tsunami$shinyPots(boolean original) {
+        return original || ModuleShinyPots.INSTANCE.shouldShine((ItemStack) (Object) this);
     }
 
 }

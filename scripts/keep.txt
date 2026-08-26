@@ -42,6 +42,7 @@ Notifier
 Particles
 QuickPerspectiveSwap
 ShieldStatus
+ShinyPots
 SkinChanger
 SmoothCamera
 Sneak

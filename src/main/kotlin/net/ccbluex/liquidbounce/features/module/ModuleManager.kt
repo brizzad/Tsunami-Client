@@ -63,6 +63,7 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageTint
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChunkBorders
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBlockInfo
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleWaypoints
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShinyPots
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFoodInfo
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShieldStatus
@@ -319,6 +320,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleChunkBorders,
             ModuleBlockInfo,
             ModuleWaypoints,
+            ModuleShinyPots,
             ModuleFoodInfo,
             ModuleDurabilityGuard,
             ModuleStopwatch,
