@@ -9,4 +9,4 @@ phone-home	src/main/java/net/ccbluex/liquidbounce/LiquidInstruction.java	83: cas
 phone-home	src/main/java/net/ccbluex/liquidbounce/LiquidInstruction.java	84: case 1 -> browse(URI.create("https://liquidbounce.net/download"));
 phone-home	src/main/java/net/ccbluex/liquidbounce/LiquidInstruction.java	85: case 2 -> browse(URI.create("https://github.com/CCBlueX/LiquidBounce"));
 phone-home	src/main/java/net/ccbluex/liquidbounce/LiquidInstruction.java	86: case 3 -> browse(URI.create("https://liquidbounce.net/discord"));
-phone-home	src/main/kotlin/net/ccbluex/liquidbounce/features/command/commands/client/CommandConfig.kt	70: private const val CONFIGS_URL = "https://github.com/CCBlueX/LiquidCloud/tree/main/LiquidBounce/setti
+phone-home	src/main/kotlin/net/ccbluex/liquidbounce/features/command/commands/client/CommandConfig.kt	72: private const val CONFIGS_URL = "https://github.com/CCBlueX/LiquidCloud/tree/main/LiquidBounce/setti

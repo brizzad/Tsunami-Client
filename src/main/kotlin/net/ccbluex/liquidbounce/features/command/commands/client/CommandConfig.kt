@@ -18,6 +18,8 @@
  */
 package net.ccbluex.liquidbounce.features.command.commands.client
 
+import net.ccbluex.liquidbounce.config.ConfigSystem
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
@@ -77,6 +79,9 @@ object CommandConfig : Command.Factory {
             .subcommand(listSubcommand())
             .subcommand(browseSubcommand())
             .subcommand(reloadSubcommand())
+            .subcommand(exportSubcommand())
+            .subcommand(importSubcommand())
+            .subcommand(profilesSubcommand())
             .build()
     }
 
@@ -204,6 +209,65 @@ object CommandConfig : Command.Factory {
             }.onFailure { exception ->
                 chat(markAsError(command.result("failedToLoad", variable(name))))
                 logger.error("Failed to load config $name", exception)
+            }
+        }
+        .build()
+
+
+    /**
+     * Profiles live in a `profiles` folder beside the rest of the config, as
+     * plain JSON. A profile is a file you can send someone; there is no
+     * account, no upload and no service in the middle, which is the only way
+     * sharing can work while Tsunami has no backend.
+     */
+    private val profileFolder: File
+        get() = File(ConfigSystem.rootFolder, "profiles").apply { mkdirs() }
+
+    private fun exportSubcommand() = CommandBuilder
+        .begin("export")
+        .parameter(ParameterBuilder.begin<String>("name").required().build())
+        .handler {
+            val name = (args[0] as String).replace(Regex("[^A-Za-z0-9._-]"), "_")
+            val file = File(profileFolder, "$name.json")
+
+            file.bufferedWriter().use { writer ->
+                AutoConfig.serializeAutoConfig(writer)
+            }
+
+            chat("Exported profile to profiles/${file.name}")
+        }
+        .build()
+
+    private fun importSubcommand() = CommandBuilder
+        .begin("import")
+        .parameter(ParameterBuilder.begin<String>("name").required().build())
+        .handler {
+            val name = (args[0] as String).removeSuffix(".json")
+            val file = File(profileFolder, "$name.json")
+
+            if (!file.exists()) {
+                chat("No profile called '$name' in profiles/")
+                return@handler
+            }
+
+            file.bufferedReader().use { reader ->
+                AutoConfig.loadAutoConfig(reader)
+            }
+        }
+        .build()
+
+    private fun profilesSubcommand() = CommandBuilder
+        .begin("profiles")
+        .handler {
+            val files = profileFolder.listFiles { f -> f.extension == "json" }?.sortedBy { it.name }
+
+            if (files.isNullOrEmpty()) {
+                chat("No profiles saved. Use .config export <name>")
+                return@handler
+            }
+
+            for (file in files) {
+                chat("${file.nameWithoutExtension} (${file.length() / 1024} KB)")
             }
         }
         .build()
