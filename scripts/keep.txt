@@ -4,6 +4,7 @@ AntiExploit
 AutoF5
 AutoRespawn
 BetterChat
+BetterHitreg
 BetterInventory
 BetterTab
 BetterTitle
@@ -26,6 +27,7 @@ ItemScroller
 ItemTags
 JumpEffect
 Macros
+MlgHelper
 NameProtect
 Nametags
 NoBob

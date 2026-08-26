@@ -56,7 +56,9 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageParti
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeLook
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitboxes
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleMlgHelper
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageTint
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShieldStatus
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFullBright
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
@@ -306,7 +308,9 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleJumpEffect,
             ModuleHitFX,
             ModuleHitboxes,
+            ModuleMlgHelper,
             ModuleDamageTint,
+            ModuleBetterHitreg,
             ModuleShieldStatus,
             ModuleNametags,
             ModuleAutoF5,
