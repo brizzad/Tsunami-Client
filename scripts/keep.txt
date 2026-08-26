@@ -8,6 +8,7 @@ BetterHitreg
 BetterInventory
 BetterTab
 BetterTitle
+BlockInfo
 BlockOutline
 ChunkBorders
 ClickGui
