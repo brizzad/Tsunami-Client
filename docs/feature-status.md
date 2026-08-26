@@ -35,10 +35,17 @@ Status meanings:
 | MLG cobweb helper | done | `MlgHelper`; marks the landing, places nothing |
 | Freelook | present | `FreeLook` |
 | Speedometer | done | walking mean 4.06 b/s against vanilla's 4.317 |
-| Shield status | done | bar 14.20, control 0.000 |
+| Shield status | done | bundled: Walksy's Shield Statuses `4.1.8+26.2` |
 | Potion timers | present | Effects HUD already shows both |
 | Better Hitreg | done | rendering only; see caveat below |
 | ~~Auto-totem~~ | excluded | automates a reaction that decides fights |
+
+**Shield status is the upstream mod, not ours.** A first attempt drew a bar
+above the hotbar, which is not what the feature means: Shield Statuses tints
+the shield itself, orange while disabled and fading back as the cooldown runs
+down, so the state is where your eyes already are. That mod is MIT, mature and
+has millions of installs, so the version worth shipping was always the real
+one. The home-made module was deleted rather than left beside it.
 
 **Better Hitreg caveat.** Its effect only exists under network latency, and
 singleplayer has none, so there was nothing to measure. Verified structurally:

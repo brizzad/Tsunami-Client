@@ -43,7 +43,6 @@ Notifier
 Particles
 QuickPerspectiveSwap
 ServerIntegration
-ShieldStatus
 ShinyPots
 SkinChanger
 SmoothCamera

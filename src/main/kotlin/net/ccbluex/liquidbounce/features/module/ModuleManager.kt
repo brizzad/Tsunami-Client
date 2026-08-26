@@ -68,7 +68,6 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleWaypoints
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShinyPots
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFoodInfo
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShieldStatus
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFullBright
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleItemTags
@@ -329,7 +328,6 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleNoServerResourcePack,
             ModuleServerIntegration,
             ModuleBetterHitreg,
-            ModuleShieldStatus,
             ModuleNametags,
             ModuleAutoF5,
             ModuleNoBob,
