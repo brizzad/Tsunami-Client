@@ -159,6 +159,30 @@ public enum VfpCompatibility {
         }
     }
 
+    /** Item cooldowns arrived in 1.9; below it nothing is ever on cooldown. */
+    public boolean isOlderThan1_9() {
+        try {
+            var version = ViaFabricPlus.getImpl().getTargetVersion();
+
+            return version.olderThan(ProtocolVersion.v1_9);
+        } catch (Throwable throwable) {
+            LiquidBounce.INSTANCE.getLogger().error("Failed to check if 1.9", throwable);
+            return false;
+        }
+    }
+
+    /** Totems of Undying arrived in 1.11. */
+    public boolean isOlderThan1_11() {
+        try {
+            var version = ViaFabricPlus.getImpl().getTargetVersion();
+
+            return version.olderThan(ProtocolVersion.v1_11);
+        } catch (Throwable throwable) {
+            LiquidBounce.INSTANCE.getLogger().error("Failed to check if 1.11", throwable);
+            return false;
+        }
+    }
+
     public boolean isOlderThan1_21_2() {
         try {
             var version = ViaFabricPlus.getImpl().getTargetVersion();

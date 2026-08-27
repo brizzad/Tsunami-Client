@@ -298,6 +298,40 @@ public abstract class MixinMinecraft {
         }
     }
 
+    /**
+     * Delay remover, as shipped by every 1.8.9 PvP client (Lunar, Badlion) and allowed on the
+     * servers those clients target.
+     *
+     * Vanilla punishes a missed swing with a 10 tick lockout: {@code startAttack} refuses to
+     * run at all while {@code missTime > 0}, so the half second after a whiff silently eats
+     * every click. 1.8.9 clients zero that counter so the next click lands, and players coming
+     * from them read its absence as the client dropping inputs.
+     *
+     * Only the writes that *charge* the penalty are suppressed. The two in {@code tick} are
+     * left alone on purpose - one of them is the {@code --missTime} countdown, and cancelling
+     * that would freeze a non-zero timer forever instead of removing it.
+     *
+     * Deliberately not a module and not toggleable: it is baseline behaviour for the clients
+     * this one is meant to replace. Note it applies on every protocol, not just 1.8 - scope it
+     * with `isOlderThanOrEqual1_8` if that is ever not wanted.
+     */
+    @WrapWithCondition(method = "startAttack", at = @At(value = "FIELD",
+        target = "Lnet/minecraft/client/Minecraft;missTime:I", opcode = Opcodes.PUTFIELD))
+    private boolean removeAttackMissPenalty(Minecraft instance, int value) {
+        return false;
+    }
+
+    /**
+     * The same penalty, charged again while the attack key is held down.
+     *
+     * @see #removeAttackMissPenalty
+     */
+    @WrapWithCondition(method = "continueAttack", at = @At(value = "FIELD",
+        target = "Lnet/minecraft/client/Minecraft;missTime:I", opcode = Opcodes.PUTFIELD))
+    private boolean removeContinuedAttackMissPenalty(Minecraft instance, int value) {
+        return false;
+    }
+
     @Inject(method = "updateLevelInEngines(Lnet/minecraft/client/multiplayer/ClientLevel;Z)V", at = @At("HEAD"))
     private void hookWorldChangeEvent(ClientLevel world, boolean bl, CallbackInfo ci) {
         EventManager.INSTANCE.callEvent(new WorldChangeEvent(world));

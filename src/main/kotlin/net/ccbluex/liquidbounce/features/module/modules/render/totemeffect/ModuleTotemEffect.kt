@@ -19,6 +19,7 @@
 
 package net.ccbluex.liquidbounce.features.module.modules.render.totemeffect
 
+import net.ccbluex.liquidbounce.utils.client.isOlderThan1_11
 import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.ClientModule
@@ -32,6 +33,12 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec3
 
 object ModuleTotemEffect : ClientModule("TotemEffect", ModuleCategories.RENDER) {
+
+    /**
+     * The Totem of Undying is a 1.11 item. Below that there is no pop to draw an effect for.
+     */
+    override val inapplicableOnProtocol: String?
+        get() = if (isOlderThan1_11) "Totems of Undying do not exist below 1.11" else null
 
     val entities = ExpiringList<TotemPopSnapshot>()
 

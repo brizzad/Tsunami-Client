@@ -85,8 +85,26 @@ open class ClientModule(
      *
      * Note: This overwrites [ToggleableValueGroup] declaration of [running].
      */
+    /**
+     * Why this module does nothing on the protocol currently negotiated, or `null` when it
+     * applies. The string is shown to the player, so it should say what is missing rather
+     * than name a version: "Totems of Undying do not exist below 1.11" beats "requires 1.11".
+     *
+     * ViaFabricPlus lets this client play anything back to 1.8, and a good part of what the
+     * client draws simply has nothing to describe there - an item-cooldown readout on 1.8 is
+     * an empty box, because nothing on 1.8 has a cooldown. Gating them here keeps the module
+     * list honest instead of leaving the player to work out which entries are inert.
+     *
+     * This gates [running] only. It deliberately does not touch [enabled] or [hidden]: those
+     * are the player's, they persist, and a module silently switching itself off on one
+     * server and staying off on the next is worse than one that pauses.
+     */
+    open val inapplicableOnProtocol: String?
+        get() = null
+
     override val running: Boolean
-        get() = super<EventListener>.running && inGame && (enabled || notActivatable)
+        get() = super<EventListener>.running && inGame && (enabled || notActivatable) &&
+            inapplicableOnProtocol == null
 
     internal val bindValue = bind("Bind", InputBind(InputConstants.Type.KEYSYM, bind, bindAction))
         .doNotIncludeWhen { !AutoConfig.includeConfiguration.includeBinds }
@@ -175,6 +193,14 @@ open class ClientModule(
                 translation("liquidbounce.generic.disabled") to NotificationEvent.Severity.DISABLED
             }
             notification(title, this.name, severity)
+        }
+
+        // Say so at the moment of switching it on. A module that is enabled and inert looks
+        // exactly like a module that is broken.
+        if (state && !loadingNow) {
+            inapplicableOnProtocol?.let { reason ->
+                notification(this.name, reason, NotificationEvent.Severity.ERROR)
+            }
         }
 
         EventManager.callEvent(ModuleToggleEvent(name, hidden, state))

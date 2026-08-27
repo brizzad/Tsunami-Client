@@ -94,6 +94,25 @@ val isOlderThanOrEqual1_8: Boolean
         logger.error("Failed to check if the server is using old combat", it)
     }.getOrDefault(false)
 
+/**
+ * Item cooldowns did not exist before 1.9, so anything that reads or draws them has
+ * nothing to show on an older server.
+ */
+val isOlderThan1_9: Boolean
+    get() = runCatching {
+        usesViaFabricPlus && VfpCompatibility.INSTANCE.isOlderThan1_9
+    }.onFailure {
+        logger.error("Failed to check if the server is older than 1.9", it)
+    }.getOrDefault(false)
+
+/** Totems of Undying did not exist before 1.11. */
+val isOlderThan1_11: Boolean
+    get() = runCatching {
+        usesViaFabricPlus && VfpCompatibility.INSTANCE.isOlderThan1_11
+    }.onFailure {
+        logger.error("Failed to check if the server is older than 1.11", it)
+    }.getOrDefault(false)
+
 val isOlderThanOrEquals1_7_10: Boolean
     get() = runCatching {
         // Check if the ViaFabricPlus mod is loaded - prevents from causing too many exceptions
