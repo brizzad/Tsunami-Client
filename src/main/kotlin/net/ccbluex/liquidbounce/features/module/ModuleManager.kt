@@ -61,6 +61,12 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeLook
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleMlgHelper
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageTint
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleBundledMods
+import net.ccbluex.liquidbounce.features.module.modules.render.ModulePotionTimers
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleCooldowns
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleArmorHud
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitboxes
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChunkBorders
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleWaypoints
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShinyPots
@@ -68,6 +74,7 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFullBright
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleItemTags
 import net.ccbluex.liquidbounce.features.module.modules.render.jumpeffect.ModuleJumpEffect
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleMotionBlur
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleNoBob
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleNoFov
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleNoHurtCam
@@ -313,6 +320,12 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleHitFX,
             ModuleMlgHelper,
             ModuleDamageTint,
+            ModuleHitboxes,
+            ModuleBetterHitreg,
+            ModuleArmorHud,
+            ModuleCooldowns,
+            ModulePotionTimers,
+            ModuleBundledMods,
             ModuleChunkBorders,
             ModuleWaypoints,
             ModuleShinyPots,
@@ -322,6 +335,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleServerIntegration,
             ModuleNametags,
             ModuleAutoF5,
+            ModuleMotionBlur,
             ModuleNoBob,
             ModuleNoFov,
             ModuleNoHurtCam,
