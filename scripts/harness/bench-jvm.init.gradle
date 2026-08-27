@@ -1,0 +1,48 @@
+// Adds JVM flags to the game run task only, for A/B benchmarking the launcher's
+// garbage-collector settings against the dev client.
+//
+//   ./gradlew runClient --init-script scripts/harness/bench-jvm.init.gradle \
+//                       -PbenchJvmArgs="-Xmx4096M -XX:+UseG1GC ..."
+//
+// Why not JAVA_TOOL_OPTIONS, which is the obvious way to do this: that variable
+// is picked up by *every* JVM started in the environment, which includes the
+// Gradle daemon and the Gradle launcher process, not just the game. With
+// -Xms4096M and -XX:+AlwaysPreTouch in the set under test that meant roughly 8GB
+// of pre-touched heap on a 16GB machine with 5.9GB free. The tuned side would
+// have spent the run paging to disk, and come back "slower" for a reason that
+// has nothing to do with garbage collection.
+//
+// RunGameTask extends AbstractRunTask extends JavaExec, so matching JavaExec
+// reaches the client and nothing else.
+//
+// A project property rather than an environment variable on purpose: build
+// scripts read System.getenv() from the *daemon's* environment, which is not
+// the one you set on the command line, so an env var here would silently apply
+// nothing at all.
+
+// The flags *replace* Loom's rather than being appended to them, for two
+// reasons. Loom runs the dev client with -XX:+UseZGC, so appending -XX:+UseG1GC
+// makes the JVM refuse to start at all - "Multiple garbage collectors selected".
+// More importantly, that default means the dev client normally runs on a
+// different collector from the one the launcher ships, so measuring it tells
+// you nothing about what players get. Replacing the list puts both sides of an
+// A/B on exactly the launcher's own flags and nothing else.
+// The replacement happens in doFirst, not at configuration time. Assigning
+// jvmArgs while configuring looks like it works and does nothing: Loom
+// configures the run task after this init script runs, so its -XX:+UseZGC lands
+// on top and the JVM dies with "Multiple garbage collectors selected". doFirst
+// runs after all configuration and immediately before the process starts, which
+// is the point where the value actually sticks.
+gradle.allprojects {
+    tasks.withType(JavaExec).configureEach { task ->
+        task.doFirst {
+            if (task.project.hasProperty('benchJvmArgs')) {
+                def replacement = task.project.property('benchJvmArgs').toString().trim()
+                if (replacement) {
+                    task.jvmArgs = replacement.split(/\s+/) as List
+                    logger.lifecycle("bench-jvm: launching with ${task.jvmArgs.join(' ')}")
+                }
+            }
+        }
+    }
+}

@@ -1,15 +1,19 @@
 Animations
 AntiBlind
 AntiExploit
+ArmorHud
 AutoF5
 AutoRespawn
 BetterChat
+BetterHitreg
 BetterInventory
 BetterTab
 BetterTitle
 BlockOutline
+BundledMods
 ChunkBorders
 ClickGui
+Cooldowns
 Crosshair
 CustomAmbience
 DamageParticles
@@ -21,6 +25,7 @@ FullBright
 GUICloser
 Hats
 HitFX
+Hitboxes
 Hud
 InventoryTracker
 ItemScroller
@@ -37,6 +42,7 @@ NoServerResourcePack
 NoSwing
 Notifier
 Particles
+PotionTimers
 QuickPerspectiveSwap
 ServerIntegration
 ShinyPots

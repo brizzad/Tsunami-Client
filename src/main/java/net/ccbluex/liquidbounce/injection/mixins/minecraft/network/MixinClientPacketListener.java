@@ -26,6 +26,9 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.ccbluex.liquidbounce.common.ChunkUpdateFlag;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.*;
+import net.ccbluex.liquidbounce.features.hitreg.DontAnimate;
+import net.ccbluex.liquidbounce.features.hitreg.HitState;
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg;
 import net.ccbluex.liquidbounce.features.module.modules.misc.betterchat.ModuleBetterChat;
 import net.ccbluex.liquidbounce.features.module.modules.player.Limit;
 import net.ccbluex.liquidbounce.features.module.modules.player.ModuleAntiExploit;
@@ -47,6 +50,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import net.minecraft.world.damagesource.DamageSource;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -205,4 +210,47 @@ public abstract class MixinClientPacketListener extends ClientCommonPacketListen
         return ModuleBetterChat.INSTANCE.modifyMessage(content);
     }
 
+
+    /**
+     * Reconciles the verdict from the server with the hit the client drew.
+     *
+     * Two things happen here. The pending hit is retired, which is how
+     * BetterHitreg tells apart a hit the server agreed with and one it
+     * silently dropped - a ghost. And where the client already drew this hit,
+     * the source is wrapped so the flash does not run a second time when the
+     * confirmation lands a ping later.
+     *
+     * Everything else about the packet is untouched: the damage, the knockback
+     * and the death are applied exactly as the server sent them.
+     */
+    @ModifyArg(
+        method = "handleDamageEvent",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/Entity;handleDamageEvent(Lnet/minecraft/world/damagesource/DamageSource;)V"
+        )
+    )
+    private DamageSource hookHitregConfirmation(DamageSource damageSource) {
+        if (!ModuleBetterHitreg.INSTANCE.getRunning() || damageSource == null) {
+            return damageSource;
+        }
+
+        var player = Minecraft.getInstance().player;
+        var attacker = damageSource.getEntity();
+        var causedByUs = player != null && attacker != null && player.getId() == attacker.getId();
+
+        if (!causedByUs) {
+            return damageSource;
+        }
+
+        HitState.confirmed();
+
+        // Only suppress the second flash if we actually drew the first one, and
+        // only while the confirmation is still plausibly for that swing.
+        var alreadyDrawn = HitState.lastHitHandled
+            && HitState.withinFight
+            && System.currentTimeMillis() - HitState.lastAttack <= 1000;
+
+        return alreadyDrawn ? new DontAnimate(damageSource) : damageSource;
+    }
 }

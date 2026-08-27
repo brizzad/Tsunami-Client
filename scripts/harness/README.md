@@ -104,6 +104,66 @@ powershell -File scripts/harness/burst.ps1 -Prefix out_ -Frames 8 -DelayMs 110 -
 
 Holds a key (default `0x11` = W) and captures a burst, for measuring motion.
 
+### FPS
+
+```sh
+node scripts/harness/fps-bench.mjs --log <run-log> --world "New World" --label before --out runs/before1.json
+node scripts/harness/fps-bench.mjs --compare "runs/before1.json,runs/before2.json,runs/before3.json" \
+                                             "runs/after1.json,runs/after2.json,runs/after3.json"
+```
+
+Asks the client for its own frame counter over the interop server, so a run
+needs no keyboard, no mouse and no screenshots. `--world` joins through
+`POST /client/worlds/join`, which drops the player at the position and camera
+angle in `level.dat` — identical every run, with nothing to steer. That only
+works from the title screen, because `findLevelCandidates()` reports nothing
+while a world is open, so benchmark right after launch.
+
+`--compare` refuses runs whose conditions differ (world, window size, video
+settings) and reports the mod-set difference as the change under test.
+
+Four things will otherwise hand you a confident, meaningless number:
+
+- **`inactivityFpsLimit` defaults to `"afk"`.** Since 1.21.2 the game drops to
+  30fps after roughly a minute without input — and this benchmark sends no input
+  by design, so it fires on every run over a minute. The window is focused, the
+  world is unpaused, and the number is 30. Set it to `"minimized"`; the
+  preflight refuses to start until you do.
+- **`pauseOnLostFocus` opens the Game Menu and pauses the world.** Not merely a
+  throttle: the sampler reads a frozen scene. Set it false.
+- **`mc.fps` is a per-second counter, so there is no 1% low here.** `worstSecond`
+  is the lowest one-second average. It catches a mod that stalls for a whole
+  second and will not catch one dropping a frame here and there. Do not quote it
+  as a 1% low.
+- **One run per side proves nothing.** Two identical baseline runs on the
+  development laptop came out at median 383 and median 290 — a 24% gap with no
+  change of any kind. The first version of this script judged changes against
+  within-run standard deviation and called that a regression, in bold. Give each
+  side at least three runs; the noise floor is measured from their spread, and
+  anything inside it is reported as no effect.
+
+That last one is the reason to distrust any FPS claim, including your own, that
+does not come with repeats.
+
+**Interleave the runs.** Four identical baselines on the benchmark scene came
+out 178, 181, 188, 162 — a 26fps spread, about 14%, with nothing changed. The
+runs are not independent of when they happened, so measuring every "before" run
+first and every "after" run second lets whatever drifts across a session line up
+exactly with the change under test and masquerade as its effect. Alternate them
+— before, after, before, after — and the drift lands on both sides instead.
+
+**Know what the floor costs you.** At a 26fps floor on a ~180fps scene, only a
+change larger than roughly 14% is visible. Most single optimization mods are
+smaller than that. More repeats narrow it, a quieter machine narrows it further
+(close the Gradle daemons, plug the laptop in), but the honest position is that
+a change under ~10% cannot currently be resolved here, and reporting one anyway
+would be inventing a result.
+
+**The scene has to be the bottleneck.** On the empty superflat platform this
+client runs at ~350fps, where the limit is frame submission rather than anything
+Sodium, Lithium or EntityCulling touches, and every change lands inside the
+noise. Point `--world` at somewhere that actually costs something to draw.
+
 ## Worked examples
 
 These are the four measurements that confirmed the restored modules. Each one

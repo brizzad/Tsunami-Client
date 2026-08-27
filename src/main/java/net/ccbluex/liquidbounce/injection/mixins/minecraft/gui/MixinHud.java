@@ -56,12 +56,30 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import com.llamalad7.mixinextras.sugar.Local;
+import net.ccbluex.liquidbounce.features.armorhud.ArmorHudRenderer;
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleArmorHud;
+import net.ccbluex.liquidbounce.features.module.modules.render.ModulePotionTimers;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.item.ItemStack;
+import net.ccbluex.liquidbounce.features.effectbars.EffectBarRenderer;
+import net.minecraft.world.effect.MobEffectInstance;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
 @Mixin(Hud.class)
 public abstract class MixinHud {
+
+
+    @Shadow
+    @Final
+    private static net.minecraft.resources.Identifier HOTBAR_SPRITE;
+
+    @Shadow
+    @Final
+    private static net.minecraft.resources.Identifier HOTBAR_OFFHAND_LEFT_SPRITE;
 
     @Final
     @Shadow
@@ -190,9 +208,40 @@ public abstract class MixinHud {
 
     @Inject(method = "extractEffects", at = @At("HEAD"), cancellable = true)
     private void hookRenderStatusEffectOverlay(CallbackInfo ci) {
+        // PotionTimers decorates these very icons, so it has to win over the
+        // theme tweak that hides them. Without this the module loads, enables,
+        // and draws nothing - the whole method is cancelled before it reaches
+        // the injection the bars are drawn from.
+        if (ModulePotionTimers.INSTANCE.getRunning()) {
+            return;
+        }
+
         if (HudComponentManager.isTweakEnabled(HudComponentTweak.DISABLE_STATUS_EFFECT_OVERLAY)) {
             ci.cancel();
         }
+    }
+
+    /**
+     * Draws the depletion bar under each status effect icon.
+     *
+     * Injected where vanilla looks up the sprite for an icon, because that
+     * is the one point where the effect and its screen position are both in
+     * scope. Drawing afterwards would mean recomputing the layout and
+     * getting it subtly wrong the moment vanilla changes it.
+     */
+    @Inject(
+        method = "extractEffects",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/gui/Hud;getMobEffectSprite(Lnet/minecraft/core/Holder;)Lnet/minecraft/resources/Identifier;",
+            ordinal = 0
+        )
+    )
+    private void hookPotionTimerBars(GuiGraphicsExtractor context, DeltaTracker tickCounter, CallbackInfo ci,
+                                     @Local(name = "instance") MobEffectInstance instance,
+                                     @Local(name = "x") int x,
+                                     @Local(name = "y") int y) {
+        EffectBarRenderer.render(context, tickCounter, instance, x, y, EffectBarRenderer.ICON_SIZE);
     }
 
 
@@ -262,4 +311,88 @@ public abstract class MixinHud {
     }
 
 
+
+    /**
+     * Draws the armour widget once the hotbar is done.
+     *
+     * TAIL of the hotbar extraction rather than a separate render pass, so
+     * the widget is layered with the hotbar it is anchored to and inherits
+     * the same scaling.
+     */
+    @Inject(method = "extractItemHotbar", at = @At("TAIL"))
+    private void hookArmorHud(GuiGraphicsExtractor graphics, DeltaTracker tickCounter, CallbackInfo ci) {
+        var module = ModuleArmorHud.INSTANCE;
+        if (!module.getRunning()) {
+            return;
+        }
+
+        var player = ArmorHudRenderer.cameraPlayer();
+        if (player == null) {
+            return;
+        }
+
+        var rect = ArmorHudRenderer.widgetRect(graphics, player);
+        if (rect == null) {
+            return;
+        }
+
+        var items = ArmorHudRenderer.armorItems(player);
+        int size = ArmorHudRenderer.SIZE;
+        int step = ArmorHudRenderer.STEP;
+        int textureWidth = size + ((items.size() - 1) * step);
+        boolean vertical = module.getOrientation() == ModuleArmorHud.Orientation.VERTICAL;
+
+        // The background is drawn in the widget's own space; rotating for the
+        // vertical layout is cheaper than a second set of blit coordinates.
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(rect.getX(), rect.getY());
+        if (vertical) {
+            graphics.pose().rotate(net.minecraft.util.Mth.HALF_PI).translate(0, -size);
+        }
+
+        int white = ARGB.white(1.0f);
+        switch (module.getStyle()) {
+            case HOTBAR -> {
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HOTBAR_SPRITE, 182, 22,
+                    0, 0, 0, 0, textureWidth - 3, size, white);
+                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HOTBAR_SPRITE, 182, 22,
+                    182 - 3, 0, textureWidth - 3, 0, 3, size, white);
+            }
+            case ROUNDED -> {
+                if (items.size() > 1) {
+                    graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HOTBAR_OFFHAND_LEFT_SPRITE, 29, 24,
+                        0, 1, 0, 0, 3, size, white);
+                    graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HOTBAR_SPRITE, 182, 22,
+                        3, 0, 3, 0, textureWidth - 6, size, white);
+                    graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HOTBAR_OFFHAND_LEFT_SPRITE, 29, 24,
+                        size - 3, 1, textureWidth - 3, 0, 3, size, white);
+                } else {
+                    graphics.blitSprite(RenderPipelines.GUI_TEXTURED, HOTBAR_OFFHAND_LEFT_SPRITE, 29, 24,
+                        0, 1, 0, 0, size, size, white);
+                }
+            }
+            case NONE -> { }
+        }
+        graphics.pose().popMatrix();
+
+        for (int i = 0; i < items.size(); i++) {
+            ItemStack stack = items.get(i);
+            int x = rect.getX() + (vertical ? 0 : step * i);
+            int y = rect.getY() + (vertical ? step * i : 0);
+
+            if (module.getWarnOnLowDurability() && ArmorHudRenderer.isLowDurability(stack)) {
+                graphics.fill(x + 1, y + 1, x + size - 1, y + size - 1,
+                    module.getWarningColor().argb());
+            }
+
+            this.extractSlot(graphics, x + 3, y + 3, tickCounter, player, stack, i + 1);
+
+            String durability = ArmorHudRenderer.durabilityText(stack);
+            if (durability != null) {
+                int textY = module.getAnchor().isTop() ? y + size : y - net.minecraft.client.Minecraft.getInstance().font.lineHeight;
+                graphics.centeredText(net.minecraft.client.Minecraft.getInstance().font, durability, x + (size / 2), textY,
+                    ARGB.opaque(stack.getBarColor()));
+            }
+        }
+    }
 }

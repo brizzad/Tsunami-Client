@@ -47,12 +47,21 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
+import com.llamalad7.mixinextras.sugar.Local;
+import net.ccbluex.liquidbounce.features.effectbars.MobEffectInstanceDuck;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.ccbluex.liquidbounce.features.hitreg.DontAnimate;
+import net.ccbluex.liquidbounce.features.hitreg.Hit;
+import net.ccbluex.liquidbounce.features.hitreg.OnlyAnimate;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.WalkAnimationState;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -269,4 +278,85 @@ public abstract class MixinLivingEntity extends MixinEntity {
         return original;
     }
 
+
+    @Shadow
+    @Nullable
+    private DamageSource lastDamageSource;
+
+    @Shadow
+    private long lastDamageStamp;
+
+    @Shadow
+    @Final
+    public WalkAnimationState walkAnimation;
+
+    @Shadow
+    public int hurtDuration;
+
+    @Shadow
+    public int hurtTime;
+
+    @Shadow
+    protected abstract void playHurtSound(DamageSource damageSource);
+
+    /**
+     * Handles the two marker damage sources BetterHitreg uses to split a hit
+     * into the part you see and the part the server decides.
+     *
+     * {@link OnlyAnimate} runs the flash and stops: no health change, no
+     * knockback, no death. {@link DontAnimate} is the reverse, applied when the
+     * server confirms a hit the client already drew, so the flash does not run
+     * twice a ping apart.
+     *
+     * Both are wrappers around the real source, so anything downstream that
+     * reads the damage type still sees the right one.
+     */
+    @Inject(method = "handleDamageEvent", at = @At("HEAD"), cancellable = true)
+    private void hookHitregMarkers(DamageSource damageSource, CallbackInfo ci) {
+        if (damageSource instanceof DontAnimate) {
+            var entity = (LivingEntity) (Object) this;
+            entity.invulnerableTime = 20;
+            lastDamageSource = damageSource;
+            lastDamageStamp = entity.level().getGameTime();
+
+            // Your own hurt sound is client-side, so it still has to be played
+            // here; the flash is the only thing being skipped.
+            if (liquid_bounce$isClientPlayer()) {
+                playHurtSound(damageSource);
+            }
+
+            ci.cancel();
+            return;
+        }
+
+        if (damageSource instanceof OnlyAnimate) {
+            walkAnimation.setSpeed(1.5F);
+            hurtDuration = Hit.HURT_DURATION;
+            hurtTime = hurtDuration;
+            ci.cancel();
+        }
+    }
+
+    /**
+     * Stops an effect bar jumping backwards when the effect is refreshed.
+     *
+     * Reapplying an effect at the same strength replaces the instance, and
+     * the new one only knows its own duration. Without carrying the longer
+     * of the two maximums across, a bar that was half empty snaps to full
+     * and then drains faster than the effect actually does.
+     */
+    @Inject(method = "forceAddEffect", at = @At("TAIL"))
+    private void hookEffectBarDuration(MobEffectInstance newEffect, net.minecraft.world.entity.@Nullable Entity source,
+                                       CallbackInfo ci,
+                                       @Local(name = "previousEffect") MobEffectInstance previousEffect) {
+        if (previousEffect == null || previousEffect.getAmplifier() != newEffect.getAmplifier()) {
+            return;
+        }
+
+        var updated = (MobEffectInstanceDuck) newEffect;
+        var previous = (MobEffectInstanceDuck) previousEffect;
+        if (updated.tsunami$getMaxDuration() < previous.tsunami$getMaxDuration()) {
+            updated.tsunami$setMaxDuration(previous.tsunami$getMaxDuration());
+        }
+    }
 }

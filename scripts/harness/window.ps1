@@ -3,6 +3,7 @@
 #        powershell -File mc.ps1 -Action click -X 283 -Y 256
 #        powershell -File mc.ps1 -Action key -Scan 0x36
 #        powershell -File mc.ps1 -Action type -Text "FullBright"
+#        powershell -File mc.ps1 -Action use -X 640 -Y 400   # right click, uses the held item
 param(
     [string]$Action = "shot",
     [string]$Out = "shot.png",
@@ -54,6 +55,12 @@ public class MCW {
     System.Threading.Thread.Sleep(80); var b=new INPUT[1]; b[0].type=1; b[0].ki.wScan=s; b[0].ki.dwFlags=8|2; SendInput(1,b,Marshal.SizeOf(typeof(INPUT))); }
   public static void Type(string t){ foreach(char c in t){ var a=new INPUT[1]; a[0].type=1; a[0].ki.wScan=c; a[0].ki.dwFlags=4; SendInput(1,a,Marshal.SizeOf(typeof(INPUT)));
     System.Threading.Thread.Sleep(35); var b=new INPUT[1]; b[0].type=1; b[0].ki.wScan=c; b[0].ki.dwFlags=4|2; SendInput(1,b,Marshal.SizeOf(typeof(INPUT))); System.Threading.Thread.Sleep(35);} }
+  // Right click. Needed to *use* a held item - throwing a pearl, blowing a
+  // goat horn - which the left-click helper cannot do, so anything with a
+  // use cooldown was untestable before this existed.
+  public static void Use(IntPtr h,int ox,int oy){ RECT r; GetWindowRect(h,out r); int x=r.L+ox,y=r.T+oy;
+    SetCursorPos(x,y); System.Threading.Thread.Sleep(250);
+    mouse_event(0x0008,0,0,0,IntPtr.Zero); System.Threading.Thread.Sleep(100); mouse_event(0x0010,0,0,0,IntPtr.Zero); }
   public static void Click(IntPtr h,int ox,int oy){ RECT r; GetWindowRect(h,out r); int x=r.L+ox,y=r.T+oy;
     for(int i=0;i<4;i++){ SetCursorPos(x-30+i*10,y); System.Threading.Thread.Sleep(80);} SetCursorPos(x,y); System.Threading.Thread.Sleep(350);
     mouse_event(0x0002,0,0,0,IntPtr.Zero); System.Threading.Thread.Sleep(100); mouse_event(0x0004,0,0,0,IntPtr.Zero); }
@@ -71,6 +78,7 @@ switch ($Action) {
     "focus" { [MCW]::Focus($h) }
     "shot"  { [MCW]::Focus($h); if ($Wait -gt 0) { Start-Sleep -Seconds $Wait }; [MCW]::Shot($h, $Out); Write-Output "shot -> $Out" }
     "click" { [MCW]::Focus($h); [MCW]::Click($h, $X, $Y); if ($Wait -gt 0) { Start-Sleep -Seconds $Wait }; [MCW]::Shot($h, $Out); Write-Output "clicked $X,$Y -> $Out" }
+    "use"   { [MCW]::Focus($h); [MCW]::Use($h, $X, $Y); if ($Wait -gt 0) { Start-Sleep -Seconds $Wait }; [MCW]::Shot($h, $Out); Write-Output "used $X,$Y -> $Out" }
     "key"   { [MCW]::Focus($h); [MCW]::Tap([Convert]::ToUInt16($Scan,16)); if ($Wait -gt 0) { Start-Sleep -Seconds $Wait }; [MCW]::Shot($h, $Out); Write-Output "key $Scan -> $Out" }
     "type"  { [MCW]::Focus($h); [MCW]::Type($Text); if ($Wait -gt 0) { Start-Sleep -Seconds $Wait }; [MCW]::Shot($h, $Out); Write-Output "typed -> $Out" }
 }
