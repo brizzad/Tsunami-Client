@@ -1,23 +1,29 @@
 {
-  "name": "Keystrokes",
-  "description": "Visualizes your movement keys and mouse buttons, with clicks per second.",
+  "name": "CpsCounter",
+  "description": "Shows your clicks per second.",
   "enabled": false,
   "singleton": true,
   "alignment": {
     "horizontalAlignment": "Left",
     "horizontalOffset": 15,
     "verticalAlignment": "Bottom",
-    "verticalOffset": 15
+    "verticalOffset": 90
   },
   "values": [
     {
+      "type": "CHOOSE",
+      "name": "Buttons",
+      "value": "Left",
+      "choices": ["Left", "Right", "Both"]
+    },
+    {
       "type": "BOOLEAN",
-      "name": "ShowMouseButtons",
+      "name": "ShowLabel",
       "value": true
     },
     {
       "type": "BOOLEAN",
-      "name": "ShowCps",
+      "name": "ShowButtonName",
       "value": true
     }
   ]

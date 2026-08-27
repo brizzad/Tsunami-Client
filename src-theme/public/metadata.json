@@ -2,7 +2,9 @@
   "id": "tsunami",
   "name": "Tsunami",
   "version": "0.1.0",
-  "authors": ["Tsunami contributors"],
+  "authors": [
+    "Tsunami contributors"
+  ],
   "colors": {
     "Accent": "#1fa8ff",
     "Tint": "#000000"
@@ -39,6 +41,7 @@
     "BlockCounter",
     "Effects",
     "Keystrokes",
+    "CpsCounter",
     "Taco",
     "Image",
     "Text",
@@ -59,7 +62,10 @@
   "backgrounds": [
     {
       "name": "background",
-      "types": ["frag", "png"]
+      "types": [
+        "frag",
+        "png"
+      ]
     }
   ],
   "values": []

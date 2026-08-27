@@ -35,6 +35,17 @@ interface HudInventoryStatisticsSettings {
     rowLength: number;
 }
 
+interface HudKeystrokesSettings {
+    showMouseButtons: boolean;
+    showCps: boolean;
+}
+
+interface HudCpsCounterSettings {
+    buttons: "Left" | "Right" | "Both";
+    showLabel: boolean;
+    showButtonName: boolean;
+}
+
 interface HudBlockCounterSettings {
     iconPosition: "None" | "Left" | "Right" | "Top" | "Bottom";
 }

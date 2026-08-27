@@ -19,6 +19,7 @@
     import Taco from "./elements/taco/Taco.svelte";
     import type {ComponentsUpdateEvent, ScaleFactorChangeEvent} from "../../integration/events";
     import Keystrokes from "./elements/keystrokes/Keystrokes.svelte";
+    import CpsCounter from "./elements/CpsCounter.svelte";
     import Effects from "./elements/Effects.svelte";
     import BlockCounter from "./elements/BlockCounter.svelte";
     import Text from "./elements/Text.svelte";
@@ -123,7 +124,9 @@
                 {:else if c.name === "Taco"}
                     <Taco/>
                 {:else if c.name === "Keystrokes"}
-                    <Keystrokes/>
+                    <Keystrokes settings={c.settings}/>
+                {:else if c.name === "CpsCounter"}
+                    <CpsCounter settings={c.settings}/>
                 {:else if c.name === "Effects"}
                     <Effects/>
                 {:else if c.name === "Text"}
