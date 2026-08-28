@@ -46,6 +46,7 @@ src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "VelocityY", velocityY)
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/combat/velocity/mode/VelocityJumpReset.kt	Debug	ModuleDebug.debugParameter(this, "VelocityZ", velocityZ)
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSafeWalk.kt	Debug	ModuleDebug.DebuggedPoint(center, Color4b.BLUE, 0.05)
+src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/ModuleSprint.kt	Sprint	this@ModuleSprint)
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/inventorymove/ModuleInventoryMove.kt	ClickGui	NORMAL("Normal", { !it.isInEditBox() && !ModuleClickGui.isInSearchBar }),
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/movement/step/ModuleStep.kt	Debug	ModuleDebug.debugParameter(ModuleStep, "StepHeight", stepHeight)
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/player/antivoid/ModuleAntiVoid.kt	Debug	ModuleDebug.DebuggedBox(
