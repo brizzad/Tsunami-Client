@@ -71,6 +71,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+import static net.ccbluex.liquidbounce.utils.client.ProtocolUtilKt.isOlderThanOrEqual1_8;
 import static net.ccbluex.liquidbounce.utils.client.ProtocolUtilKt.getUsesViaFabricPlus;
 
 @Mixin(Minecraft.class)
@@ -312,13 +313,17 @@ public abstract class MixinMinecraft {
      * that would freeze a non-zero timer forever instead of removing it.
      *
      * Deliberately not a module and not toggleable: it is baseline behaviour for the clients
-     * this one is meant to replace. Note it applies on every protocol, not just 1.8 - scope it
-     * with `isOlderThanOrEqual1_8` if that is ever not wanted.
+     * this one is meant to replace.
+     *
+     * Scoped to 1.8 and below. On newer protocols the miss penalty is left alone, so vanilla
+     * combat is untouched and nothing here looks like an advantage where it was never the
+     * norm. {@code isOlderThanOrEqual1_8} is false without ViaFabricPlus, so a native-version
+     * session keeps vanilla behaviour too.
      */
     @WrapWithCondition(method = "startAttack", at = @At(value = "FIELD",
         target = "Lnet/minecraft/client/Minecraft;missTime:I", opcode = Opcodes.PUTFIELD))
     private boolean removeAttackMissPenalty(Minecraft instance, int value) {
-        return false;
+        return !isOlderThanOrEqual1_8();
     }
 
     /**
@@ -329,7 +334,7 @@ public abstract class MixinMinecraft {
     @WrapWithCondition(method = "continueAttack", at = @At(value = "FIELD",
         target = "Lnet/minecraft/client/Minecraft;missTime:I", opcode = Opcodes.PUTFIELD))
     private boolean removeContinuedAttackMissPenalty(Minecraft instance, int value) {
-        return false;
+        return !isOlderThanOrEqual1_8();
     }
 
     @Inject(method = "updateLevelInEngines(Lnet/minecraft/client/multiplayer/ClientLevel;Z)V", at = @At("HEAD"))
