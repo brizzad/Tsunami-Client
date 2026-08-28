@@ -108,7 +108,15 @@ object ModuleNametags : ClientModule("Nametags", ModuleCategories.RENDER) {
     private fun collectAndSortNametagsToRender() {
         nametagPool.recycleAll(nametagsToRender)
         nametagsToRender.clear()
+        val self = mc.player ?: return
+
         for (entity in RenderedEntities) {
+            // Vanilla hides both the model and the nametag of an invisible player. Drawing
+            // one anyway would announce someone the game is deliberately concealing.
+            if (entity.isInvisibleTo(self)) {
+                continue
+            }
+
             if (requireLineOfSight && !canBeSeen(entity)) {
                 continue
             }

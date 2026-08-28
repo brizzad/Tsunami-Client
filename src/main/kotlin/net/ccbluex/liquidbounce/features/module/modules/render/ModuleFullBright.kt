@@ -24,19 +24,25 @@ import net.ccbluex.liquidbounce.event.events.PlayerPostTickEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleCategories
-import net.minecraft.world.effect.MobEffectInstance
-import net.minecraft.world.effect.MobEffects
 
 /**
  * A full bright module
  *
  * Allows you to see in the dark.
  */
+/*
+ * The NightVision mode was removed. It called player.addEffect(NIGHT_VISION) every tick,
+ * which fabricates a status effect the server never granted - that is inventing a potion,
+ * not adjusting a display setting, and it desyncs the client's own effect list too.
+ *
+ * The gamma mode is kept. Raising brightness is what every client in this space ships and
+ * what servers here expect, but it is still a setting worth deciding on deliberately.
+ */
 object ModuleFullBright : ClientModule("FullBright", ModuleCategories.RENDER) {
 
     private val modes = choices(
-        "Mode", FullBrightGamma, arrayOf(
-            FullBrightGamma, FullBrightNightVision
+        "Mode", FullBrightGamma, arrayOf<Mode>(
+            FullBrightGamma
         )
     )
 
@@ -58,22 +64,6 @@ object ModuleFullBright : ClientModule("FullBright", ModuleCategories.RENDER) {
             if (gamma < brightness) {
                 gamma = (gamma + 0.1F).coerceAtMost(brightness.toFloat())
             }
-        }
-
-    }
-
-    private object FullBrightNightVision : Mode("NightVision") {
-
-        override val parent: ModeValueGroup<Mode>
-            get() = modes
-
-        @Suppress("unused")
-        val tickHandler = handler<PlayerPostTickEvent> {
-            player.addEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 1337))
-        }
-
-        override fun disable() {
-            player.removeEffect(MobEffects.NIGHT_VISION)
         }
 
     }

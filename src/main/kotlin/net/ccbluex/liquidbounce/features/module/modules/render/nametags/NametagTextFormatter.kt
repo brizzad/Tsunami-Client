@@ -166,7 +166,6 @@ private val Entity.isBot get() = false
 private val Entity.nameColor: TextColor?
     get() = when {
         isBot -> ChatFormatting.DARK_AQUA.toTextColor()
-        isInvisible -> ChatFormatting.GOLD.toTextColor()
         isShiftKeyDown -> ChatFormatting.DARK_RED.toTextColor()
         else -> EntityTaggingManager.getTag(this).color?.toTextColor()
     }

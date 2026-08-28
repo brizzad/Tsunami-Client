@@ -45,17 +45,22 @@ import net.ccbluex.liquidbounce.utils.kotlin.Priority
  * Sprints automatically.
  */
 
+/*
+ * Only automatic forward sprint remains.
+ *
+ * The removed Omnidirectional and Omnirotational modes beat the vanilla rule that sprinting
+ * applies in the direction you face: one rewrote the jump yaw to your input direction, the
+ * other pushed a rotation target so the server believed you were facing where you moved.
+ * Sprinting sideways or backwards at full speed is not something the game grants.
+ */
 object ModuleSprint : ClientModule("Sprint", ModuleCategories.MOVEMENT) {
 
     private enum class SprintMode(override val tag: String) : Tagged {
         LEGIT("Legit"),
-        OMNIDIRECTIONAL("Omnidirectional"),
-        OMNIROTATIONAL("Omnirotational"),
     }
 
     private val sprintMode by enumChoice("Mode", SprintMode.LEGIT)
 
-    private val ignore by multiEnumChoice<Ignore>("Ignore")
 
     /**
      * This is used to stop sprinting when the player is not moving forward
@@ -63,17 +68,25 @@ object ModuleSprint : ClientModule("Sprint", ModuleCategories.MOVEMENT) {
      */
     private val stopOn by multiEnumChoice("StopOn", StopOn.entries)
 
-    val shouldSprintOmnidirectional: Boolean
-        get() = running && sprintMode == SprintMode.OMNIDIRECTIONAL
+    /*
+     * These four stay as properties because Java mixins read them, but they are now constant.
+     *
+     * Each one existed to beat a rule the game enforces on purpose: sprinting only applies
+     * forward, stops below six hunger, stops while blinded, and is slowed by collision.
+     * Ignoring any of them is extra movement the server never granted, so the mixins that
+     * consult these now never fire.
+     */
+    @Suppress("MayBeConstant")
+    val shouldSprintOmnidirectional: Boolean = false
 
-    val shouldIgnoreBlindness
-        get() = running && Ignore.BLINDNESS in ignore
+    @Suppress("MayBeConstant")
+    val shouldIgnoreBlindness: Boolean = false
 
-    val shouldIgnoreHunger
-        get() = running && Ignore.HUNGER in ignore
+    @Suppress("MayBeConstant")
+    val shouldIgnoreHunger: Boolean = false
 
-    val shouldIgnoreCollision
-        get() = running && Ignore.COLLISION in ignore
+    @Suppress("MayBeConstant")
+    val shouldIgnoreCollision: Boolean = false
 
     @Suppress("unused")
     private val sprintHandler = handler<SprintEvent>(priority = CRITICAL_MODIFICATION) { event ->
@@ -95,32 +108,6 @@ object ModuleSprint : ClientModule("Sprint", ModuleCategories.MOVEMENT) {
         }
     }
 
-    @Suppress("unused")
-    private val jumpHandler = handler<PlayerJumpEvent> { event ->
-        if (sprintMode == SprintMode.OMNIDIRECTIONAL && shouldSprintOmnidirectional) {
-            // Allows us to sprint boost in every direction
-            event.yaw = player.getMovementDirectionOfInput()
-        }
-    }
-
-    // DO NOT USE TREE TO MAKE SURE THAT THE ROTATIONS ARE NOT CHANGED
-    private val rotations = RotationsValueGroup(this)
-
-    @Suppress("unused")
-    private val omniRotationalHandler = handler<GameTickEvent> {
-        // Check if omnirotational sprint is enabled
-        if (sprintMode != SprintMode.OMNIROTATIONAL) {
-            return@handler
-        }
-
-        val yaw = player.getMovementDirectionOfInput()
-
-        // todo: unhook pitch - AimPlan needs support for only yaw or pitch operation
-        val rotation = Rotation(yaw, player.xRot)
-
-        RotationManager.setRotationTarget(rotations.toRotationTarget(rotation), Priority.NOT_IMPORTANT,
-            this@ModuleSprint)
-    }
 
     private fun shouldPreventSprint(): Boolean {
         if (StopOn.USING_ITEM in stopOn && player.isSlowDueToUsingItem ||
@@ -138,12 +125,6 @@ object ModuleSprint : ClientModule("Sprint", ModuleCategories.MOVEMENT) {
             && !shouldSprintOmnidirectional
             && RotationManager.activeRotationTarget?.movementCorrection == MovementCorrection.OFF
             && !hasForwardMovement
-    }
-
-    private enum class Ignore(override val tag: String) : Tagged {
-        BLINDNESS("Blindness"),
-        HUNGER("Hunger"),
-        COLLISION("Collision"),
     }
 
     private enum class StopOn(override val tag: String) : Tagged {

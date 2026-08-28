@@ -18,6 +18,9 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render
 
+import java.util.EnumSet
+import net.ccbluex.fastutil.enumSetAllOf
+import net.ccbluex.fastutil.enumSetOf
 import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleCategories
@@ -39,33 +42,55 @@ object ModuleAntiBlind : ClientModule("AntiBlind", ModuleCategories.RENDER, alia
     @JvmField
     val TEXTURE_PUMPKIN_BLUR: Identifier = Identifier.withDefaultNamespace("textures/misc/pumpkinblur.png")
 
-    private val render = multiEnumChoice("DoRender",
-        DoRender.ARMOR,
-        DoRender.MOB_IN_SPAWNER,
-        DoRender.ENCHANT_TABLE_BOOK,
-        DoRender.EAT_PARTICLES,
-        DoRender.BLOCK_BREAK_PARTICLES,
-        DoRender.BLOCK_BREAK_OVERLAY,
-        DoRender.TITLE,
-        DoRender.MAP_CONTENTS,
-        DoRender.MAP_MARKERS,
-        DoRender.FALLING_BLOCKS,
-        DoRender.BEACON_BEAMS,
-        DoRender.SKYLIGHT_UPDATES,
-        DoRender.GUI_BACKGROUND,
-        DoRender.SPYGLASS_OVERLAY,
-        DoRender.SIGN_TEXT,
-        DoRender.INVISIBLE_ENTITIES,
-        DoRender.BOSS_BARS,
-        DoRender.EXPLOSION_PARTICLES,
-        DoRender.WORLD_BORDER,
-        DoRender.FALLING_LEAVES,
+    /**
+     * Effects the game applies to take vision away from you on purpose.
+     *
+     * Turning these off is not "removing an annoyance", it is declining a mechanic: seeing
+     * through a blindness potion, a Warden's darkness, water fog or the block your head is
+     * inside is knowledge the game deliberately withholds, and a pumpkin's blur is the price
+     * of wearing one. They always render and are not offered as choices.
+     */
+    private val ALWAYS_RENDERED: EnumSet<DoRender> = enumSetOf(
+        DoRender.BLINDING,
+        DoRender.DARKNESS,
+        DoRender.NAUSEA,
+        DoRender.LIQUIDS_FOG,
+        DoRender.POWDER_SNOW_FOG,
+        DoRender.WALL_OVERLAY,
+        DoRender.PUMPKIN_BLUR,
+    )
+
+    private val render = multiEnumChoice(
+        "DoRender",
+        default = enumSetOf(
+            DoRender.ARMOR,
+            DoRender.MOB_IN_SPAWNER,
+            DoRender.ENCHANT_TABLE_BOOK,
+            DoRender.EAT_PARTICLES,
+            DoRender.BLOCK_BREAK_PARTICLES,
+            DoRender.BLOCK_BREAK_OVERLAY,
+            DoRender.TITLE,
+            DoRender.MAP_CONTENTS,
+            DoRender.MAP_MARKERS,
+            DoRender.FALLING_BLOCKS,
+            DoRender.BEACON_BEAMS,
+            DoRender.SKYLIGHT_UPDATES,
+            DoRender.GUI_BACKGROUND,
+            DoRender.SPYGLASS_OVERLAY,
+            DoRender.SIGN_TEXT,
+            DoRender.INVISIBLE_ENTITIES,
+            DoRender.BOSS_BARS,
+            DoRender.EXPLOSION_PARTICLES,
+            DoRender.WORLD_BORDER,
+            DoRender.FALLING_LEAVES,
+        ),
+        choices = enumSetAllOf<DoRender>().apply { removeAll(ALWAYS_RENDERED) },
     )
 
     private val fireOpacity by int("FireOpacity", 100, 0..100, suffix = "%")
 
     @JvmStatic
-    fun canRender(choice: DoRender) = !running || choice in render
+    fun canRender(choice: DoRender) = !running || choice in ALWAYS_RENDERED || choice in render
 
     val fireOpacityPercentage get() =
         if (running) {
