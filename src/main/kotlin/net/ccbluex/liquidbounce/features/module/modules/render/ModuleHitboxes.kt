@@ -69,6 +69,17 @@ import net.minecraft.world.phys.Vec3
  */
 object ModuleHitboxes : ClientModule("Hitboxes", ModuleCategories.RENDER) {
 
+    /**
+     * All hitbox geometry is drawn depth-tested, so a box is hidden by whatever stands in
+     * front of it.
+     *
+     * Rendering these through walls would report where someone is when you could not
+     * otherwise know, which is an advantage rather than a clearer view of what is already on
+     * screen. Everything here goes through this helper so that stays true by construction.
+     */
+    private fun WorldRenderEnvironment.drawHitboxLines(argb: Int, width: Float, vararg positions: Vec3f) =
+        drawLinesWithWidth(argb, width, *positions, noDepthTest = false)
+
     private val players by boolean("Players", true)
     private val mobs by boolean("Mobs", true)
     private val items by boolean("Items", false)
@@ -210,7 +221,7 @@ object ModuleHitboxes : ClientModule("Hitboxes", ModuleCategories.RENDER) {
         val y1 = box.maxY.toFloat()
         val z1 = box.maxZ.toFloat()
 
-        drawLinesWithWidth(
+        drawHitboxLines(
             color.argb, width,
             // bottom face
             Vec3f(x0, y0, z0), Vec3f(x1, y0, z0),
@@ -243,7 +254,7 @@ object ModuleHitboxes : ClientModule("Hitboxes", ModuleCategories.RENDER) {
         val x1 = box.maxX.toFloat()
         val z1 = box.maxZ.toFloat()
 
-        drawLinesWithWidth(
+        drawHitboxLines(
             color.argb, width,
             Vec3f(x0, y, z0), Vec3f(x1, y, z0),
             Vec3f(x1, y, z0), Vec3f(x1, y, z1),
@@ -258,7 +269,7 @@ object ModuleHitboxes : ClientModule("Hitboxes", ModuleCategories.RENDER) {
         color: Color4b,
         width: Float,
     ) {
-        drawLinesWithWidth(
+        drawHitboxLines(
             color.argb, width,
             Vec3f(from.x.toFloat(), from.y.toFloat(), from.z.toFloat()),
             Vec3f(to.x.toFloat(), to.y.toFloat(), to.z.toFloat()),

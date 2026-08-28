@@ -186,11 +186,16 @@ fun WorldRenderEnvironment.drawLine(p1: Vec3, p2: Vec3, argb: Int) =
  * Draws lines with [width].
  * Modern GL doesn't support `glLineWidth` well, so draw with shader simulation.
  */
-fun WorldRenderEnvironment.drawLinesWithWidth(argb: Int, width: Float, vararg positions: Vec3f) {
+fun WorldRenderEnvironment.drawLinesWithWidth(
+    argb: Int,
+    width: Float,
+    vararg positions: Vec3f,
+    noDepthTest: Boolean = true,
+) {
     if (positions.isEmpty()) return
     require(positions.size and 1 == 0)
 
-    drawCustomMesh(pipeline = ClientRenderPipelines.LinesWithWidth) { pose ->
+    drawCustomMesh(pipeline = ClientRenderPipelines.linesWithWidth(noDepthTest)) { pose ->
         for (i in 0 until positions.size step 2) {
             val p1 = positions[i]
             val p2 = positions[i + 1]

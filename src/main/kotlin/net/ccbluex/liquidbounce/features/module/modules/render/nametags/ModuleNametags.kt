@@ -32,6 +32,8 @@ import net.ccbluex.liquidbounce.utils.entity.cameraDistanceSq
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIORITY
 import net.ccbluex.liquidbounce.utils.render.entity
 import net.ccbluex.liquidbounce.utils.render.isCustom
+import net.ccbluex.liquidbounce.utils.raytracing.hasLineOfSight
+import net.minecraft.world.entity.Entity
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.renderer.entity.state.EntityRenderState
 import org.joml.Vector2f
@@ -47,6 +49,13 @@ object ModuleNametags : ClientModule("Nametags", ModuleCategories.RENDER) {
         tree(NametagTextFormatter)
         tree(NametagEquipment)
     }
+
+    /**
+     * Nametags draw in screen space after the world, so nothing occludes them on their own.
+     * Without this they report where players are through walls, which is knowledge you could
+     * not otherwise have rather than a clearer view of what is already visible.
+     */
+    private val requireLineOfSight by boolean("RequireLineOfSight", true)
 
     internal val borderWidth by float("BorderWidth", 1f, 0f..8f)
     internal val backgroundRadius by float("BackgroundRadius", 2f, 0f..16f)
@@ -100,6 +109,10 @@ object ModuleNametags : ClientModule("Nametags", ModuleCategories.RENDER) {
         nametagPool.recycleAll(nametagsToRender)
         nametagsToRender.clear()
         for (entity in RenderedEntities) {
+            if (requireLineOfSight && !canBeSeen(entity)) {
+                continue
+            }
+
             val distance = entity.position().cameraDistance().toFloat()
             val scale = scale.transform(distance)
             if (scale > 0.01f) {
@@ -109,6 +122,16 @@ object ModuleNametags : ClientModule("Nametags", ModuleCategories.RENDER) {
             }
         }
         nametagsToRender.sortWith(NAMETAG_COMPARATOR)
+    }
+
+    /**
+     * Traced from the camera rather than the player's eyes, so what you see matches what is
+     * drawn when the camera is detached in third person.
+     */
+    private fun canBeSeen(entity: Entity): Boolean {
+        val camera = mc.gameRenderer.mainCamera().position()
+        return hasLineOfSight(camera, entity.eyePosition) ||
+            hasLineOfSight(camera, entity.position())
     }
 
     private val NAMETAG_COMPARATOR: Comparator<NametagRenderState> = Comparator.comparingDouble { nametag ->

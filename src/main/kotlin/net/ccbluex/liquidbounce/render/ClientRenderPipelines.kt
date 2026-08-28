@@ -229,6 +229,19 @@ object ClientRenderPipelines {
         forWorldRender()
     }
 
+    /**
+     * Depth-tested twin of [LinesWithWidth], for anything that should be hidden by geometry
+     * rather than drawn over it.
+     */
+    @JvmField
+    val LinesWithWidthDepthTested = newPipeline("lines_with_width_depth_tested") {
+        withSnippet(RenderPipelines.LINES_SNIPPET)
+        forWorldRender(noDepthTest = false)
+    }
+
+    fun linesWithWidth(noDepthTest: Boolean) =
+        if (noDepthTest) LinesWithWidth else LinesWithWidthDepthTested
+
     private val Lines = newPipeline("lines") {
         posColorSnippet(PrimitiveTopology.DEBUG_LINES)
         forWorldRender()
