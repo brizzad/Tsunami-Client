@@ -1,6 +1,7 @@
 <script lang="ts">
     import Key from "./Key.svelte";
     import MouseKey from "./MouseKey.svelte";
+    import MouseTracker from "./MouseTracker.svelte";
     import {onMount} from "svelte";
     import {getMinecraftKeybinds} from "../../../../integration/rest";
     import type {MinecraftKeybind, SessionStats} from "../../../../integration/types";
@@ -21,6 +22,8 @@
     let keyJump: MinecraftKeybind | undefined;
     let keyAttack: MinecraftKeybind | undefined;
     let keyUse: MinecraftKeybind | undefined;
+    let keySneak: MinecraftKeybind | undefined;
+    let keySprint: MinecraftKeybind | undefined;
 
     let cps = {left: 0, right: 0};
 
@@ -34,6 +37,8 @@
         keyJump = keybinds.find(k => k.bindName === "key.jump");
         keyAttack = keybinds.find(k => k.bindName === "key.attack");
         keyUse = keybinds.find(k => k.bindName === "key.use");
+        keySneak = keybinds.find(k => k.bindName === "key.sneak");
+        keySprint = keybinds.find(k => k.bindName === "key.sprint");
     }
 
     onMount(updateKeybinds);
@@ -57,11 +62,21 @@
         <Key key={keyJump} gridArea="e" />
     </div>
 
+    {#if cSettings?.showSneakSprint}
+        <div class="modifiers">
+            <Key key={keySneak} gridArea="h" />
+            <Key key={keySprint} gridArea="i" />
+        </div>
+    {/if}
+
     {#if cSettings?.showMouseButtons}
         <div class="mouse">
             <MouseKey key={keyAttack} label="LMB" cps={cps.left} showCps={cSettings?.showCps ?? true} gridArea="f" />
             <MouseKey key={keyUse} label="RMB" cps={cps.right} showCps={cSettings?.showCps ?? true} gridArea="g" />
         </div>
+    {/if}
+    {#if cSettings?.showMouseTracker}
+        <MouseTracker/>
     {/if}
 </div>
 
@@ -82,7 +97,14 @@
     gap: 5px;
   }
 
-  /* Two tiles across the same 160px the movement grid occupies, so the block stays square-edged. */
+  /* Sneak and sprint share the mouse row's shape so the block stays square-edged. */
+  .modifiers {
+    display: grid;
+    grid-template-areas: "h i";
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+
   .mouse {
     display: grid;
     grid-template-areas: "f g";

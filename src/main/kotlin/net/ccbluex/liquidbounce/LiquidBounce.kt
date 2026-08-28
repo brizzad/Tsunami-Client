@@ -46,6 +46,7 @@ import net.ccbluex.liquidbounce.features.blink.BlinkManager
 import net.ccbluex.liquidbounce.features.command.CommandManager
 import net.ccbluex.liquidbounce.features.creativetab.tabs.HeadsCreativeModeTab
 import net.ccbluex.liquidbounce.features.global.GlobalManager
+import net.ccbluex.liquidbounce.features.misc.MouseTrail
 import net.ccbluex.liquidbounce.features.misc.FriendManager
 import net.ccbluex.liquidbounce.features.misc.SessionStats
 import net.ccbluex.liquidbounce.features.module.ModuleManager
@@ -260,6 +261,7 @@ object LiquidBounce : EventListener {
         RenderedEntities
         ChunkScanner
         InputTracker
+        MouseTrail
 
         // Feature managers
         ModuleManager

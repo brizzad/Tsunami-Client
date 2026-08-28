@@ -55,6 +55,7 @@ export interface EventMap {
     fps: FpsChangeEvent;
     clientPlayerData: ClientPlayerDataEvent;
     sessionStats: SessionStatsEvent;
+    mouseTrail: MouseTrailEvent;
     clientPlayerEffect: ClientPlayerEffectEvent;
     clientPlayerInventory: ClientPlayerInventoryEvent;
     title: TitleEventTitle;
@@ -130,6 +131,11 @@ export type ComponentsUpdateEvent =
 
 export interface ClientPlayerDataEvent {
     playerData: PlayerData;
+}
+
+export interface MouseTrailEvent {
+    dx: number;
+    dy: number;
 }
 
 export interface SessionStatsEvent {

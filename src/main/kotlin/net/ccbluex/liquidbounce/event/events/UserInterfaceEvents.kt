@@ -45,6 +45,10 @@ class ClientPlayerDataEvent(val playerData: PlayerData) : Event(), WebSocketEven
 @Suppress("unused")
 class SessionStatsEvent(val session: SessionStatsData) : Event(), WebSocketEvent
 
+@Tag("mouseTrail")
+@Suppress("unused")
+class MouseTrailEvent(val dx: Double, val dy: Double) : Event(), WebSocketEvent
+
 @Tag("clientPlayerEffect")
 @Suppress("unused")
 class ClientPlayerEffectEvent(val effects: List<MobEffectInstance>) : Event(), WebSocketEvent

@@ -37,6 +37,8 @@ interface HudInventoryStatisticsSettings {
 
 interface HudKeystrokesSettings {
     showMouseButtons: boolean;
+    showSneakSprint: boolean;
+    showMouseTracker: boolean;
     showCps: boolean;
 }
 

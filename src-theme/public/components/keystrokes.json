@@ -1,6 +1,6 @@
 {
   "name": "Keystrokes",
-  "description": "Visualizes your movement keys and mouse buttons, with clicks per second.",
+  "description": "Visualizes your movement keys, sneak/sprint and mouse buttons, with clicks per second.",
   "enabled": false,
   "singleton": true,
   "alignment": {
@@ -17,8 +17,18 @@
     },
     {
       "type": "BOOLEAN",
+      "name": "ShowSneakSprint",
+      "value": true
+    },
+    {
+      "type": "BOOLEAN",
       "name": "ShowCps",
       "value": true
+    },
+    {
+      "type": "BOOLEAN",
+      "name": "ShowMouseTracker",
+      "value": false
     }
   ]
 }
