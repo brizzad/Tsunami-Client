@@ -33,11 +33,23 @@
     }
 
     /**
+     * Indices into `configurable.value`, never copies of the settings themselves.
+     *
+     * `bind:setting` has to write back into the array `save()` sends, and a
+     * `filter()`/`find()` result is a different array holding the same object
+     * references. A child that reassigns its prop - which every setting editor
+     * does, as `setting = {...cSetting}` - then writes into that copy, and the
+     * change never reaches `configurable`. Binding to `configurable.value[i]`
+     * is what `GlobalSettings.svelte` already does, for this reason.
+     *
      * Bind and Hidden are handled by the header and the HUD respectively, so
      * showing them again in the body would be two controls for one value.
      */
-    $: settings = configurable?.value.filter((v) => v.name !== "Bind" && v.name !== "Hidden") ?? [];
-    $: bind = configurable?.value.find((v) => v.name === "Bind") ?? null;
+    $: settingIndices = configurable
+        ? configurable.value.flatMap((v, i) =>
+            v.name === "Bind" || v.name === "Hidden" ? [] : [i])
+        : [];
+    $: bindIndex = configurable?.value.findIndex((v) => v.name === "Bind") ?? -1;
 </script>
 
 <div class="pane">
@@ -60,19 +72,27 @@
         </header>
 
         <div class="body">
-            {#if bind}
+            {#if configurable && bindIndex >= 0}
                 <div class="bind">
-                    <GenericSetting path="clickgui.{name}" bind:setting={bind} on:change={save}/>
+                    <GenericSetting
+                            path="clickgui.{name}"
+                            bind:setting={configurable.value[bindIndex]}
+                            on:change={save}
+                    />
                 </div>
             {/if}
 
             {#if configurable === null}
                 <p class="muted">Loading…</p>
-            {:else if settings.length === 0}
+            {:else if settingIndices.length === 0}
                 <p class="muted">This module has no settings.</p>
             {:else}
-                {#each settings as setting (setting.name)}
-                    <GenericSetting path="clickgui.{name}" bind:setting={setting} on:change={save}/>
+                {#each settingIndices as i (configurable.value[i].name)}
+                    <GenericSetting
+                            path="clickgui.{name}"
+                            bind:setting={configurable.value[i]}
+                            on:change={save}
+                    />
                 {/each}
             {/if}
         </div>

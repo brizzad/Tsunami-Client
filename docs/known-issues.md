@@ -7,15 +7,109 @@ reproduce it and how it was confirmed, so nobody has to rediscover it.
 
 ## ClickGUI commits only the first setting change per module selection
 
-**Severity: high.** It affects every setting in the client, not one module.
+**Fixed in the working tree; not yet checked in a running client.** Kept here
+until someone confirms it in game, because that is this project's bar for done.
 
-After you select a module in the ClickGUI, the **first** setting you change is
-applied and persisted. Every change after that flips the switch on screen but
-never reaches the backend. Selecting another module and coming back resyncs it,
-and the next single change works again.
+After you selected a module in the ClickGUI, the **first** setting you changed
+was applied and persisted. Every change after that flipped the switch on screen
+but never reached the backend. Selecting another module and coming back
+resynced it, and the next single change worked again.
 
-So a player who opens a module and adjusts four things gets one of them, and the
-UI tells them all four took. Nothing is logged.
+So a player who opened a module and adjusted four things got one of them, and
+the UI told them all four took. Nothing was logged.
+
+### The cause
+
+Two things had to be true at once, which is why it survived review.
+
+**One — the settings each-block bound into a copy.** `SettingsPane.svelte` did:
+
+```svelte
+$: settings = configurable?.value.filter((v) => v.name !== "Bind" && v.name !== "Hidden") ?? [];
+
+{#each settings as setting (setting.name)}
+    <GenericSetting bind:setting={setting} on:change={save}/>
+{/each}
+```
+
+`filter()` returns a **new array** holding the same object references. A
+`bind:` writeback assigns into that array, not into `configurable.value`, and
+`save()` sends `configurable`. So any child that *reassigns* its prop writes
+into a dead end.
+
+**Two — every setting editor reassigns its prop, from a stale capture.** The
+upstream idiom, here in `BooleanSetting.svelte`, is:
+
+```js
+const cSetting = setting as BooleanSetting;   // captured once, at init
+function handleChange() {
+    setting = { ...cSetting };                // reassignment, not mutation
+    dispatch("change");
+}
+```
+
+`cSetting` is a `const` grabbed when the component mounts. The inner control
+mutates *that object*.
+
+Together they produce exactly the observed behaviour:
+
+1. First change — `cSetting` still **is** `configurable.value[i]`, so mutating
+   it in place reaches `configurable` despite the dead-end writeback.
+   `save()` sends it. It commits.
+2. `save()` then refetches: `configurable = await getModuleSettings(name)`,
+   which replaces every setting object with a fresh one from the server.
+3. The keyed each sees unchanged keys, so it **reuses** the child components
+   rather than recreating them — and `cSetting` still points at the discarded
+   object from step 1.
+4. Every later change mutates that orphan. The writeback goes to the filtered
+   copy. `configurable.value` is untouched, and `save()` sends it unchanged.
+
+That is why the doc's earlier note was right that `Value.set` was innocent: the
+change never arrived at it.
+
+It also explains the resync. Selecting another module sets `configurable = null`,
+which empties the list and destroys the children; coming back rebuilds them, so
+`cSetting` is captured fresh and one more change gets through.
+
+### The fix
+
+Bind to the real array by index, so the writeback lands where `save()` reads:
+
+```svelte
+$: settingIndices = configurable
+    ? configurable.value.flatMap((v, i) =>
+        v.name === "Bind" || v.name === "Hidden" ? [] : [i])
+    : [];
+
+{#each settingIndices as i (configurable.value[i].name)}
+    <GenericSetting bind:setting={configurable.value[i]} on:change={save}/>
+{/each}
+```
+
+The Bind row had the same fault, from `find()`, and is fixed the same way.
+
+This is not a new idea — `tabs/GlobalSettings.svelte` and
+`menu/common/setting/WrappedSetting.svelte` both already bind
+`something.value[i]`, and neither has ever shown the bug. `SettingsPane.svelte`
+was the only place binding into a derived value, and it was the one file the
+single-window rework (`1e8b9f2a`) added that touches settings.
+
+### How it was verified
+
+Compiled the real before-and-after shapes with the project's own Svelte 5.33.9
+and drove them in jsdom, clicking one setting three times and then a second
+setting, without reselecting — the reproduction below, as code. Committed
+values per click:
+
+| | AirWalker | SwingSpeed |
+| --- | --- | --- |
+| before | `true, true, true, true` | `false, false, false, false` |
+| after | `true, false, true, true` | `false, false, false, true` |
+
+Before, clicks 2 and 3 never move the value and the fourth click is lost too.
+After, every click commits. `npx vite build` is clean.
+
+**Still to do: confirm it in game**, with the reproduction below.
 
 ### Reproducing it
 
@@ -28,36 +122,55 @@ UI tells them all four took. Nothing is logged.
 node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('run/Tsunami/modules.json','utf8'));const f=(n,name)=>{if(n&&typeof n==='object'){if(n.name===name)return n;for(const v of Object.values(n)){const r=f(v,name);if(r)return r;}}return null;};console.log(f(j,'Animations').value.find(v=>v.name==='AirWalker'));"
 ```
 
-The switch on screen and the stored value disagree after step 3.
+The switch on screen and the stored value should now agree at every step.
 
 `run/Tsunami/modules.json` is the authority here, not the screen. Force a save
 first by toggling something on a *different* module, since the config is written
 on a change rather than continuously.
 
-### What is known
+### The latent half, deliberately left alone
 
-- It is **not specific to nested value groups**. `AirWalker` is a plain
-  top-level boolean on `Animations`, and it reproduces there.
-- It is **not specific to modules added recently**. `Animations` is upstream's,
-  untouched by this fork.
-- The backend is behaving correctly. `Value.set` skips no-ops and fires its
-  listeners on every real change (`config/types/Value.kt`), and
-  `ValueChangedEvent` is emitted. The changes that go missing never arrive at
-  `set` at all - the stored value simply never moves.
-- So the fault is on the theme side, in what the ClickGUI sends after it has
-  already sent one change for the selected module.
+The stale `const cSetting` capture is still there, in all 22 setting editors.
+With the writeback repaired it no longer loses changes — the `{...cSetting}`
+spread carries the new value into the real array — but it does mean a child goes
+on displaying its own copy after a refetch. If the backend ever answers with a
+value different from the one sent (a clamped int, a choice that resets its
+siblings), the row will show the sent value rather than the stored one.
 
-### Where it came from
+Not fixed here because it is upstream's idiom across 22 files, and this fork
+keeps upstream's structure so merges stay possible. Worth doing as its own
+piece of work, with `const` becoming `$:` and each editor re-checked.
 
-The single-window ClickGUI rework, commit `1e8b9f2a`. That commit was verified
-for rendering, filtering, counts, row toggles and that every setting *type*
-appears - all of which still hold. What it did not cover was changing two
-settings in a row without reselecting, which is the case that fails.
+---
 
-### How it was found
+## `./gradlew build` fails on an orphaned NoFall test
 
-While verifying `BundledMods`, whose settings write through to a bundled mod's
-own config file. The first toggle wrote to `config/sodium-options.json` and
-logged it; later toggles did nothing. The bridge was suspected first, and
-cleared by reproducing the same pattern on `Animations`, which has no such
-listener.
+**Severity: medium.** CI's second job runs the full `./gradlew build`, so the
+tree is red there until this is removed.
+
+`src/test/kotlin/net/ccbluex/liquidbounce/features/module/modules/player/nofall/modes/NoFallMlgPlacementTest.kt`
+tests `NoFall`, which was deleted during the cheat strip. `compileTestKotlin`
+fails on seven unresolved references — `wasMlgPlacementApplied`,
+`MlgPlacementActionType`, `shouldPrepareMlgAction` — all of which lived in the
+deleted module.
+
+### Reproducing it
+
+```sh
+./gradlew compileTestKotlin
+```
+
+### The fix
+
+Delete the file, and the now-empty `nofall` directory with it. There is nothing
+to salvage: the module it covers is gone on purpose and is not coming back.
+
+Nothing else in the test source set references it, and `./gradlew build -x test
+-x compileTestKotlin -x compileTestJava` is green, so this is the only thing
+between the tree and a passing build.
+
+This is the second orphan the strip left behind. The first was the four modules
+that loaded and did nothing, which is what `scripts/audit.mjs` now checks for.
+Worth noting that `audit.mjs` reports **clean** here — it checks that kept
+modules still have the code they depend on, not that deleted modules left no
+test behind. A `kept-tests` check would have caught this.
