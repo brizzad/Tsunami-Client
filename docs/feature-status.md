@@ -11,6 +11,8 @@ Status meanings:
 - **done** — built and checked in a running client, not merely compiled
 - **present** — already existed in the fork; verified rather than rebuilt
 - **deferred** — deliberately not built, with the reason given
+- **built** — merged and compiling, with every injection point verified against
+  the deobfuscated jar, but not yet seen in a running client
 - **blocked** — cannot be built at all right now, with the blocker given
 
 ---
@@ -88,7 +90,7 @@ outside the keybind system - three things every other feature here has.
 jasspir's mod is still the specification for what BetterHitreg does, and its
 wording is quoted in the source: appearance only, actual hits unmodified.
 
-## Performance — 9/11
+## Performance — 9/12
 
 | Item | Status | Notes |
 | --- | --- | --- |
@@ -103,14 +105,27 @@ wording is quoted in the source: appearance only, actual hits unmodified.
 | Lithium, FerriteCore, ImmediatelyFast, EntityCulling, C2ME | done | versions pinned to real 26.2 Fabric builds |
 | **VulkanMod profile** | **blocked** | no 26.2 release exists; newest is 26.1.2 |
 | **ModernFix** | **blocked** | no 26.2 Fabric build; newest Fabric is 1.21.1 |
+| **Shader support** | **deferred** | Iris `1.11.1+26.2-fabric` (LGPL-3.0) exists and fits; see below |
 | ~~Starlight~~, ~~OptiFine~~ | excluded | both conflict with Sodium |
 
-Neither blocker is a scoping decision. Both are absent from Modrinth, checked
-rather than assumed. The VulkanMod profile exists by name and installs nothing,
-with the reason written where its entry would go. Verifying that every UI
+Neither blocker is a scoping decision. Both are absent from Modrinth, re-checked
+on 2026-08-28 and still absent. The VulkanMod profile exists by name and installs
+nothing, with the reason written where its entry would go. Verifying that every UI
 element renders under Vulkan cannot be done while it cannot be installed.
 
-## HUD and visual — 20/27
+**Shader support had no row in this document at all until now.** It is in the
+approved brief under Performance/Rendering, and it was never recorded as done,
+deferred or blocked - it was simply missing, which is the one state this document
+exists to prevent. Iris is the mod for it, it is LGPL-3.0, and Iris with Sodium is
+the standard pairing rather than a compromise.
+
+There is a trap in the version, and it is the Sodium Extra bug exactly. Iris
+`1.11.2` requires Sodium `>=0.9.1`; the launcher pins Sodium `0.9.0`, because 0.9.1
+and up are alphas. **Iris `1.11.1` is the newest build that requires only 0.9.0**,
+so that is the one to pin. Taking the newest would not degrade - Fabric would
+refuse to start the game.
+
+## HUD and visual — 21/27
 
 | Item | Status | Notes |
 | --- | --- | --- |
@@ -139,10 +154,10 @@ element renders under Vulkan cannot be done while it cannot be installed.
 | AppleSkin food HUD | done | bundled: AppleSkin `3.0.10+mc26.2` |
 | Minimap | present | **not** ported from Xaero's; see below |
 | Motion blur | done | bundled: Natural Motion Blur `1.4.4` (LGPL-3.0), off by default |
-| **Item physics** | **blocked** | no Fabric mod with a 26.2 build exists to merge or bundle |
+| **Item physics** | **deferred** | ItemPhysic `1.8.15` does build for 26.2 now, but see below |
 | 3D skins | done | bundled: 3D Skin Layers `1.11.2`; see the licence note below |
-| **Glint colorizer** | **deferred** | only 26.2 option is ZEEG, which requires Mod Menu; see below |
-| **2D items** | **blocked** | same: nothing on Modrinth builds for 26.2 |
+| **Glint colorizer** | **deferred** | ZEEG still needs Mod Menu, but it is no longer the only option; see below |
+| 2D items | built | `FlatItems`, merged from beamingblue's Flat Items `1.1.1+26.2` (MIT) |
 | **Resource pack organiser** | **deferred** | a Svelte UI project in its own right; no 26.2 mod either |
 | ~~Real-world clock~~ | excluded | as specified |
 
@@ -160,19 +175,39 @@ does not need one: vanilla already has a post-effect chain, and Natural Motion
 Blur uses it. 3D skins was deferred by association rather than on its own
 merits. Both are now bundled and neither needed a line of render code here.
 
-What is left in that group is genuinely blocked rather than deferred. Item
-physics and 2D items have no Fabric mod with a 26.2 build at all - checked
-against Modrinth, not assumed - so there is nothing to merge and nothing to
-bundle, and building either from scratch means the entity and item renderer
-surgery that silently broke four modules once already.
+**That group was re-checked on 2026-08-28, and two thirds of it had gone
+stale.** "No 26.2 build exists" was true when written and is a claim with a
+shelf life; Modrinth moved and the doc did not. Re-check before trusting any
+remaining blocker here.
 
-Glint colorizer is a near miss worth recording. ZEEG is the only 26.2 option,
-it is MIT with source, and it would be mergeable except that it declares Mod
-Menu as a required dependency and reaches item rendering through eight mixins.
-Bundling it would mean bundling Mod Menu, which is a second settings UI - the
-exact thing the bundled-mod config bridge exists to avoid - and merging it
-means eight mixins into item rendering for a mod with 322 downloads. Skipped
-on the strategy note that says to skip rather than sink effort into a corner.
+**2D items is built.** `flat-items` `1.1.1+26.2` is MIT and its entire feature is two
+mixins and a settings interface, so the source was merged as `FlatItems` rather
+than bundled - upstream configures itself through Mod Menu, which this client
+deliberately does not ship. The feared "entity and item renderer surgery" turned
+out to be one `@Redirect` on the single `PoseStack.mulPose` call inside
+`ItemEntityRenderer.submit`, plus an accessor for the baked quads. Both
+injection points were verified against the deobfuscated 26.2 jar: `submit`
+carries exactly one `mulPose` invocation, so the redirect is unambiguous.
+
+**Item physics is now a licence problem rather than an availability one.**
+ItemPhysic `1.8.15` builds for 26.2, so it can be bundled - but it cannot be
+merged: it is LGPL-2.1-**only**, and without the "or later" clause there is no
+upgrade path into a GPL-3.0 work. It also requires CreativeCore, so bundling it
+costs two jars rather than one. That is a deliberate call to make, not a
+blocker, which is why the row moved from blocked to deferred.
+
+Glint colorizer was recorded as a near miss on ZEEG, which is still true -
+ZEEG still declares Mod Menu as a *required* dependency, re-checked, and
+bundling Mod Menu means a second settings UI. But ZEEG is no longer the only
+26.2 option, which is what the old note got wrong. `enchantment-glint-outline`
+`3.3` is **CC0-1.0** with 936k downloads, and Mod Menu is *optional* to it. CC0
+is the most permissive licence there is, so it can be merged outright. Not
+built here only because it was not what this batch was for.
+
+The separate objection in the Feather audit below - that 26.2 has no glint
+class left to inject into - deserves a re-check too, because these mods build
+for 26.2 and therefore found something to hook. Whatever they hook is the
+answer to that question.
 
 ## Social — 7/9
 
@@ -223,7 +258,7 @@ because a hook that lies is worse than none.
 | **Network level display** | **blocked** | same API and key, and no LevelHead-style mod builds for 26.2 |
 | **Game-specific timers** | **deferred** | same, plus per-gamemode parsing |
 | **Auto-friend / GG / tip** | **deferred** | needs server-specific end-of-game detection |
-| **MumbleLink / TeamSpeak** | **blocked** | JNI shared memory, and no 26.2 Fabric mod exists to bundle |
+| **MumbleLink / TeamSpeak** | **deferred** | `mumble-link-fabric` `0.13.2` (LGPL-3.0) does build for 26.2; the JNI work is upstream's, not ours |
 
 The four Hypixel-shaped items are deferred as one piece of work rather than
 four: they share an API client, key storage and rate limiting, and building
@@ -264,10 +299,89 @@ Deliberately not taken from Lunar:
 | Screenshot Uploader | Needs an image host - backend gap below |
 | Hypixel Bedwars/Mods/Quickplay, UHC Overlay, Team View, PvP Info | Server-specific, and the Hypixel set needs a user API key |
 | Mumble Link | JNI shared memory, no 26.2 mod |
-| Pack Organizer, Pack Display | A Svelte UI project in its own right |
+| Pack Organizer | A Svelte UI project in its own right |
+| ~~Pack Display~~ | **Built since**, as `PackDisplay`. Naming the applied packs is a four-line read of `PackRepository`; only the organiser is a UI project |
 | Knockback Trainer | A practice tool, in scope but a feature batch of its own - flagged rather than started |
-| Better Sounds, Color Saturation, Fog Customizer | Fog and ambience are already `CustomAmbience`; the other two are shader work for cosmetic gain |
+| Fog Customizer | Already `CustomAmbience` - `FogValueGroup` sets colour, environmental and render-distance bands, sky and cloud ends |
+| Better Sounds | Reverb needs OpenAL EFX, which is a project rather than a module |
+| ~~Color Saturation~~ | **Built since.** Recorded here as "shader work for cosmetic gain", which was wrong twice over: the fork already had a post-effect pipeline from MotionBlur, and colour grading is the single most-requested setting these clients ship. It is now `ColorSaturation` |
 | Momentum, Snaplook, Auto Text Hot Key, Playtime, FPS | Already covered by the speedometer, `QuickPerspectiveSwap`, `Macros`, `{session.uptime}` and `{session.fps}` |
+
+## Audited against Feather Client
+
+Feather publishes its own mod list in its server API documentation
+(<https://docs.feathermc.com/server-api/mods/>) — 93 mod ids with display names
+and descriptions. That is the whole surface, from the vendor, rather than a
+review site's summary, so it was checked line by line rather than sampled.
+
+**Roughly two thirds were already here.** Animations, armour status, auto
+perspective, auto text, block overlay, boss bar, brightness, combo, coordinates,
+CPS, crosshair, custom chat, damage indicator, direction, FOV changer, FPS,
+hitbox, inventory, item counter, keystrokes, mousestrokes, motion blur,
+nametags, nick hider, perspective, ping, playtime, potion effects, reach
+display, saturation, scoreboard, server address, snaplook, speed meter,
+stopwatch, subtitles, tablist, time changer, title tweaker, TNT timer, toggle
+sprint, totem, viewmodel, voice, waypoints, weather changer and zoom all map
+onto an existing module, HUD component or bundled mod.
+
+### Built from this audit — thirteen modules
+
+| Feather mod | Built as | Notes |
+| --- | --- | --- |
+| `colorSaturation` | `ColorSaturation` | Post-process grade over the world frame: saturation, vibrance, contrast, brightness, gamma and white balance, plus six presets. Runs on the same `PostChain` machinery MotionBlur brought in |
+| `lootBeams` | `LootBeams` | Rarity-coloured beam over dropped items, with a rarity floor and distance fade |
+| `itemdespawn` | `ItemDespawn` | Outline that warms toward red and then flashes as the despawn clock runs out |
+| `lightleveloverlay` | `LightLevels` | Marks ground a hostile mob can spawn on, with a hard marker budget so range cannot stall the render thread |
+| `horses` | `HorseStats` | Speed in b/s and jump in blocks, read from the horse's own attributes |
+| `packdisplay` | `PackDisplay` | Names the applied resource packs, built-ins hidden by default |
+| `hitindicator` | `HitDirection` | Arc pointing at the source of damage already taken, for a second or two |
+| `itemInfo1` | `PickupInfo` | Running tally of what entered or left the inventory, losses included |
+| `toastcontrol` | `ToastControl` | Per-kind toast filter, cancelled at the queue so a hidden toast takes no slot |
+| `reconnect` | `AutoReconnect` | Bounded retries with optional back-off; refuses to retry a disconnect that reads as a ban or kick |
+| `culllogs` | `LogCleanup` | Deletes rotated `.log.gz` archives past an age. Dry run by default, never touches `latest.log` |
+| `dropprevention` | `DropProtect` | Refuses the drop key on enchanted, rare, renamed or damageable items, and says so |
+| `deathInfo` | `DeathInfo` | Death coordinates in chat plus an optional waypoint, written through the existing `WaypointManager` |
+
+Two readouts were added to `SessionStats` rather than as modules, because that
+is where `{session.fps}`, `{session.ping}` and `{session.memory.percent}`
+already live:
+
+* **`{session.tps}`** (Feather's `tps`) — measured, not asked for. A vanilla
+  server sends a time update every 20 ticks, so the median gap between them is
+  the tick rate. The ticking-state packet was rejected as a source: it reports
+  the rate the server was *configured* with, which stays at 20 while a server
+  lags. A server that suppresses time updates leaves this at 0 rather than at a
+  fabricated number.
+* **`{session.cpu}`** (part of Feather's `systemresources`, which Tsunami only
+  covered for memory) — this process' CPU share, read reflectively so a JVM
+  without `com.sun.management` reports -1 instead of failing.
+
+### Already covered, so not rebuilt
+
+| Feather mod | Where it already is |
+| --- | --- |
+| `customfog` | `CustomAmbience` → `FogValueGroup`: colour override, environmental and render-distance bands, sky and cloud ends. Clear water is `AntiBlind` → `LIQUIDS_FOG` |
+| `shulkertooltips` | Vanilla. `ItemContainerContents` implements `TooltipProvider` and prints the contents itself; only Feather's graphical grid is extra, and a bespoke `ClientTooltipComponent` is not worth it for a layout change |
+| `subtitles` | Already replaced by the theme HUD through `ClosedCaptionsEvent`; `MixinSubtitleOverlay` wraps the vanilla path in four places |
+| `blockIndicator` | Jade, bundled |
+| `armorBar`, `hearts` | `ArmorHud`. The compact single-row health rewrite would mean cancelling `Gui.extractPlayerHealth`, which `HudComponentTweak.DISABLE_STATUS_BAR` already claims |
+| `autohidehud` | `AntiBlind`'s `DoRender` set plus the HUD component tweaks |
+| `teamtracker`, `mobOverlay` | Out of scope — both are entity locators through terrain, which is the wallhack line |
+| `jumpreset`, `totem` (auto) | Out of scope — automating or coaching a reaction that decides a fight |
+| `time` | Excluded in the brief; a real-world clock was cut as useless |
+
+### Checked and left alone, with the reason
+
+| Feather mod | Why not |
+| --- | --- |
+| `glint` | **There is no glint class in 26.2 at all** — the whole `net.minecraft.client...glint` family is gone, checked against the deobfuscated jar rather than assumed. The earlier ZEEG note still stands, but the real blocker is now that there is no obvious injection point to colour |
+| `uiScaling` | Feather ships this with "USE WITH CAUTION" in its own description. `Window.calculateScale` is injectable, but a GUI scale that goes wrong is unrecoverable without editing options.txt by hand |
+| `backups` | `LevelStorageAccess.makeWorldBackup` runs from the world-selection screen with the world closed. Calling it mid-session needs a forced save first or the archive is a torn one, and a backup you cannot trust is worse than none. Worth doing properly, as its own piece of work |
+| `soundfilters` | Reverb is OpenAL EFX. Same answer as Lunar's Better Sounds |
+| `screenshot` | Vanilla already prints a clickable "saved as" line. Clipboard image copy would mean AWT, which does not coexist with LWJGL on macOS |
+| `customf3`, `customadvancementsscreen`, `darkmode`, `searchkeybind`, `elytras`, `playerModel`, `camera` | Screen-chrome polish. In scope and cheap individually, but none of them is a gap anybody has named |
+| `hypixel`, `uhcoverlay`, `tiertagger` | Server-specific, and two of the three need a user API key — the same batch already deferred in the niche section |
+| `itemPhysic`, `packOrganizer` | Unchanged from the render section above |
 
 ## The backend gap
 

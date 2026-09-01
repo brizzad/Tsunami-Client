@@ -152,13 +152,20 @@ object ModuleHitboxes : ClientModule("Hitboxes", ModuleCategories.RENDER) {
             return targetColor
         }
 
-        return when (entity) {
-            is Player -> if (players) playerColor else null
-            is ItemEntity -> if (items) itemColor else null
-            is FireworkRocketEntity -> if (fireworks) itemColor else null
-            is LivingEntity -> if (mobs) mobColor else null
-            else -> null
-        }
+        return colorForKind(entity)
+    }
+
+    /**
+     * The colour an entity gets on its type alone, or null when that type is
+     * switched off. Split from [colorFor] so the precedence rules above stay
+     * readable beside the per-type table.
+     */
+    private fun colorForKind(entity: Entity): Color4b? = when {
+        entity is Player -> playerColor.takeIf { players }
+        entity is ItemEntity -> itemColor.takeIf { items }
+        entity is FireworkRocketEntity -> itemColor.takeIf { fireworks }
+        entity is LivingEntity -> mobColor.takeIf { mobs }
+        else -> null
     }
 
     @Suppress("unused")

@@ -21,7 +21,6 @@
 package net.ccbluex.liquidbounce.features.module.modules.render
 
 import net.ccbluex.liquidbounce.utils.client.isOlderThan1_9
-import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.ClientModule
@@ -62,14 +61,7 @@ object ModuleCooldowns : ClientModule("Cooldowns", ModuleCategories.RENDER) {
     override val inapplicableOnProtocol: String?
         get() = if (isOlderThan1_9) "Item cooldowns do not exist below 1.9" else null
 
-    enum class Anchor(override val tag: String) : Tagged {
-        TOP_LEFT("TopLeft"),
-        TOP_RIGHT("TopRight"),
-        BOTTOM_LEFT("BottomLeft"),
-        BOTTOM_RIGHT("BottomRight")
-    }
-
-    private val anchor by enumChoice("Anchor", Anchor.TOP_LEFT)
+    private val anchor by enumChoice("Anchor", ScreenAnchor.TOP_LEFT)
     private val offsetX by int("OffsetX", 4, 0..512)
     private val offsetY by int("OffsetY", 110, 0..512)
 
@@ -116,14 +108,8 @@ object ModuleCooldowns : ClientModule("Cooldowns", ModuleCategories.RENDER) {
         val height = context.guiHeight()
         val rows = cooldowns.size
 
-        val x = when (anchor) {
-            Anchor.TOP_LEFT, Anchor.BOTTOM_LEFT -> offsetX
-            Anchor.TOP_RIGHT, Anchor.BOTTOM_RIGHT -> width - offsetX - ROW_WIDTH
-        }
-        val top = when (anchor) {
-            Anchor.TOP_LEFT, Anchor.TOP_RIGHT -> offsetY
-            Anchor.BOTTOM_LEFT, Anchor.BOTTOM_RIGHT -> height - offsetY - rows * ROW_HEIGHT
-        }
+        val x = anchor.x(width, ROW_WIDTH, offsetX)
+        val top = anchor.y(height, rows * ROW_HEIGHT, offsetY)
 
         cooldowns.forEachIndexed { index, entry ->
             val y = top + index * ROW_HEIGHT
@@ -159,44 +145,43 @@ object ModuleCooldowns : ClientModule("Cooldowns", ModuleCategories.RENDER) {
         val player = mc.player ?: return emptyList()
         val manager = player.cooldowns
         val seen = HashSet<Pair<Int, Int>>()
-        val result = ArrayList<Entry>()
 
         val candidates = if (wholeInventory) stacks else stacks.take(9) + player.offhandItem
 
-        for (stack in candidates) {
-            if (stack.isEmpty) {
-                continue
+        // A lazy chain rather than a loop of early exits: the sequence stops
+        // pulling as soon as `take` has enough, so it still walks no further
+        // than the old `break` did.
+        val result = candidates.asSequence()
+            .filter { !it.isEmpty }
+            .mapNotNull { stack -> manager.getCooldown(stack)?.let { stack to it } }
+            .mapNotNull { (stack, cooldown) ->
+                val total = cooldown.endTick() - cooldown.startTick()
+                val remaining = cooldown.endTick() - cooldown.currentTick()
+
+                if (total <= 0 || remaining <= 0 || remaining < minDuration * 2) {
+                    return@mapNotNull null
+                }
+
+                // Items sharing a cooldown group share its exact window, so the
+                // start/end pair identifies the group without needing the
+                // group id, which vanilla keeps to itself.
+                if (!seen.add(cooldown.startTick() to cooldown.endTick())) {
+                    return@mapNotNull null
+                }
+
+                Entry(
+                    label = "%s  %.1fs".format(stack.hoverName.string, remaining / 20.0f),
+                    remainingFraction = remaining.toFloat() / total.toFloat(),
+                    remaining = remaining,
+                )
             }
-
-            val cooldown = manager.getCooldown(stack) ?: continue
-            val total = cooldown.endTick() - cooldown.startTick()
-            val remaining = cooldown.endTick() - cooldown.currentTick()
-
-            if (total <= 0 || remaining <= 0 || remaining < minDuration * 2) {
-                continue
-            }
-
-            // Items sharing a cooldown group share its exact window, so the
-            // start/end pair identifies the group without needing the
-            // group id, which vanilla keeps to itself.
-            if (!seen.add(cooldown.startTick() to cooldown.endTick())) {
-                continue
-            }
-
-            result += Entry(
-                label = "%s  %.1fs".format(stack.hoverName.string, remaining / 20.0f),
-                remainingFraction = remaining.toFloat() / total.toFloat(),
-                remaining = remaining,
-            )
-
-            if (result.size >= maxEntries) {
-                break
-            }
-        }
+            .take(maxEntries)
+            .toList()
 
         // Soonest first: the one about to come back is the one being waited on.
         return result.sortedBy { it.remaining }
     }
+
 
     /** Left inset for the label, so the bar stays readable underneath it. */
     private const val TEXT_INSET = 6

@@ -42,6 +42,12 @@ import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleStopwatch
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleNoServerResourcePack
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleServerIntegration
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleNotifier
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleToastControl
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleAutoReconnect
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleLogCleanup
+import net.ccbluex.liquidbounce.features.module.modules.player.ModuleDropProtect
+import net.ccbluex.liquidbounce.features.module.modules.player.ModuleDeathInfo
+import net.ccbluex.liquidbounce.features.module.modules.render.ModulePickupInfo
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleTextFieldProtect
 import net.ccbluex.liquidbounce.features.module.modules.misc.betterchat.ModuleBetterChat
 import net.ccbluex.liquidbounce.features.module.modules.misc.nameprotect.ModuleNameProtect
@@ -58,6 +64,7 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.features.module.modules.render.customambience.ModuleCustomAmbience
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageParticles
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFlatItems
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeLook
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleMlgHelper
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageTint
@@ -67,6 +74,13 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleCooldowns
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleArmorHud
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitboxes
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleColorSaturation
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleItemDespawn
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleLightLevels
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleLootBeams
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHorseStats
+import net.ccbluex.liquidbounce.features.module.modules.render.ModulePackDisplay
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitDirection
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChunkBorders
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleWaypoints
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleShinyPots
@@ -293,6 +307,9 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleNameProtect,
             ModuleTextFieldProtect,
             ModuleNotifier,
+            ModuleToastControl,
+            ModuleAutoReconnect,
+            ModuleLogCleanup,
 
             // Movement
             ModuleSneak,
@@ -301,6 +318,8 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             // Player
             ModuleAntiExploit,
             ModuleAutoRespawn,
+            ModuleDropProtect,
+            ModuleDeathInfo,
 
             // Render
             ModuleAnimations,
@@ -311,6 +330,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleDamageParticles,
             ModuleParticles,
             ModuleSmoothCamera,
+            ModuleFlatItems,
             ModuleFreeLook,
             ModuleFullBright,
             ModuleHud,
@@ -327,6 +347,14 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModulePotionTimers,
             ModuleBundledMods,
             ModuleChunkBorders,
+            ModuleColorSaturation,
+            ModuleLootBeams,
+            ModuleItemDespawn,
+            ModuleLightLevels,
+            ModuleHorseStats,
+            ModulePackDisplay,
+            ModuleHitDirection,
+            ModulePickupInfo,
             ModuleWaypoints,
             ModuleShinyPots,
             ModuleDurabilityGuard,

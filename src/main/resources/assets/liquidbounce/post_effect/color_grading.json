@@ -1,0 +1,40 @@
+{
+  "targets": {
+    "grade_swap": {}
+  },
+  "passes": [
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "liquidbounce:post/color_grading",
+      "inputs": [
+        {"sampler_name": "In", "target": "minecraft:main"}
+      ],
+      "output": "grade_swap",
+      "uniforms": {
+        "ColorGradingUniforms": [
+          {"name": "saturation",  "type": "float", "value": 1.0},
+          {"name": "vibrance",    "type": "float", "value": 0.0},
+          {"name": "contrast",    "type": "float", "value": 1.0},
+          {"name": "brightness",  "type": "float", "value": 1.0},
+          {"name": "gamma",       "type": "float", "value": 1.0},
+          {"name": "temperature", "type": "float", "value": 0.0},
+          {"name": "tint",        "type": "float", "value": 0.0},
+          {"name": "padding0",    "type": "float", "value": 0.0}
+        ]
+      }
+    },
+    {
+      "vertex_shader": "minecraft:core/screenquad",
+      "fragment_shader": "minecraft:post/blit",
+      "inputs": [
+        {"sampler_name": "In", "target": "grade_swap"}
+      ],
+      "output": "minecraft:main",
+      "uniforms": {
+        "BlitConfig": [
+          {"name": "ColorModulate", "type": "vec4", "value": [1, 1, 1, 1]}
+        ]
+      }
+    }
+  ]
+}

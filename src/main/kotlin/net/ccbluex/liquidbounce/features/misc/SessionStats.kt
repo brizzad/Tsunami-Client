@@ -26,11 +26,15 @@ import net.ccbluex.liquidbounce.event.events.AttackEntityEvent
 import net.ccbluex.liquidbounce.event.events.FpsChangeEvent
 import net.ccbluex.liquidbounce.event.events.GameTickEvent
 import net.ccbluex.liquidbounce.event.events.MouseButtonEvent
+import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.events.SessionStatsEvent
+import net.ccbluex.liquidbounce.event.events.TransferOrigin
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.utils.client.mc
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket
 import net.ccbluex.liquidbounce.utils.entity.ping
 import net.ccbluex.liquidbounce.utils.text.hideSensitiveAddress
+import java.lang.management.ManagementFactory
 import kotlin.math.hypot
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
@@ -109,6 +113,21 @@ object SessionStats : EventListener {
             return (stopwatchAccumulated + running) / 1000
         }
 
+    /**
+     * Server tick rate, measured rather than asked for.
+     *
+     * A vanilla server sends a time update every 20 ticks, so the gap between two
+     * of them is one second at full speed and stretches as the server falls
+     * behind. That is the only tick-paced signal a client is guaranteed to see -
+     * the ticking-state packet reports the rate the server was configured with,
+     * which is exactly the number that stays at 20 while a server lags.
+     *
+     * A server that suppresses time updates - some anti-cheat setups do - leaves
+     * this at zero rather than at a made-up value.
+     */
+    private val timeUpdateIntervals = ArrayDeque<Long>()
+    private var lastTimeUpdateAt = 0L
+
     private var fps = 0
     private var lastPos: Triple<Double, Double, Double>? = null
     private var speed = 0.0
@@ -119,6 +138,62 @@ object SessionStats : EventListener {
             clicks.removeFirst()
         }
     }
+
+    /** Intervals kept for the rolling median. Ten seconds of history at full speed. */
+    private const val TPS_SAMPLE_COUNT = 10
+
+    /** Vanilla sends a time update every this many ticks. */
+    private const val TICKS_PER_TIME_UPDATE = 20
+
+    /** Nothing heard for this long means the server stopped talking, not that it is slow. */
+    private const val TPS_STALE_MS = 10_000L
+
+    @Suppress("unused")
+    private val timePacketHandler = handler<PacketEvent> { event ->
+        if (event.origin != TransferOrigin.INCOMING || event.packet !is ClientboundSetTimePacket) {
+            return@handler
+        }
+
+        val now = System.currentTimeMillis()
+        val previous = lastTimeUpdateAt
+        lastTimeUpdateAt = now
+
+        // The first packet after joining has nothing to measure against.
+        if (previous == 0L) {
+            return@handler
+        }
+
+        val interval = now - previous
+
+        // A burst of updates in the same tick, or a gap that means the connection
+        // stalled rather than the server slowed, would both poison the median.
+        if (interval in 1..TPS_STALE_MS) {
+            timeUpdateIntervals.addLast(interval)
+            while (timeUpdateIntervals.size > TPS_SAMPLE_COUNT) {
+                timeUpdateIntervals.removeFirst()
+            }
+        }
+    }
+
+    /**
+     * The median interval rather than the mean, so one hitch does not drag the
+     * readout down for the next ten seconds.
+     */
+    private val tps: Double
+        get() {
+            if (timeUpdateIntervals.isEmpty() ||
+                System.currentTimeMillis() - lastTimeUpdateAt > TPS_STALE_MS
+            ) {
+                return 0.0
+            }
+
+            val sorted = timeUpdateIntervals.sorted()
+            val median = sorted[sorted.size / 2]
+
+            // Above 20 is not a thing a server does; it means the update arrived
+            // early, and reporting 23.4 TPS would just look broken.
+            return (TICKS_PER_TIME_UPDATE * 1000.0 / median).coerceAtMost(20.0)
+        }
 
     @Suppress("unused")
     private val fpsHandler = handler<FpsChangeEvent> { event ->
@@ -218,9 +293,13 @@ object SessionStats : EventListener {
                 count = player?.mainHandItem?.count ?: 0,
                 total = player?.let { p ->
                     val held = p.mainHandItem
-                    if (held.isEmpty) 0 else p.inventory.nonEquipmentItems
-                        .filter { it.item == held.item }
-                        .sumOf { it.count }
+                    if (held.isEmpty) {
+                        0
+                    } else {
+                        p.inventory.nonEquipmentItems
+                            .filter { it.item == held.item }
+                            .sumOf { it.count }
+                    }
                 } ?: 0
             ),
             // Overworld clock rather than the local one, so the day counter keeps
@@ -230,8 +309,35 @@ object SessionStats : EventListener {
             server = ServerData(
                 address = mc.currentServer?.ip?.hideSensitiveAddress() ?: "Singleplayer",
                 players = mc.connection?.onlinePlayers?.size ?: 1
-            )
+            ),
+            tps = tps,
+            cpu = processCpuPercent(),
         )
+    }
+
+    /**
+     * This process' CPU share, as a whole percent.
+     *
+     * Read through the JDK's own management bean by reflection rather than by
+     * importing `com.sun.management`, which is not on every JVM this can run on.
+     * Where it is missing the answer is -1, which the HUD renders as a dash - a
+     * readout that says "unknown" beats one that says zero.
+     */
+    private fun processCpuPercent(): Int {
+        val bean = ManagementFactory.getOperatingSystemMXBean()
+        val load = try {
+            bean.javaClass.methods
+                .firstOrNull { it.name == "getProcessCpuLoad" && it.parameterCount == 0 }
+                ?.also { it.isAccessible = true }
+                ?.invoke(bean) as? Double
+        } catch (_: ReflectiveOperationException) {
+            null
+        } catch (_: RuntimeException) {
+            null
+        }
+
+        // The bean returns a negative value until it has two samples to compare.
+        return if (load == null || load < 0.0) -1 else (load * 100.0).roundToInt()
     }
 
     /**
@@ -247,6 +353,8 @@ object SessionStats : EventListener {
         reach = 0.0
         speed = 0.0
         lastPos = null
+        timeUpdateIntervals.clear()
+        lastTimeUpdateAt = 0L
     }
 
 }
@@ -294,4 +402,10 @@ data class SessionStatsData(
     val day: Long,
     val direction: DirectionData,
     val server: ServerData,
+
+    /** Measured server tick rate, or 0 when the server sends nothing to measure. */
+    val tps: Double,
+
+    /** This process' share of the CPU, 0-100, or -1 where the JVM will not say. */
+    val cpu: Int,
 )
