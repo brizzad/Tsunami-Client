@@ -115,47 +115,49 @@ still absent. That is not a scoping decision, just a missing artifact.
 The blocked entry was for *VulkanMod*, a third-party renderer replacement, and
 that still has no 26.2 build. It does not need one: **26.2 ships a Vulkan backend
 in vanilla.** `com.mojang.blaze3d.vulkan.VulkanBackend` sits beside `GlBackend`
-and `net.minecraft.client.PreferredGraphicsApi` picks between them - checked
-against the deobfuscated jar, not assumed. This fork was already written for it:
-`MixinVulkanRenderPass` injects into the Vulkan path.
+and `net.minecraft.client.PreferredGraphicsApi` picks between them. This fork was
+already written for it: `MixinVulkanRenderPass` injects into the Vulkan path.
 
 The switch is `BundledMods` → `Vulkan` → `Enabled`. It sets vanilla's
-`preferredGraphicsBackend` option and saves `options.txt`; the game reads that
-once at startup, so it takes effect on the next launch. The launcher reads the
-same option before installing mods and leaves out the ones that cannot run on
-it, which is the only place that decision can live - a jar cannot be unloaded at
-runtime.
+`preferredGraphicsBackend` and saves `options.txt`; the game reads that once at
+startup, so it applies on the next launch. That is all it does.
 
-Three mods are left out, and the confidence in each differs:
+**It was run, and the run overturned the design.** On an NVIDIA GTX 1660 Ti the
+client starts on Vulkan 1.4.341 and logs `Using graphics backend Vulkan`, then
+the full healthy-start sequence - `Launching Tsunami v0.40.1`,
+`Reloaded theme 'Tsunami'`, `Initialized Browser API`,
+`Tsunami has been successfully initialized` - with no exception anywhere in the
+log.
 
-* **Sodium** replaces the OpenGL renderer. Not a judgement call.
-* **Sodium Extra** declares `sodium` as a required dependency, verified against
-  Modrinth, so Fabric would refuse to start the game without it.
-* **ImmediatelyFast** optimises immediate-mode OpenGL draws and ships an option
-  its own docs describe as disabling *OpenGL* error checking. Strong evidence
-  rather than proof, and the one entry to re-test.
+The first implementation also had the launcher strip Sodium, Sodium Extra and
+ImmediatelyFast on the way in, on the reasoning that a mod which replaces the
+OpenGL renderer cannot survive a Vulkan one. **That was wrong, and the evidence
+is direct:**
 
-Everything else was checked and kept: Lithium, FerriteCore, C2ME and
-BadOptimizations do not touch the graphics API, and MoreCulling and EntityCulling
-depend on Cloth Config and Fabric API rather than Sodium.
+* Sodium `0.9.0+mc26.2` ships `DrawBackend` with `OPENGL`, `VK_MULTIDRAW` and
+  `VK_INDIRECT`, a `chooseBackend()` that picks at runtime, and a
+  `VKDrawContext` built on `org.lwjgl.vulkan.VkCommandBuffer`. Read out of the
+  jar, not inferred. Sodium has a Vulkan renderer.
+* ImmediatelyFast logged `Initializing ImmediatelyFast 1.16.0+26.2 ... with
+  Vulkan 1.4.341`. It names the API it is running on.
+* Sodium Extra only ever needed Sodium, which works.
 
-**Status is `built`, not `done`, and the gap is real.** The option write, the
-parsing and the mod filtering are covered by tests, but nobody has yet started
-the game on the Vulkan backend and confirmed the client's own HUD, ClickGUI and
-render modules draw correctly on it. The original brief asked for exactly that
-verification before shipping Vulkan as an option, and it is still outstanding.
+So the filtering was removed and no mod is disabled. The lesson is the one this
+document keeps recording: "these two things are incompatible" was a plausible
+inference from how the mods used to work, and one `runClient` plus one `javap`
+disproved it.
 
-**Shader support had no row in this document at all until now.** It is in the
-approved brief under Performance/Rendering, and it was never recorded as done,
-deferred or blocked - it was simply missing, which is the one state this document
-exists to prevent. Iris is the mod for it, it is LGPL-3.0, and Iris with Sodium is
-the standard pairing rather than a compromise.
+**The real cost is not a mod.** MCEF logs `GPU acceleration only supports the
+OpenGL backend. Current backend: Vulkan`. The ClickGUI and themed HUD are a
+Chromium browser, so under Vulkan they composite on the CPU. They still work -
+the browser initialises and serves the theme - but that is the argument against
+making Vulkan a default.
 
-There is a trap in the version, and it is the Sodium Extra bug exactly. Iris
-`1.11.2` requires Sodium `>=0.9.1`; the launcher pins Sodium `0.9.0`, because 0.9.1
-and up are alphas. **Iris `1.11.1` is the newest build that requires only 0.9.0**,
-so that is the one to pin. Taking the newest would not degrade - Fabric would
-refuse to start the game.
+**Status is `built`, not `done`, and the remaining gap is specific: terrain has
+not been seen drawn.** The client reaches the title screen and initialises
+everything, but Tsunami replaces the title screen with its own browser screen,
+which swallows vanilla's `--quickPlaySingleplayer`, so an automated run cannot
+enter a world. Loading a world by hand and looking at it is what is left.
 
 ## HUD and visual — 21/27
 

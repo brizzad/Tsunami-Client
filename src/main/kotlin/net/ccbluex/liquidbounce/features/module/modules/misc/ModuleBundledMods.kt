@@ -117,52 +117,61 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
      *
      * Mojang shipped a second graphics backend in 26.2:
      * `com.mojang.blaze3d.vulkan.VulkanBackend` sits beside the long-standing
-     * `GlBackend`, and [PreferredGraphicsApi] picks between them. Tsunami is
+     * `GlBackend`, and [PreferredGraphicsApi] picks between them. This fork was
      * already written for it - `MixinVulkanRenderPass` injects into the Vulkan
-     * path, so the client's own rendering works either way.
+     * path - and it has now been run: the client starts on Vulkan, and the HUD,
+     * theme and ClickGUI browser all initialise (checked 2026-09-01 on an
+     * NVIDIA GTX 1660 Ti, Vulkan 1.4.341).
      *
      * This is **not** the VulkanMod profile recorded as blocked in
      * `docs/feature-status.md`. That was a third-party mod replacing the
-     * renderer and it still has no 26.2 build. This is the renderer the game
-     * ships with, which is why it can be offered now.
+     * renderer, and it still has no 26.2 build. It is not needed: the renderer
+     * ships with the game.
      *
-     * ## What the switch actually does
+     * ## What the switch does
      *
-     * Two things, and only the first happens here:
+     * It sets vanilla's `preferredGraphicsBackend` option and saves
+     * `options.txt`. Minecraft reads that once at startup, so the backend
+     * changes on the next launch and not before - the same "restart to apply"
+     * every other group in this module carries.
      *
-     * 1. It sets the vanilla `preferredGraphicsBackend` option and saves
-     *    `options.txt`. Minecraft reads that once at startup, so the backend
-     *    changes on the next launch and not before.
-     * 2. **The launcher reads the same option** before it installs mods, and
-     *    leaves out the ones that cannot run on Vulkan. That half lives in
-     *    `prelauncher.rs` in the launcher repo, because a jar cannot be
-     *    unloaded at runtime and the mod list is the launcher's to decide.
+     * That is the whole feature. **No mods are disabled**, which is worth
+     * stating because the first version of this did disable three of them.
      *
-     * Doing it that way keeps one source of truth - the vanilla option - rather
-     * than having the client reach into the launcher's own config.
+     * ## Why nothing has to be turned off
      *
-     * ## What gets left out, and how sure we are
+     * The assumption was that Sodium replaces the OpenGL renderer and therefore
+     * cannot survive a Vulkan backend. That was true of older Sodium and is not
+     * true of the build shipped here. Sodium `0.9.0+mc26.2` carries
+     * `DrawBackend` with `OPENGL`, `VK_MULTIDRAW` and `VK_INDIRECT` and a
+     * `chooseBackend()` that picks at runtime, plus a `VKDrawContext` built on
+     * `org.lwjgl.vulkan.VkCommandBuffer`. It has a real Vulkan path.
      *
-     * * **Sodium** - it replaces the OpenGL renderer. This one is not a
-     *   judgement call.
-     * * **Sodium Extra** - declares `sodium` as a *required* dependency, so
-     *   Fabric refuses to start the game without it. Verified against Modrinth
-     *   rather than assumed.
-     * * **ImmediatelyFast** - optimises immediate-mode OpenGL draws, and ships
-     *   an `experimental_disable_error_checking` option described as disabling
-     *   *OpenGL* error checking. Strong evidence, not proof; it is the one entry
-     *   worth re-testing when somebody runs Vulkan for real.
+     * ImmediatelyFast announces the API it is on, and on this machine it logged
+     * `Initializing ImmediatelyFast ... with Vulkan 1.4.341`. Sodium Extra only
+     * ever needed Sodium, which works. Nothing else Tsunami bundles touches the
+     * graphics API at all.
      *
-     * Everything else Tsunami bundles was checked and left in. Lithium,
-     * FerriteCore, C2ME and BadOptimizations do not touch the graphics API at
-     * all; MoreCulling and EntityCulling declare Cloth Config and Fabric API
-     * respectively, not Sodium.
+     * ## The one real cost, and it is not a mod
+     *
+     * MCEF logs `GPU acceleration only supports the OpenGL backend. Current
+     * backend: Vulkan`. The ClickGUI and the themed HUD are a Chromium browser,
+     * so on Vulkan they composite on the CPU instead. The browser still starts
+     * and still works - this is a cost, not a break - but it is the reason to
+     * think twice before making Vulkan the default.
+     *
+     * ## Still unverified
+     *
+     * Terrain has not been seen drawn on Vulkan. The client reaches the title
+     * screen and initialises everything, but Tsunami replaces the title screen
+     * with its own browser one, which swallows vanilla's `--quickPlaySingleplayer`,
+     * so an automated run cannot get into a world. Loading a world by hand is
+     * the check that is still outstanding.
      *
      * ## Turning it off
      *
      * Off means `opengl`, not `default`. `default` tries OpenGL and falls back
-     * to Vulkan, and a machine that took the fallback would get Sodium and a
-     * Vulkan backend at once - the exact combination this exists to prevent.
+     * to Vulkan, so it is not a way of saying "not Vulkan".
      */
     object Vulkan : ValueGroup("Vulkan") {
 
@@ -199,9 +208,9 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
             logger.info("Graphics backend set to ${target.serializedName}; applies on restart")
 
             if (useVulkan) {
-                chat("Vulkan will be used from the next launch. Sodium, Sodium Extra and ImmediatelyFast cannot run on it and will not be installed.")
+                chat("Vulkan will be used from the next launch. All bundled mods still load; the ClickGUI and HUD lose GPU acceleration, because the browser they run in only accelerates on OpenGL.")
             } else {
-                chat("OpenGL will be used from the next launch, with Sodium back.")
+                chat("OpenGL will be used from the next launch.")
             }
         }
     }
