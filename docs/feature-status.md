@@ -439,11 +439,31 @@ were followed all the way into `run/config/sodium-options.json`. The fourteen
 Feather modules were checked the same way: 14/14 toggles, 81/81 settings.
 `CLAUDE.md` has the recipe.
 
-## The backend gap
+## The backend gap — half closed, 2026-09-01
 
-Five items across three categories are blocked on the same missing thing: the
-marketplace, cross-server chat, the screenshot uploader, and the update and
-auto-config paths already gated behind `BACKEND_CONFIGURED`.
+There is a backend now. `https://brizzad.github.io/tsunami-api` serves the build
+catalogue, launch manifests, mod lists and changelog as static JSON from GitHub
+Pages, generated from the `tsunami-api` repo. The launcher reads it: driven on
+2026-09-01 it logged `Fetched 1 build(s) from https://brizzad.github.io/tsunami-api`,
+with `local_build.rs` kept as a fallback for when the host is unreachable.
 
-`docs/backend-contract.md` in the launcher repo specifies it. Nothing serves it.
-It is the single largest unblock available.
+**That unblocks two of the five and none of the other three**, and the split is
+worth understanding rather than re-checking each time:
+
+| Item | Now |
+| --- | --- |
+| Update path, auto-config (`BACKEND_CONFIGURED`) | **unblocked** — these needed a catalogue to read, and there is one |
+| Marketplace | **still blocked** — needs writes |
+| Cross-server chat | **still blocked** — needs a live service, not files |
+| Screenshot uploader | **still blocked** — needs somewhere to put an image |
+
+The three that remain are blocked on the *same* thing as each other and a
+different thing from what was just built. Static files can serve a catalogue
+forever at no cost; they cannot accept an upload, hold a socket open, or store
+a message. Those three need a real service with a real bill, and standing up
+the catalogue did not move them an inch closer. Do not read "the backend
+exists" as "the backend gap is closed".
+
+**The next step is on the launcher side, not here:** the client jar is still not
+published anywhere, so a launch depends on a file copied into `custom_mods` by
+hand. `docs/backend-contract.md` in the launcher repo has the options.
