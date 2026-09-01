@@ -37,12 +37,12 @@ discord-ipc = "-SNAPSHOT"
 modmenu = "20.0.0-beta.4"
 exploit_preventer_api = "1.0.0"
 exploit_preventer_mod = "1.1.0+26.2"
-sodium = "mc26.2-0.9.0-fabric"
+sodium = "mc26.2-0.9.1-fabric"
 lithium = "mc26.2-0.25.0-fabric"
 viafabricplus = "4.6.1"
 # Mods for compatibility test (runtime only)
 immediatelyFast = "1.16.0+26.2-fabric"
-iris = "1.11.1+26.2-fabric"
+iris = "oaD6KQls"
 # By Modrinth version id, not version number: each publishes the same number for
 # more than one loader, and the number alone can resolve to the NeoForge jar.
 itemphysic = "a7vcCKc2"
@@ -50,6 +50,16 @@ creativecore = "SI6rsPDj"
 xaerominimap = "W7vHFz3T"
 glintoutline = "SoxEj0Lh"
 skinlayers3d = "rJYtiDew"
+sodiumExtra = "mc26.2-0.9.3+fabric"
+jade = "26.2.11+fabric"
+appleskin = "uo5bAN1Y"
+shieldStatuses = "4.1.8+26.2"
+walksylib = "1.0.12+26.2"
+moreculling = "D5oVCouK"
+clothConfig = "26.2.155+fabric"
+badoptimizations = "JmPs4Wie"
+entityculling = "iiF6U3Ne"
+ixeris = "4.6.5+26.2-fabric"
 
 # Kotlin
 # https://kotlinlang.org/releases.html
@@ -132,6 +142,16 @@ creativecore = { group = "maven.modrinth", name = "creativecore", version.ref = 
 xaerominimap = { group = "maven.modrinth", name = "xaeros-minimap", version.ref = "xaerominimap" }
 glintoutline = { group = "maven.modrinth", name = "enchantment-glint-outline", version.ref = "glintoutline" }
 skinlayers3d = { group = "maven.modrinth", name = "3dskinlayers", version.ref = "skinlayers3d" }
+sodiumExtra = { group = "maven.modrinth", name = "sodium-extra", version.ref = "sodiumExtra" }
+jade = { group = "maven.modrinth", name = "jade", version.ref = "jade" }
+appleskin = { group = "maven.modrinth", name = "appleskin", version.ref = "appleskin" }
+shieldStatuses = { group = "maven.modrinth", name = "shield-statuses", version.ref = "shieldStatuses" }
+walksylib = { group = "maven.modrinth", name = "walksylib", version.ref = "walksylib" }
+moreculling = { group = "maven.modrinth", name = "moreculling", version.ref = "moreculling" }
+clothConfig = { group = "maven.modrinth", name = "cloth-config", version.ref = "clothConfig" }
+badoptimizations = { group = "maven.modrinth", name = "badoptimizations", version.ref = "badoptimizations" }
+entityculling = { group = "maven.modrinth", name = "entityculling", version.ref = "entityculling" }
+ixeris = { group = "maven.modrinth", name = "ixeris", version.ref = "ixeris" }
 
 [plugins]
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }

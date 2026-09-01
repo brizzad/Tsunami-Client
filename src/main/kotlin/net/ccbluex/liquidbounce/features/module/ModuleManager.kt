@@ -33,6 +33,7 @@ import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.event.sequenceHandler
 import net.ccbluex.liquidbounce.event.tickUntil
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleBetterTab
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleBetterTitle
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleGUICloser
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleInventoryTracker
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleItemScroller
@@ -300,6 +301,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             // Misc
             ModuleGUICloser,
             ModuleBetterTab,
+            ModuleBetterTitle,
             ModuleItemScroller,
             ModuleBetterChat,
             ModuleMacros,

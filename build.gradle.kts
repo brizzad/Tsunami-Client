@@ -115,6 +115,16 @@ dependencies {
     runtimeOnly(libs.xaerominimap)
     runtimeOnly(libs.glintoutline)
     runtimeOnly(libs.skinlayers3d)
+    runtimeOnly(libs.sodiumExtra)
+    runtimeOnly(libs.jade)
+    runtimeOnly(libs.appleskin)
+    runtimeOnly(libs.walksylib)
+    runtimeOnly(libs.shieldStatuses)
+    runtimeOnly(libs.clothConfig)
+    runtimeOnly(libs.moreculling)
+    runtimeOnly(libs.badoptimizations)
+    runtimeOnly(libs.entityculling)
+    runtimeOnly(libs.ixeris)
 
     // ViaFabricPlus
     api(libs.vfp.api)
