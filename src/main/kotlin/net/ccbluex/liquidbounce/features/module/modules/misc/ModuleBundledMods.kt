@@ -27,6 +27,8 @@ import net.ccbluex.liquidbounce.features.bundled.ModConfigStore
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleCategories
 import net.ccbluex.liquidbounce.utils.client.chat
+import net.ccbluex.liquidbounce.utils.client.mc
+import net.minecraft.client.PreferredGraphicsApi
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.client.logger
 
@@ -96,6 +98,7 @@ import net.ccbluex.liquidbounce.utils.client.logger
 object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
 
     init {
+        tree(Vulkan)
         tree(Sodium)
         tree(SodiumExtra)
         tree(ImmediatelyFast)
@@ -107,6 +110,100 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(Ixeris)
         tree(BadOptimizations)
         tree(ShieldStatuses)
+    }
+
+    /**
+     * The renderer, which in 26.2 is a vanilla choice rather than a mod.
+     *
+     * Mojang shipped a second graphics backend in 26.2:
+     * `com.mojang.blaze3d.vulkan.VulkanBackend` sits beside the long-standing
+     * `GlBackend`, and [PreferredGraphicsApi] picks between them. Tsunami is
+     * already written for it - `MixinVulkanRenderPass` injects into the Vulkan
+     * path, so the client's own rendering works either way.
+     *
+     * This is **not** the VulkanMod profile recorded as blocked in
+     * `docs/feature-status.md`. That was a third-party mod replacing the
+     * renderer and it still has no 26.2 build. This is the renderer the game
+     * ships with, which is why it can be offered now.
+     *
+     * ## What the switch actually does
+     *
+     * Two things, and only the first happens here:
+     *
+     * 1. It sets the vanilla `preferredGraphicsBackend` option and saves
+     *    `options.txt`. Minecraft reads that once at startup, so the backend
+     *    changes on the next launch and not before.
+     * 2. **The launcher reads the same option** before it installs mods, and
+     *    leaves out the ones that cannot run on Vulkan. That half lives in
+     *    `prelauncher.rs` in the launcher repo, because a jar cannot be
+     *    unloaded at runtime and the mod list is the launcher's to decide.
+     *
+     * Doing it that way keeps one source of truth - the vanilla option - rather
+     * than having the client reach into the launcher's own config.
+     *
+     * ## What gets left out, and how sure we are
+     *
+     * * **Sodium** - it replaces the OpenGL renderer. This one is not a
+     *   judgement call.
+     * * **Sodium Extra** - declares `sodium` as a *required* dependency, so
+     *   Fabric refuses to start the game without it. Verified against Modrinth
+     *   rather than assumed.
+     * * **ImmediatelyFast** - optimises immediate-mode OpenGL draws, and ships
+     *   an `experimental_disable_error_checking` option described as disabling
+     *   *OpenGL* error checking. Strong evidence, not proof; it is the one entry
+     *   worth re-testing when somebody runs Vulkan for real.
+     *
+     * Everything else Tsunami bundles was checked and left in. Lithium,
+     * FerriteCore, C2ME and BadOptimizations do not touch the graphics API at
+     * all; MoreCulling and EntityCulling declare Cloth Config and Fabric API
+     * respectively, not Sodium.
+     *
+     * ## Turning it off
+     *
+     * Off means `opengl`, not `default`. `default` tries OpenGL and falls back
+     * to Vulkan, and a machine that took the fallback would get Sodium and a
+     * Vulkan backend at once - the exact combination this exists to prevent.
+     */
+    object Vulkan : ValueGroup("Vulkan") {
+
+        /**
+         * Seeded from the live option so a fresh install shows the game's real
+         * state, then persisted like any other setting.
+         *
+         * `runCatching` because this runs during module registration, and
+         * `Minecraft.getInstance().options` is not guaranteed to exist that
+         * early. A default of false there is harmless - the stored value
+         * replaces it as soon as the config loads.
+         *
+         * The switch can still drift from the option if somebody changes the
+         * backend in vanilla's video settings instead. Nothing here fights
+         * that; the last write wins, and vanilla's own screen is the other
+         * legitimate way to set it.
+         */
+        @Suppress("unused")
+        val enabled by boolean(
+            "Enabled",
+            runCatching { currentApi() == PreferredGraphicsApi.VULKAN }.getOrDefault(false)
+        ).onChanged { preferVulkan(it) }
+
+        private fun currentApi(): PreferredGraphicsApi = mc.options.preferredGraphicsBackend().get()
+
+        private fun preferVulkan(useVulkan: Boolean) {
+            val target = if (useVulkan) PreferredGraphicsApi.VULKAN else PreferredGraphicsApi.OPENGL
+            if (currentApi() == target) {
+                return
+            }
+
+            mc.options.preferredGraphicsBackend().set(target)
+            mc.options.save()
+            logger.info("Graphics backend set to ${target.serializedName}; applies on restart")
+
+            if (useVulkan) {
+                chat("Vulkan will be used from the next launch. Sodium, Sodium Extra and ImmediatelyFast cannot run on it and will not be installed.")
+            } else {
+                chat("OpenGL will be used from the next launch, with Sodium back.")
+            }
+        }
     }
 
     /**

@@ -55,6 +55,16 @@ const groupStores = {
     ShieldStatuses: "shieldstatus.json",
 };
 
+/*
+ * Groups that deliberately have no mod config behind them, so "unmapped" is the
+ * right answer rather than a gap to fill.
+ *
+ * Vulkan writes vanilla's own `preferredGraphicsBackend` option through
+ * `Options.save()`, not a bundled mod's file. There is no key for this script to
+ * resolve, and adding a fake mapping would make it look like there was.
+ */
+const storelessGroups = new Set(["Vulkan"]);
+
 /** Configs that are an array of named records rather than a key tree. */
 const recordFiles = new Set(["shieldstatus.json"]);
 
@@ -148,7 +158,9 @@ for (let i = 0; i < spans.length; i++) {
     spans[i].end = i + 1 < spans.length ? spans[i + 1].at : source.length;
 }
 
-const unknownGroups = spans.filter((s) => !(s.name in groupStores)).map((s) => s.name);
+const unknownGroups = spans
+    .filter((s) => !(s.name in groupStores) && !storelessGroups.has(s.name))
+    .map((s) => s.name);
 
 /*
  * Every string literal that addresses a config key: an inline

@@ -90,7 +90,7 @@ outside the keybind system - three things every other feature here has.
 jasspir's mod is still the specification for what BetterHitreg does, and its
 wording is quoted in the source: appearance only, actual hits unmodified.
 
-## Performance — 9/12
+## Performance — 10/12
 
 | Item | Status | Notes |
 | --- | --- | --- |
@@ -103,15 +103,47 @@ wording is quoted in the source: appearance only, actual hits unmodified.
 | RAM display | done | `{session.memory.percent}` |
 | Sodium profile | done | default |
 | Lithium, FerriteCore, ImmediatelyFast, EntityCulling, C2ME | done | versions pinned to real 26.2 Fabric builds |
-| **VulkanMod profile** | **blocked** | no 26.2 release exists; newest is 26.1.2 |
+| **Vulkan rendering** | built | vanilla's own backend, via `BundledMods` → `Vulkan`; see below |
 | **ModernFix** | **blocked** | no 26.2 Fabric build; newest Fabric is 1.21.1 |
 | **Shader support** | **deferred** | Iris `1.11.1+26.2-fabric` (LGPL-3.0) exists and fits; see below |
 | ~~Starlight~~, ~~OptiFine~~ | excluded | both conflict with Sodium |
 
-Neither blocker is a scoping decision. Both are absent from Modrinth, re-checked
-on 2026-08-28 and still absent. The VulkanMod profile exists by name and installs
-nothing, with the reason written where its entry would go. Verifying that every UI
-element renders under Vulkan cannot be done while it cannot be installed.
+ModernFix is absent from Modrinth for 26.2 Fabric, re-checked on 2026-08-28 and
+still absent. That is not a scoping decision, just a missing artifact.
+
+**Vulkan stopped being a mod problem, which is why its row changed** (2026-09-01).
+The blocked entry was for *VulkanMod*, a third-party renderer replacement, and
+that still has no 26.2 build. It does not need one: **26.2 ships a Vulkan backend
+in vanilla.** `com.mojang.blaze3d.vulkan.VulkanBackend` sits beside `GlBackend`
+and `net.minecraft.client.PreferredGraphicsApi` picks between them - checked
+against the deobfuscated jar, not assumed. This fork was already written for it:
+`MixinVulkanRenderPass` injects into the Vulkan path.
+
+The switch is `BundledMods` → `Vulkan` → `Enabled`. It sets vanilla's
+`preferredGraphicsBackend` option and saves `options.txt`; the game reads that
+once at startup, so it takes effect on the next launch. The launcher reads the
+same option before installing mods and leaves out the ones that cannot run on
+it, which is the only place that decision can live - a jar cannot be unloaded at
+runtime.
+
+Three mods are left out, and the confidence in each differs:
+
+* **Sodium** replaces the OpenGL renderer. Not a judgement call.
+* **Sodium Extra** declares `sodium` as a required dependency, verified against
+  Modrinth, so Fabric would refuse to start the game without it.
+* **ImmediatelyFast** optimises immediate-mode OpenGL draws and ships an option
+  its own docs describe as disabling *OpenGL* error checking. Strong evidence
+  rather than proof, and the one entry to re-test.
+
+Everything else was checked and kept: Lithium, FerriteCore, C2ME and
+BadOptimizations do not touch the graphics API, and MoreCulling and EntityCulling
+depend on Cloth Config and Fabric API rather than Sodium.
+
+**Status is `built`, not `done`, and the gap is real.** The option write, the
+parsing and the mod filtering are covered by tests, but nobody has yet started
+the game on the Vulkan backend and confirmed the client's own HUD, ClickGUI and
+render modules draw correctly on it. The original brief asked for exactly that
+verification before shipping Vulkan as an option, and it is still outstanding.
 
 **Shader support had no row in this document at all until now.** It is in the
 approved brief under Performance/Rendering, and it was never recorded as done,
