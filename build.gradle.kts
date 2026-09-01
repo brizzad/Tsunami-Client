@@ -113,6 +113,8 @@ dependencies {
     runtimeOnly(libs.creativecore)
     runtimeOnly(libs.itemphysic)
     runtimeOnly(libs.xaerominimap)
+    runtimeOnly(libs.glintoutline)
+    runtimeOnly(libs.skinlayers3d)
 
     // ViaFabricPlus
     api(libs.vfp.api)

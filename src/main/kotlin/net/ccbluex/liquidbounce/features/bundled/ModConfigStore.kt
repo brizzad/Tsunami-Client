@@ -191,6 +191,16 @@ class JsonConfigStore(path: Path) : ModConfigStore(path) {
         return runCatching { element.asString }.getOrNull()
     }
 
+    /**
+     * A value the mod stores as an array rather than a scalar, such as
+     * Enchantment Glint Outline's `[r, g, b]` outline colour.
+     */
+    fun readArray(key: String): JsonArray? {
+        val root = root() ?: return null
+        val (holder, leaf) = resolve(root, key, create = false) ?: return null
+        return holder.get(leaf)?.takeIf { it.isJsonArray }?.asJsonArray
+    }
+
     override fun write(values: Map<String, Any>) {
         // No file means the mod has never run. Writing one now would be a guess
         // at a schema we have only seen part of, so leave it for the mod.
@@ -203,6 +213,11 @@ class JsonConfigStore(path: Path) : ModConfigStore(path) {
                 is Int -> holder.add(leaf, JsonPrimitive(value))
                 is Float -> holder.add(leaf, JsonPrimitive(value))
                 is String -> holder.add(leaf, JsonPrimitive(value))
+                // A value the mod stores as an array or object rather than a
+                // scalar - Enchantment Glint Outline keeps its outline colour
+                // as [r, g, b]. The caller builds the element; this only has to
+                // put it where the key says.
+                is JsonElement -> holder.add(leaf, value)
                 else -> continue
             }
         }

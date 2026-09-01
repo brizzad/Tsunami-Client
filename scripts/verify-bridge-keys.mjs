@@ -74,6 +74,7 @@ const groupStores = {
     Iris: "iris.properties",
     ItemPhysic: "itemphysic-client.json",
     XaerosMinimap: "xaero/minimap/profiles/default.cfg",
+    GlintOutline: "enchantment-glint-outline.json",
 };
 
 /*

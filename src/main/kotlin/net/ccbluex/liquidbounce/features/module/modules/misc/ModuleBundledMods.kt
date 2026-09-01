@@ -113,6 +113,7 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(Iris)
         tree(ItemPhysic)
         tree(XaerosMinimap)
+        tree(GlintOutline)
     }
 
     /**
@@ -382,7 +383,13 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
             .onChanged { write("renderDistanceLOD" to it) }
 
         private fun write(vararg pairs: Pair<String, Any>) =
-            applyTo(store, "3dskinlayers", *pairs)
+            // "skinlayers3d", not "3dskinlayers": the Modrinth slug and the Fabric
+            // mod id are reversed here. This was wrong from the day the bridge was
+            // written, and silently - the key resolved, the ClickGUI stored and
+            // redisplayed the value, and isModLoaded quietly refused the write, so
+            // all six settings did nothing. Found by pushing a value through in a
+            // running client and reading the mod's file back.
+            applyTo(store, "skinlayers3d", *pairs)
     }
 
     /**
@@ -584,6 +591,65 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
             .onChanged { write("minimap_safe_mode" to it) }
 
         private fun write(pair: Pair<String, Any>) = applyTo(store, "xaerominimap", pair)
+    }
+
+
+    /**
+     * Enchantment Glint Outline. Keys verified against a real
+     * `enchantment-glint-outline.json`, which is flat rather than nested.
+     *
+     * [enabled] is a genuine off switch, which is why this can be bundled and
+     * still satisfy the rule that every mod is controlled from here: the mod
+     * reads that flag itself and falls back to the vanilla glint when it is
+     * off.
+     *
+     * The outline colour is stored as `[r, g, b]` rather than a packed int, so
+     * it is written as a JSON array. Alpha is dropped on the way out because
+     * the mod has no channel for it - the ClickGUI swatch still shows one, and
+     * it is ignored.
+     */
+    object GlintOutline : ValueGroup("GlintOutline") {
+        private val store = ModConfigStore.json("enchantment-glint-outline.json")
+
+        val enabled by boolean("Enabled", store.readBoolean("enabled") ?: true)
+            .onChanged { write("enabled" to it) }
+
+        /**
+         * Upstream's own wording: dropping the vanilla glint render pass is
+         * what makes the outline the only glint you see. Off means both draw.
+         */
+        val removeRenderPass by boolean("RemoveVanillaGlint", store.readBoolean("removeRenderPass") ?: true)
+            .onChanged { write("removeRenderPass" to it) }
+
+        val outlineSize by float("OutlineSize", store.readFloat("outline_size") ?: 20f, 0f..100f)
+            .onChanged { write("outline_size" to it) }
+
+        val renderSolid by boolean("SolidOutline", store.readBoolean("render_solid") ?: false)
+            .onChanged { write("render_solid" to it) }
+
+        val outlineColor by color("OutlineColor", glintOutlineColor(store))
+            .onChanged { write("render_solid_outline_color_rgb" to glintRgb(it)) }
+
+        val renderEquipment by boolean("OnWornArmour", store.readBoolean("render_equipment") ?: true)
+            .onChanged { write("render_equipment" to it) }
+
+        val equipmentOutlineSize by float(
+            "ArmourOutlineSize",
+            store.readFloat("equipment_outline_size") ?: 20f,
+            0f..100f
+        ).onChanged { write("equipment_outline_size" to it) }
+
+        val renderEquipmentSolid by boolean(
+            "SolidOutlineOnArmour",
+            store.readBoolean("render_equipment_solid") ?: false
+        ).onChanged { write("render_equipment_solid" to it) }
+
+        // "enchant-outline", not the Modrinth slug "enchantment-glint-outline".
+        // isModLoaded takes the Fabric mod id from fabric.mod.json, and the two
+        // differ here. Getting it wrong is silent in the worst way: the key
+        // resolves, the ClickGUI stores and redisplays the new value, and the
+        // write is skipped with only a chat line. Read the id out of the jar.
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "enchant-outline", pair)
     }
 
     object Jade : ValueGroup("Jade") {

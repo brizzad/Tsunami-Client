@@ -48,6 +48,8 @@ iris = "1.11.1+26.2-fabric"
 itemphysic = "a7vcCKc2"
 creativecore = "SI6rsPDj"
 xaerominimap = "W7vHFz3T"
+glintoutline = "SoxEj0Lh"
+skinlayers3d = "rJYtiDew"
 
 # Kotlin
 # https://kotlinlang.org/releases.html
@@ -128,6 +130,8 @@ iris = { group = "maven.modrinth", name = "iris", version.ref = "iris" }
 itemphysic = { group = "maven.modrinth", name = "itemphysic", version.ref = "itemphysic" }
 creativecore = { group = "maven.modrinth", name = "creativecore", version.ref = "creativecore" }
 xaerominimap = { group = "maven.modrinth", name = "xaeros-minimap", version.ref = "xaerominimap" }
+glintoutline = { group = "maven.modrinth", name = "enchantment-glint-outline", version.ref = "glintoutline" }
+skinlayers3d = { group = "maven.modrinth", name = "3dskinlayers", version.ref = "skinlayers3d" }
 
 [plugins]
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }
