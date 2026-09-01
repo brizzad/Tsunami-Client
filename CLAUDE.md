@@ -327,9 +327,9 @@ Facts that cost a whole debugging round because they were not written down:
 
 ## Live issues to know about
 
-- **The ClickGUI first-setting-only bug is fixed in the working tree, but has
-  not been seen in a running client yet.** It affected every setting in the
-  client: only the first change per module selection reached the backend.
+- **The ClickGUI first-setting-only bug is fixed and committed (`035a0d046`),
+  but has not been seen in a running client yet.** It affected every setting in
+  the client: only the first change per module selection reached the backend.
   `SettingsPane.svelte` bound `bind:setting` into a `filter()` copy, so the
   writeback never reached the `configurable` that `save()` sends. It now binds
   `configurable.value[i]`, the way `GlobalSettings.svelte` always has.
@@ -337,12 +337,6 @@ Facts that cost a whole debugging round because they were not written down:
   fix and the jsdom before/after are in `docs/known-issues.md`; the in-game
   check is still outstanding.
 - **`./gradlew build` fails** on the orphaned `NoFall` test. See above.
-- **There is a large uncommitted WIP on the current branch** — roughly a dozen
-  modules from the Feather audit. Check `git status` before assuming the tree is
-  clean, and do not `git checkout .` anything you did not write.
-  Some of those files are ` M` on line endings alone and have an empty
-  `git diff` — do not read that as somebody's pending edit, and stage by path
-  rather than `git add -A` so the WIP does not ride along on your commit.
 
 ## Verifying a feature before calling it done
 

@@ -7,8 +7,9 @@ reproduce it and how it was confirmed, so nobody has to rediscover it.
 
 ## ClickGUI commits only the first setting change per module selection
 
-**Fixed in the working tree; not yet checked in a running client.** Kept here
-until someone confirms it in game, because that is this project's bar for done.
+**Fixed and committed (`035a0d046`); not yet checked in a running client.**
+Kept here until someone confirms it in game, because that is this project's bar
+for done.
 
 After you selected a module in the ClickGUI, the **first** setting you changed
 was applied and persisted. Every change after that flipped the switch on screen
