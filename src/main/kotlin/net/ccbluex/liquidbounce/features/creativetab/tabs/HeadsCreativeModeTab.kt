@@ -54,7 +54,7 @@ data class Head(val name: String, val uuid: UUID, val value: String) {
             ItemLore(
                 listOf(
                     "UUID: $uuid".asPlainText(UUID_STYLE),
-                    "liquidbounce.net".asPlainText(CLIENT_LINK_STYLE),
+                    "tsunami.net".asPlainText(CLIENT_LINK_STYLE),
                 )
             )
         )

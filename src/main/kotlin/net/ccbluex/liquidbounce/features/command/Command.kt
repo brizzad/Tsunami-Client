@@ -66,7 +66,7 @@ class Command(
         get() = "Command$name"
 
     val translationBaseKey: String
-        get() = "liquidbounce.command.${getParentKeys(this, name)}"
+        get() = "tsunami.command.${getParentKeys(this, name)}"
 
     val description: MutableComponent
         get() = translation("$translationBaseKey.description")
@@ -129,7 +129,7 @@ class Command(
         key: String,
         data: String? = null,
         formatting: (MutableComponent) -> MutableComponent = ::regular,
-        hover: HoverEvent? = HoverEvent.ShowText(translation("liquidbounce.tooltip.clickToCopy")),
+        hover: HoverEvent? = HoverEvent.ShowText(translation("tsunami.tooltip.clickToCopy")),
         click: ClickEvent? = data?.let(ClickEvent::CopyToClipboard)
     ) {
         val content = data?.let(::variable) ?: markAsError("N/A")
@@ -152,7 +152,7 @@ class Command(
         textComponent: Component? = null,
         copyContent: String? = null,
         formatting: (MutableComponent) -> MutableComponent = ::regular,
-        hover: HoverEvent? = HoverEvent.ShowText(translation("liquidbounce.tooltip.clickToCopy"))
+        hover: HoverEvent? = HoverEvent.ShowText(translation("tsunami.tooltip.clickToCopy"))
     ) {
         val displayComponent = textComponent ?: markAsError("N/A")
         val content = copyContent ?: displayComponent.string

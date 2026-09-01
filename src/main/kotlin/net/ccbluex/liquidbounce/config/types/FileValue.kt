@@ -92,7 +92,7 @@ enum class FileDialogMode(
     private val translationKey: String,
     private val fallbackTitle: String
 ) {
-    OPEN_FILE("liquidbounce.fileDialog.mode.openFile", "Open File") {
+    OPEN_FILE("tsunami.fileDialog.mode.openFile", "Open File") {
         override fun selectFilesRaw(extensions: Iterable<String>?) = withFilterPatterns(extensions) {
             TinyFileDialogs.tinyfd_openFileDialog(
                 title,
@@ -103,7 +103,7 @@ enum class FileDialogMode(
             )
         }
     },
-    SAVE_FILE("liquidbounce.fileDialog.mode.saveFile", "Save File As") {
+    SAVE_FILE("tsunami.fileDialog.mode.saveFile", "Save File As") {
         override fun selectFilesRaw(extensions: Iterable<String>?) = withFilterPatterns(extensions) {
             TinyFileDialogs.tinyfd_saveFileDialog(
                 title,
@@ -113,7 +113,7 @@ enum class FileDialogMode(
             )
         }
     },
-    OPEN_DIRECTORY("liquidbounce.fileDialog.mode.openDirectory", "Select Folder") {
+    OPEN_DIRECTORY("tsunami.fileDialog.mode.openDirectory", "Select Folder") {
         override fun selectFilesRaw(extensions: Iterable<String>?) = TinyFileDialogs.tinyfd_selectFolderDialog(
             title,
             ConfigSystem.rootFolder.path,

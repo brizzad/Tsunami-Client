@@ -42,7 +42,7 @@ import java.io.Writer
 @Suppress("TooManyFunctions")
 object ConfigSystem {
 
-    const val KEY_PREFIX = "liquidbounce"
+    const val KEY_PREFIX = "tsunami"
 
     private val logger = clientLogger("ConfigSystem")
 

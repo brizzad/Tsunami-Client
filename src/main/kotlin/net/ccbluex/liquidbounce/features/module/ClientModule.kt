@@ -188,9 +188,9 @@ open class ClientModule(
 
         if (!loadingNow) {
             val (title, severity) = if (state) {
-                translation("liquidbounce.generic.enabled") to NotificationEvent.Severity.ENABLED
+                translation("tsunami.generic.enabled") to NotificationEvent.Severity.ENABLED
             } else {
-                translation("liquidbounce.generic.disabled") to NotificationEvent.Severity.DISABLED
+                translation("tsunami.generic.disabled") to NotificationEvent.Severity.DISABLED
             }
             notification(title, this.name, severity)
         }

@@ -115,7 +115,7 @@ object CommandFakePlayer : Command.Factory, EventListener {
                 checkInGame()
 
                 if (fakePlayers.isEmpty()) {
-                    throw CommandException(translation("liquidbounce.command.fakeplayer.noFakePlayers"))
+                    throw CommandException(translation("tsunami.command.fakeplayer.noFakePlayers"))
                 }
 
                 val name = args.getOrNull(0)?.toString() ?: "FakePlayer"
@@ -164,7 +164,7 @@ object CommandFakePlayer : Command.Factory, EventListener {
                 checkInGame()
 
                 if (fakePlayers.isEmpty()) {
-                    throw CommandException(translation("liquidbounce.command.fakeplayer.noFakePlayers"))
+                    throw CommandException(translation("tsunami.command.fakeplayer.noFakePlayers"))
                 }
 
                 fakePlayers.forEach { fakePlayer ->
@@ -271,7 +271,7 @@ object CommandFakePlayer : Command.Factory, EventListener {
         chat(
             regular(
                 translation(
-                    "liquidbounce.command.fakeplayer.fakePlayerSpawned",
+                    "tsunami.command.fakeplayer.fakePlayerSpawned",
                     fakePlayer.x.roundToDecimalPlaces(),
                     fakePlayer.y.roundToDecimalPlaces(),
                     fakePlayer.z.roundToDecimalPlaces()
@@ -286,7 +286,7 @@ object CommandFakePlayer : Command.Factory, EventListener {
      */
     private fun checkInGame() {
         if (mc.level == null || mc.player == null) {
-            throw CommandException(translation("liquidbounce.command.fakeplayer.mustBeInGame"))
+            throw CommandException(translation("tsunami.command.fakeplayer.mustBeInGame"))
         }
     }
 
@@ -351,14 +351,14 @@ object CommandFakePlayer : Command.Factory, EventListener {
         }
 
         if (mc.level == null || mc.player == null) {
-            chat(markAsError(translation("liquidbounce.command.fakeplayer.mustBeInGame")))
+            chat(markAsError(translation("tsunami.command.fakeplayer.mustBeInGame")))
             stopRecording()
             return@handler
         }
 
         if (snapshots.size >= Int.MAX_VALUE - 1) {
             chat(
-                markAsError(translation("liquidbounce.command.fakeplayer.recordingForTooLong")),
+                markAsError(translation("tsunami.command.fakeplayer.recordingForTooLong")),
                 metadata = MessageMetadata(id = "CFakePlayer#info")
             )
             stopRecording()
@@ -376,7 +376,7 @@ object CommandFakePlayer : Command.Factory, EventListener {
         snapshots.clear()
         notification(
             "FakePlayer",
-            translation("liquidbounce.command.fakeplayer.stoppedRecording"),
+            translation("tsunami.command.fakeplayer.stoppedRecording"),
             NotificationEvent.Severity.INFO
         )
     }

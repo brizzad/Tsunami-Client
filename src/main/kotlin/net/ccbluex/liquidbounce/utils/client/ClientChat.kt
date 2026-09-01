@@ -150,7 +150,7 @@ fun gradientText(text: String, startColor: Color4b, endColor: Color4b): MutableC
 fun MutableComponent.copyable(
     copyContent: String = this.string,
     hover: HoverEvent? = HoverEvent.ShowText(
-        translation("liquidbounce.tooltip.clickToCopy")
+        translation("tsunami.tooltip.clickToCopy")
     )
 ): MutableComponent = apply {
     hover?.let(::onHover)

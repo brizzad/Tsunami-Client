@@ -102,12 +102,12 @@ class PolyglotScript(
                         "devtools://devtools/bundled/js_app.html?ws=127.0.0.1:${debugOptions.port}/${file.name}"
 
                     chat(
-                        regular(translation("liquidbounce.scripts.debug.support", variable(file.toString())))
+                        regular(translation("tsunami.scripts.debug.support", variable(file.toString())))
                             .append(
                                 variable(devtoolURL)
                                     .copyable(
                                         copyContent = devtoolURL, hover = HoverEvent.ShowText(
-                                            regular(translation("liquidbounce.scripts.debug.inspect.url"))
+                                            regular(translation("tsunami.scripts.debug.inspect.url"))
                                         )
                                     )
                                     .underline(true)
@@ -125,9 +125,9 @@ class PolyglotScript(
 
                     chat(
                         regular(
-                            translation("liquidbounce.scripts.debug.support", variable(file.toString())).append(
+                            translation("tsunami.scripts.debug.support", variable(file.toString())).append(
                                 translation(
-                                    "liquidbounce.scripts.debug.dap",
+                                    "tsunami.scripts.debug.dap",
                                     variable(debugOptions.port.toString())
                                 )
                             )

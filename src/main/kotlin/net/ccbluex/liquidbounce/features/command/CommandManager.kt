@@ -235,7 +235,7 @@ object CommandManager : Collection<Command> by commandSet {
         // unknown
         val pair = getSubCommand(args) ?: throw CommandException(
             translation(
-                "liquidbounce.commandManager.unknownCommand",
+                "tsunami.commandManager.unknownCommand",
                 args[0]
             ),
             usageInfo = if (rootCommandMap.isEmpty() || GlobalSettings.hintCount == 0) {
@@ -269,7 +269,7 @@ object CommandManager : Collection<Command> by commandSet {
         // If the command is not executable, don't allow it to be executed
         if (!command.executable) {
             throw CommandException(
-                translation("liquidbounce.commandManager.invalidUsage", args[0]),
+                translation("tsunami.commandManager.invalidUsage", args[0]),
                 usageInfo = command.usage()
             )
         }
@@ -281,7 +281,7 @@ object CommandManager : Collection<Command> by commandSet {
         // If there are more arguments for a command that takes no parameters
         if (command.parameters.isEmpty() && idx != args.size - 1) {
             throw CommandException(
-                translation("liquidbounce.commandManager.commandTakesNoParameters"),
+                translation("tsunami.commandManager.commandTakesNoParameters"),
                 usageInfo = command.usage()
             )
         }
@@ -290,7 +290,7 @@ object CommandManager : Collection<Command> by commandSet {
         if (remainingArgsCount < command.parameters.size && command.parameters[remainingArgsCount].required) {
             throw CommandException(
                 translation(
-                    "liquidbounce.commandManager.parameterRequired",
+                    "tsunami.commandManager.parameterRequired",
                     command.parameters[remainingArgsCount].name
                 ),
                 usageInfo = command.usage()
@@ -313,7 +313,7 @@ object CommandManager : Collection<Command> by commandSet {
             // Check if there is a parameter for this index
             if (paramIndex >= command.parameters.size) {
                 throw CommandException(
-                    translation("liquidbounce.commandManager.unknownParameter", args[i]),
+                    translation("tsunami.commandManager.unknownParameter", args[i]),
                     usageInfo = command.usage()
                 )
             }
@@ -363,7 +363,7 @@ object CommandManager : Collection<Command> by commandSet {
             is Parameter.Verificator.Result.Error -> {
                 throw CommandException(
                     translation(
-                        "liquidbounce.commandManager.invalidParameterValue",
+                        "tsunami.commandManager.invalidParameterValue",
                         parameter.name,
                         argument,
                         validationResult.errorMessage

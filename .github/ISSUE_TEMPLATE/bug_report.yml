@@ -27,8 +27,8 @@ body:
 
   - type: dropdown
     attributes:
-      label: LiquidBounce Branch
-      description: Which edition of LiquidBounce does this bug affect?
+      label: Tsunami Branch
+      description: Which edition of Tsunami does this bug affect?
       options:
         - Nextgen
         - Legacy
@@ -38,8 +38,8 @@ body:
 
   - type: input
     attributes:
-      label: LiquidBounce Build/Version
-      description: Which version of LiquidBounce does this bug affect?
+      label: Tsunami Build/Version
+      description: Which version of Tsunami does this bug affect?
       placeholder: e.g. 0.36.0
     validations:
       required: true
@@ -47,7 +47,7 @@ body:
   - type: dropdown
     attributes:
       label: Operating System
-      description: On which OS is LiquidBounce running?
+      description: On which OS is Tsunami running?
       multiple: true
       options:
         - macOS

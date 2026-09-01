@@ -60,7 +60,7 @@ object CommandHelp : Command.Factory {
                         .withStyle(ChatFormatting.BLUE)
                         .onHover(
                             HoverEvent.ShowText(
-                                translation("liquidbounce.command.${command.name}.description")
+                                translation("tsunami.command.${command.name}.description")
                             )
                         )
                         .append(

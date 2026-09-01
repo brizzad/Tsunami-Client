@@ -40,76 +40,74 @@ import net.ccbluex.liquidbounce.utils.client.mc
  */
 object CommandWaypoint : Command.Factory {
 
-    override fun createCommand(): Command {
-        return CommandBuilder
-            .begin("waypoint")
-            .alias("wp")
-            .hub()
-            .requiresIngame()
-            .subcommand(
-                CommandBuilder.begin("add")
-                    .parameter(ParameterBuilder.begin<String>("name").required().build())
-                    .handler {
-                        val name = args[0] as String
-                        val player = mc.player ?: return@handler
-                        val dimension = mc.level?.dimension()?.identifier()?.toString() ?: return@handler
+    override fun createCommand(): Command = CommandBuilder
+        .begin("waypoint")
+        .alias("wp")
+        .hub()
+        .requiresIngame()
+        .subcommand(addSubcommand())
+        .subcommand(removeSubcommand())
+        .subcommand(listSubcommand())
+        .subcommand(clearSubcommand())
+        .build()
 
-                        WaypointManager.add(
-                            Waypoint(
-                                name = name,
-                                x = player.blockX,
-                                y = player.blockY,
-                                z = player.blockZ,
-                                dimension = dimension
-                            )
-                        )
+    private fun addSubcommand(): Command = CommandBuilder.begin("add")
+        .parameter(ParameterBuilder.begin<String>("name").required().build())
+        .handler {
+            val name = args[0] as String
+            val player = mc.player ?: return@handler
+            val dimension = mc.level?.dimension()?.identifier()?.toString() ?: return@handler
 
-                        chat("Saved '$name' at ${player.blockX} ${player.blockY} ${player.blockZ}")
-                    }
-                    .build()
+            WaypointManager.add(
+                Waypoint(
+                    name = name,
+                    x = player.blockX,
+                    y = player.blockY,
+                    z = player.blockZ,
+                    dimension = dimension
+                )
             )
-            .subcommand(
-                CommandBuilder.begin("remove")
-                    .parameter(ParameterBuilder.begin<String>("name").required().build())
-                    .handler {
-                        val name = args[0] as String
-                        if (WaypointManager.remove(name)) {
-                            chat("Removed waypoint '$name'")
-                        } else {
-                            chat("No waypoint called '$name'")
-                        }
-                    }
-                    .build()
-            )
-            .subcommand(
-                CommandBuilder.begin("list")
-                    .handler {
-                        val all = WaypointManager.all()
-                        if (all.isEmpty()) {
-                            chat("No waypoints saved")
-                            return@handler
-                        }
 
-                        for (waypoint in all) {
-                            // The dimension is shown because two waypoints can
-                            // share coordinates and mean different places.
-                            chat(
-                                "${waypoint.name}: ${waypoint.x} ${waypoint.y} ${waypoint.z} " +
-                                    "(${waypoint.dimension.substringAfter(':')})"
-                            )
-                        }
-                    }
-                    .build()
-            )
-            .subcommand(
-                CommandBuilder.begin("clear")
-                    .handler {
-                        WaypointManager.clear()
-                        chat("Cleared all waypoints")
-                    }
-                    .build()
-            )
-            .build()
-    }
+            chat("Saved '$name' at ${player.blockX} ${player.blockY} ${player.blockZ}")
+        }
+        .build()
+
+    private fun removeSubcommand(): Command = CommandBuilder.begin("remove")
+        .parameter(ParameterBuilder.begin<String>("name").required().build())
+        .handler {
+            val name = args[0] as String
+            if (WaypointManager.remove(name)) {
+                chat("Removed waypoint '$name'")
+            } else {
+                chat("No waypoint called '$name'")
+            }
+        }
+        .build()
+
+    private fun listSubcommand(): Command = CommandBuilder.begin("list")
+        .handler {
+            val all = WaypointManager.all()
+            if (all.isEmpty()) {
+                chat("No waypoints saved")
+                return@handler
+            }
+
+            for (waypoint in all) {
+                // The dimension is shown because two waypoints can share
+                // coordinates and mean different places.
+                chat(
+                    "${waypoint.name}: ${waypoint.x} ${waypoint.y} ${waypoint.z} " +
+                        "(${waypoint.dimension.substringAfter(':')})"
+                )
+            }
+        }
+        .build()
+
+    private fun clearSubcommand(): Command = CommandBuilder.begin("clear")
+        .handler {
+            WaypointManager.clear()
+            chat("Cleared all waypoints")
+        }
+        .build()
 
 }

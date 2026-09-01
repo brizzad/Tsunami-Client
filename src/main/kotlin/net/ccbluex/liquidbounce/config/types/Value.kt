@@ -151,7 +151,7 @@ open class Value<T : Any>(
 
             this.descriptionKey = value?.let {
                 if (independentDescription) {
-                    "liquidbounce.common.${name.toLowerCamelCase()}.description"
+                    "tsunami.common.${name.toLowerCamelCase()}.description"
                 } else {
                     this.key?.let { s -> "$s.description" }
                 }

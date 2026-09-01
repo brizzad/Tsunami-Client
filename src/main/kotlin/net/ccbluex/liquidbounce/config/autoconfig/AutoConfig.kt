@@ -83,15 +83,19 @@ object AutoConfig {
      *
      * @return successfully reloaded or not
      */
-    suspend fun reloadConfigs(): Boolean = if (!ApiConfig.BACKEND_CONFIGURED) {
-        logger.info("Auto configs unavailable: no Tsunami backend is configured.")
-        false
-    } else try {
-        configs = ClientApi.requestSettingsList()
-        true
-    } catch (e: Exception) {
-        logger.error("Failed to load auto configs", e)
-        false
+    suspend fun reloadConfigs(): Boolean {
+        if (!ApiConfig.BACKEND_CONFIGURED) {
+            logger.info("Auto configs unavailable: no Tsunami backend is configured.")
+            return false
+        }
+
+        return try {
+            configs = ClientApi.requestSettingsList()
+            true
+        } catch (e: Exception) {
+            logger.error("Failed to load auto configs", e)
+            false
+        }
     }
 
     inline fun withLoading(block: () -> Unit) {
@@ -198,7 +202,7 @@ object AutoConfig {
 
         if (lbVersion != null) {
             chat(
-                regular("with LiquidBounce "),
+                regular("with ${LiquidBounce.CLIENT_NAME} "),
                 variable(lbVersion),
                 regular(" "),
                 variable(lbCommit ?: "")

@@ -18,6 +18,7 @@
  */
 package net.ccbluex.liquidbounce.features.command.commands.client.client
 
+import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder.Companion.BOOLEAN_VALIDATOR
@@ -56,7 +57,7 @@ object CommandClientDestructSubcommand {
 
             val wipe = args.getOrNull(1) as Boolean? == true
 
-            chat(regular("LiquidBounce is being destructed from your client..."))
+            chat(regular("${LiquidBounce.CLIENT_NAME} is being destructed from your client..."))
             if (!wipe) {
                 chat(
                     regular("WARNING: You have not wiped the client (missing wipe parameter) - therefore " +
@@ -66,7 +67,7 @@ object CommandClientDestructSubcommand {
 
             destructClient()
             chat(
-                regular("LiquidBounce has been destructed from your client. " +
+                regular("${LiquidBounce.CLIENT_NAME} has been destructed from your client. " +
                 "You can clear your chat using F3+D. If wipe was enabled, the chat will be cleared automatically.")
             )
 

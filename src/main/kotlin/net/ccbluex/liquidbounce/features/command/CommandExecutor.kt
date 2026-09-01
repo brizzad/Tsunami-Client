@@ -89,7 +89,7 @@ object CommandExecutor : EventListener {
             if (!running.compareAndSet(false, true)) {
                 chat(
                     markAsError(
-                        translation("liquidbounce.commandManager.commandExecuting", command.name)
+                        translation("tsunami.commandManager.commandExecuting", command.name)
                     ),
                     command
                 )
@@ -176,7 +176,7 @@ object CommandExecutor : EventListener {
                 chat(
                     markAsError(
                         translation(
-                            "liquidbounce.commandManager.exceptionOccurred",
+                            "tsunami.commandManager.exceptionOccurred",
                             e.javaClass.simpleName ?: "Class name missing", e.message ?: "No message"
                         )
                     ),
