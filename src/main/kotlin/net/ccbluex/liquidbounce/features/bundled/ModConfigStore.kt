@@ -21,6 +21,8 @@
 package net.ccbluex.liquidbounce.features.bundled
 
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
@@ -82,6 +84,9 @@ sealed class ModConfigStore(protected val path: Path) {
         /** TOML, as MoreCulling and Ixeris write it. Sections become dotted paths. */
         fun toml(fileName: String) =
             LineConfigStore(configDir.resolve(fileName), separator = " = ", sections = true)
+
+        /** Shield Statuses, via WalksyLib: an array of named records. */
+        fun namedRecords(fileName: String) = NamedRecordConfigStore(configDir.resolve(fileName))
 
         /** BadOptimizations' `key: value` text file. Flat, no sections. */
         fun colonSeparated(fileName: String) =
@@ -410,6 +415,135 @@ class LineConfigStore(
 
         runCatching {
             Files.write(path, out)
+        }.onFailure {
+            logger.warn("Could not write ${path.fileName}", it)
+        }
+    }
+}
+
+/**
+ * A config that is a list of named records rather than a tree of keys.
+ *
+ * Shield Statuses, through WalksyLib, writes its settings as an array of
+ * categories, each holding groups, each holding options - and every level is
+ * identified by a `name` field rather than by its position or by a key:
+ *
+ * ```json
+ * [ { "name": "Color",
+ *     "groups": [ { "name": "General Options",
+ *                   "options": [ { "name": "Self State Only",
+ *                                  "type": "boolean", "value": false } ] } ] } ]
+ * ```
+ *
+ * [JsonConfigStore]'s dotted paths cannot address that: there is no object to
+ * descend into, only an array to search. So a path here is
+ * `Category/Group/Option`, separated by `/` because the names themselves
+ * contain spaces and, in places, dots. The value read and written is the
+ * option's `value` field; everything else on the record - its `type`, `min`,
+ * `max`, `increment` - is left exactly as the mod wrote it.
+ *
+ * A path that matches nothing reads null and writes nothing. That is the
+ * important half: the mod owns the shape of this file, and inventing a record
+ * to hold a setting it does not have would produce a config it cannot load.
+ */
+class NamedRecordConfigStore(path: Path) : ModConfigStore(path) {
+
+    /*
+     * serializeNulls, because this file is not ours. Every option record
+     * WalksyLib writes carries "min": null, "max": null and "increment": null,
+     * and Gson drops null members unless told not to. Rewriting the file
+     * without them would hand the mod back a different config from the one it
+     * wrote - which it would probably survive, but "probably" is not a good
+     * enough reason to quietly reshape somebody else's file.
+     */
+    private val gson = GsonBuilder().setPrettyPrinting().serializeNulls().create()
+
+    private fun root(): JsonArray? {
+        if (!exists()) {
+            return null
+        }
+
+        return runCatching {
+            JsonParser.parseString(Files.readString(path)).asJsonArray
+        }.onFailure {
+            logger.warn("Could not read ${path.fileName}", it)
+        }.getOrNull()
+    }
+
+    private fun named(array: JsonArray?, name: String): JsonObject? =
+        array?.firstOrNull { it.isJsonObject && it.asJsonObject.get("name")?.asString == name }
+            ?.asJsonObject
+
+    private fun childArray(owner: JsonObject?, member: String): JsonArray? =
+        owner?.get(member)?.takeIf { it.isJsonArray }?.asJsonArray
+
+    /** The option record a `Category/Group/Option` path names, if it exists. */
+    private fun option(path: String): JsonObject? {
+        val parts = path.split('/')
+        if (parts.size != 3) {
+            logger.warn("Bad ${this.path.fileName} path '$path': expected Category/Group/Option")
+            return null
+        }
+
+        val (categoryName, groupName, optionName) = parts
+        val category = named(root(), categoryName) ?: return null
+        val group = named(childArray(category, "groups"), groupName) ?: return null
+        return named(childArray(group, "options"), optionName)
+    }
+
+    private fun value(path: String): JsonElement? = option(path)?.get("value")
+
+    override fun readBoolean(key: String): Boolean? =
+        value(key)?.takeIf { it.isJsonPrimitive }?.runCatching { asBoolean }?.getOrNull()
+
+    override fun readInt(key: String): Int? =
+        value(key)?.takeIf { it.isJsonPrimitive }?.runCatching { asInt }?.getOrNull()
+
+    override fun readFloat(key: String): Float? =
+        value(key)?.takeIf { it.isJsonPrimitive }?.runCatching { asFloat }?.getOrNull()
+
+    override fun readString(key: String): String? =
+        value(key)?.takeIf { it.isJsonPrimitive }?.runCatching { asString }?.getOrNull()
+
+    /** The whole `value` object, for a record whose value is not a scalar. */
+    fun readObject(key: String): JsonObject? = value(key)?.takeIf { it.isJsonObject }?.asJsonObject
+
+    override fun write(values: Map<String, Any>) {
+        val array = root() ?: return
+        var wrote = 0
+
+        for ((key, value) in values) {
+            val parts = key.split('/')
+            if (parts.size != 3) {
+                logger.warn("Bad ${path.fileName} path '$key': expected Category/Group/Option")
+                continue
+            }
+
+            val (categoryName, groupName, optionName) = parts
+            val category = named(array, categoryName)
+            val group = named(childArray(category, "groups"), groupName)
+            val record = named(childArray(group, "options"), optionName)
+
+            if (record == null) {
+                logger.warn("No option '$key' in ${path.fileName}; not adding one")
+                continue
+            }
+
+            when (value) {
+                is JsonElement -> record.add("value", value)
+                is Boolean -> record.addProperty("value", value)
+                is Number -> record.addProperty("value", value)
+                else -> record.addProperty("value", value.toString())
+            }
+            wrote++
+        }
+
+        if (wrote == 0) {
+            return
+        }
+
+        runCatching {
+            Files.writeString(path, gson.toJson(array))
         }.onFailure {
             logger.warn("Could not write ${path.fileName}", it)
         }

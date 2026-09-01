@@ -52,7 +52,11 @@ const groupStores = {
     MoreCulling: "moreculling.toml",
     Ixeris: "ixeris.toml",
     BadOptimizations: "badoptimizations.txt",
+    ShieldStatuses: "shieldstatus.json",
 };
+
+/** Configs that are an array of named records rather than a key tree. */
+const recordFiles = new Set(["shieldstatus.json"]);
 
 /*
  * The line-based configs, and the separator each uses. Anything not listed
@@ -93,6 +97,25 @@ function resolves(root, key) {
 function readJson(file) {
     const raw = fs.readFileSync(file, "utf8");
     return JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ""));
+}
+
+/**
+ * Mirrors NamedRecordConfigStore: a `Category/Group/Option` path into an array
+ * of named records, as WalksyLib writes for Shield Statuses.
+ */
+function readNamedRecords(file) {
+    const array = JSON.parse(fs.readFileSync(file, "utf8"));
+    const out = {};
+    const named = (list, name) => (list ?? []).find((x) => x && x.name === name);
+    for (const category of array) {
+        for (const group of category.groups ?? []) {
+            for (const option of group.options ?? []) {
+                out[`${category.name}/${group.name}/${option.name}`] = option.value;
+            }
+        }
+    }
+    void named;
+    return out;
 }
 
 /** Mirrors LineConfigStore.entries: section-qualified key to raw value. */
@@ -136,6 +159,17 @@ const keyRe = /(?:read(?:Boolean|Int|Float|String)\(|(?:^|[^A-Za-z])[A-Za-z]*[Ww
 
 const byStore = new Map();
 let m;
+
+/*
+ * Shield Statuses addresses its options through top-level consts rather than
+ * literals inside the group, because the paths are long enough to be unreadable
+ * inline. Pick those up by their SHIELD_ prefix.
+ */
+const shieldRe = /^private const val SHIELD_[A-Z_]+ = "([^"]+\/[^"]+)"/gm;
+while ((m = shieldRe.exec(source))) {
+    if (!byStore.has("shieldstatus.json")) byStore.set("shieldstatus.json", new Set());
+    byStore.get("shieldstatus.json").add(m[1]);
+}
 while ((m = keyRe.exec(source))) {
     const span = spans.find((s) => m.index >= s.at && m.index < s.end);
     if (!span) continue;
@@ -161,13 +195,16 @@ for (const [store, keys] of [...byStore].sort()) {
     const lineFormat = lineFormats[store];
     let root;
     try {
-        root = lineFormat ? readLines(file, lineFormat) : readJson(file);
+        root = recordFiles.has(store)
+            ? readNamedRecords(file)
+            : lineFormat ? readLines(file, lineFormat) : readJson(file);
     } catch (err) {
         console.log(`  FAIL  ${store} - could not parse: ${err.message}`);
         missing += keys.size;
         continue;
     }
-    const bad = [...keys].filter((k) => (lineFormat ? !(k in root) : !resolves(root, k)));
+    const flat = lineFormat || recordFiles.has(store);
+    const bad = [...keys].filter((k) => (flat ? !(k in root) : !resolves(root, k)));
     resolved += keys.size - bad.length;
     missing += bad.length;
     if (bad.length === 0) {

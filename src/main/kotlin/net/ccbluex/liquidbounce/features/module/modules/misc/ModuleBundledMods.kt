@@ -20,12 +20,14 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.misc
 
+import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.config.types.group.ValueGroup
 import net.ccbluex.liquidbounce.config.types.list.Tagged
 import net.ccbluex.liquidbounce.features.bundled.ModConfigStore
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleCategories
 import net.ccbluex.liquidbounce.utils.client.chat
+import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.client.logger
 
 /**
@@ -75,6 +77,7 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(MoreCulling)
         tree(Ixeris)
         tree(BadOptimizations)
+        tree(ShieldStatuses)
     }
 
     /**
@@ -1013,6 +1016,86 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         private fun write(pair: Pair<String, Any>) = applyTo(store, "badoptimizations", pair)
     }
 
+    /**
+     * Shield Statuses. Paths verified against a real `shieldstatus.json`, and
+     * the colour fields against `ColorTypeAdapter` in the WalksyLib jar.
+     *
+     * This one was skipped before as "not inspected". The reason it needed
+     * inspecting is that its config is not a tree of keys at all: WalksyLib
+     * writes an array of named categories holding named groups holding named
+     * options, so [NamedRecordConfigStore] addresses it as
+     * `Category/Group/Option` instead of a dotted path.
+     *
+     * **Mod Enabled is the real on/off switch for this mod** - the one thing a
+     * bundled jar normally cannot offer, because a jar cannot be unloaded at
+     * runtime. Shield Statuses happens to carry its own enable flag, so this
+     * group can turn it off properly rather than only reconfiguring it.
+     *
+     * The two texture overrides are not here. They are resource-pack
+     * identifiers with a file picker attached, and a free-text field for a
+     * texture path is a worse control than the screen it replaces.
+     */
+    object ShieldStatuses : ValueGroup("ShieldStatuses") {
+
+        val modEnabled by boolean(
+            "ModEnabled",
+            shieldStore.readBoolean("General/Global Options/Mod Enabled") ?: true
+        ).onChanged { shieldWrite("General/Global Options/Mod Enabled" to it) }
+
+        /** Tint only your own shield, not everybody else's. */
+        val selfStateOnly by boolean(
+            "SelfStateOnly",
+            shieldStore.readBoolean(SHIELD_SELF_ONLY) ?: false
+        ).onChanged { shieldWrite(SHIELD_SELF_ONLY to it) }
+
+        /** Fade between the state colours instead of switching at once. */
+        val interpolate by boolean(
+            "InterpolateColor",
+            shieldStore.readBoolean(SHIELD_INTERPOLATE) ?: false
+        ).onChanged { shieldWrite(SHIELD_INTERPOLATE to it) }
+
+        val grayscaleTexture by boolean(
+            "GrayscaleTexture",
+            shieldStore.readBoolean(SHIELD_GRAYSCALE) ?: false
+        ).onChanged { shieldWrite(SHIELD_GRAYSCALE to it) }
+
+        val customEnabledColor by boolean(
+            "CustomEnabledColor",
+            shieldStore.readBoolean(SHIELD_CUSTOM_ENABLED) ?: true
+        ).onChanged { shieldWrite(SHIELD_CUSTOM_ENABLED to it) }
+
+        /** The shield is up and blocking. */
+        val enabledColor by color("EnabledColor", shieldColor(SHIELD_ENABLED_COLOR, Color4b(0, 255, 0, 255)))
+            .onChanged { shieldWrite(SHIELD_ENABLED_COLOR to walksyColor(it)) }
+
+        val customActiveColor by boolean(
+            "CustomActiveColor",
+            shieldStore.readBoolean(SHIELD_CUSTOM_ACTIVE) ?: false
+        ).onChanged { shieldWrite(SHIELD_CUSTOM_ACTIVE to it) }
+
+        /** Raised and in use. */
+        val activeColor by color("ActiveColor", shieldColor(SHIELD_ACTIVE_COLOR, Color4b(0, 255, 0, 255)))
+            .onChanged { shieldWrite(SHIELD_ACTIVE_COLOR to walksyColor(it)) }
+
+        val customRisingColor by boolean(
+            "CustomRisingColor",
+            shieldStore.readBoolean(SHIELD_CUSTOM_RISING) ?: false
+        ).onChanged { shieldWrite(SHIELD_CUSTOM_RISING to it) }
+
+        /** Coming up, but not yet blocking. The window that decides a fight. */
+        val risingColor by color("RisingColor", shieldColor(SHIELD_RISING_COLOR, Color4b(255, 255, 0, 255)))
+            .onChanged { shieldWrite(SHIELD_RISING_COLOR to walksyColor(it)) }
+
+        val customDisabledColor by boolean(
+            "CustomDisabledColor",
+            shieldStore.readBoolean(SHIELD_CUSTOM_DISABLED) ?: true
+        ).onChanged { shieldWrite(SHIELD_CUSTOM_DISABLED to it) }
+
+        /** Axed, and on cooldown. */
+        val disabledColor by color("DisabledColor", shieldColor(SHIELD_DISABLED_COLOR, Color4b(255, 0, 0, 255)))
+            .onChanged { shieldWrite(SHIELD_DISABLED_COLOR to walksyColor(it)) }
+    }
+
     internal fun applyTo(store: ModConfigStore, modId: String, vararg pairs: Pair<String, Any>) {
         if (!ModConfigStore.isModLoaded(modId)) {
             chat("§7$modId is not installed, so that setting has nothing to change.")
@@ -1200,4 +1283,73 @@ enum class MoreCullingLeaves(override val tag: String, override val key: String)
     DEPTH("Depth", "DEPTH"),
     RANDOM("Random", "RANDOM"),
     VERTICAL("Vertical", "VERTICAL")
+}
+
+private const val SHIELD_ID = "shieldstatus"
+
+private const val SHIELD_SELF_ONLY = "Color/General Options/Self State Only"
+private const val SHIELD_INTERPOLATE = "Color/General Options/Interpolate Shield Color"
+private const val SHIELD_GRAYSCALE = "Color/General Options/Grayscale Shield Texture"
+private const val SHIELD_CUSTOM_ENABLED = "Color/Enabled Shield Options/Custom Enabled Shield Color"
+private const val SHIELD_ENABLED_COLOR = "Color/Enabled Shield Options/Enabled Color"
+private const val SHIELD_CUSTOM_ACTIVE = "Color/Using Shield Options/Custom Active Shield Color"
+private const val SHIELD_ACTIVE_COLOR = "Color/Using Shield Options/Active Color"
+private const val SHIELD_CUSTOM_RISING = "Color/Rising Shield Options/Custom Rising Shield Color"
+private const val SHIELD_RISING_COLOR = "Color/Rising Shield Options/Rising Color"
+private const val SHIELD_CUSTOM_DISABLED = "Color/Disabled Shield Options/Custom Disabled Shield Color"
+private const val SHIELD_DISABLED_COLOR = "Color/Disabled Shield Options/Disabled Color"
+
+/** Top level for the same construction-order reason as the Jade helpers. */
+private val shieldStore = ModConfigStore.namedRecords("shieldstatus.json")
+
+private fun shieldWrite(pair: Pair<String, Any>) =
+    ModuleBundledMods.applyTo(shieldStore, SHIELD_ID, pair)
+
+/** Reads a WalksyLib colour record back into a [Color4b]. */
+private fun shieldColor(path: String, fallback: Color4b): Color4b {
+    val stored = shieldStore.readObject(path) ?: return fallback
+
+    return runCatching {
+        Color4b(
+            stored.get("r").asInt,
+            stored.get("g").asInt,
+            stored.get("b").asInt,
+            stored.get("a").asInt,
+        )
+    }.getOrDefault(fallback)
+}
+
+/**
+ * Builds the colour record WalksyLib expects.
+ *
+ * `ColorTypeAdapter` in the jar reads all of `r`, `g`, `b`, `a`, `value`,
+ * `hue`, `saturation`, `brightness`, `rainbow`, `rainbowSpeed`, `pulse` and
+ * `pulseSpeed`, so writing only the channels would leave the packed int and
+ * the HSB triple describing the *previous* colour. Its own picker edits in
+ * HSB, so a stale triple is what it would show you.
+ *
+ * Rainbow and pulse are animation modes rather than colours; they are written
+ * off, because there is no ClickGUI control for them here and silently leaving
+ * a colour animating would contradict the swatch the player just set.
+ */
+private fun walksyColor(color: Color4b): JsonObject {
+    val hsb = FloatArray(3)
+    java.awt.Color.RGBtoHSB(color.r, color.g, color.b, hsb)
+
+    val packed = (color.a shl 24) or (color.r shl 16) or (color.g shl 8) or color.b
+
+    return JsonObject().apply {
+        addProperty("r", color.r)
+        addProperty("g", color.g)
+        addProperty("b", color.b)
+        addProperty("a", color.a)
+        addProperty("value", packed)
+        addProperty("hue", hsb[0])
+        addProperty("saturation", hsb[1])
+        addProperty("brightness", hsb[2])
+        addProperty("rainbow", false)
+        addProperty("rainbowSpeed", 5)
+        addProperty("pulse", false)
+        addProperty("pulseSpeed", 5)
+    }
 }
