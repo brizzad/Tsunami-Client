@@ -43,6 +43,11 @@ viafabricplus = "4.6.1"
 # Mods for compatibility test (runtime only)
 immediatelyFast = "1.16.0+26.2-fabric"
 iris = "1.11.1+26.2-fabric"
+# By Modrinth version id, not version number: each publishes the same number for
+# more than one loader, and the number alone can resolve to the NeoForge jar.
+itemphysic = "a7vcCKc2"
+creativecore = "SI6rsPDj"
+xaerominimap = "W7vHFz3T"
 
 # Kotlin
 # https://kotlinlang.org/releases.html
@@ -120,6 +125,9 @@ exploitPreventer-api = { group = "com.nikoverflow", name = "exploit-preventer-ap
 exploitPreventer = { group = "maven.modrinth", name = "exploitpreventer", version.ref = "exploit_preventer_mod" }
 immediatelyFast = { group = "maven.modrinth", name = "ImmediatelyFast", version.ref = "immediatelyFast" }
 iris = { group = "maven.modrinth", name = "iris", version.ref = "iris" }
+itemphysic = { group = "maven.modrinth", name = "itemphysic", version.ref = "itemphysic" }
+creativecore = { group = "maven.modrinth", name = "creativecore", version.ref = "creativecore" }
+xaerominimap = { group = "maven.modrinth", name = "xaeros-minimap", version.ref = "xaerominimap" }
 
 [plugins]
 fabric-loom = { id = "net.fabricmc.fabric-loom", version.ref = "fabric-loom" }

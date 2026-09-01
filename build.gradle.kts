@@ -107,6 +107,12 @@ dependencies {
     api(libs.lithium)
     runtimeOnly(libs.immediatelyFast)
     runtimeOnly(libs.iris)
+    // Bundled by the launcher, loaded here so runClient writes their real
+    // configs - ModuleBundledMods bridges keys that have to exist, and a
+    // guessed key is the exact failure verify-bridge-keys.mjs catches.
+    runtimeOnly(libs.creativecore)
+    runtimeOnly(libs.itemphysic)
+    runtimeOnly(libs.xaerominimap)
 
     // ViaFabricPlus
     api(libs.vfp.api)

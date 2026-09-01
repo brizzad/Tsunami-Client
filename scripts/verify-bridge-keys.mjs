@@ -71,6 +71,9 @@ const groupStores = {
     Ixeris: "ixeris.toml",
     BadOptimizations: "badoptimizations.txt",
     ShieldStatuses: "shieldstatus.json",
+    Iris: "iris.properties",
+    ItemPhysic: "itemphysic-client.json",
+    XaerosMinimap: "xaero/minimap/profiles/default.cfg",
 };
 
 /*
@@ -94,6 +97,8 @@ const lineFormats = {
     "moreculling.toml": {separator: "=", sections: true},
     "ixeris.toml": {separator: "=", sections: true},
     "badoptimizations.txt": {separator: ":", sections: false},
+    "iris.properties": {separator: "=", sections: false},
+    "xaero/minimap/profiles/default.cfg": {separator: "=", sections: false},
 };
 
 /** Split on unescaped dots, exactly as JsonConfigStore does. */

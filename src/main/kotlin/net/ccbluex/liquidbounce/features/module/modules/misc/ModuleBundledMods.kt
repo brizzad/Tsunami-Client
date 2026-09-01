@@ -110,6 +110,9 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(Ixeris)
         tree(BadOptimizations)
         tree(ShieldStatuses)
+        tree(Iris)
+        tree(ItemPhysic)
+        tree(XaerosMinimap)
     }
 
     /**
@@ -409,6 +412,180 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
      * no longer reading. `history.*` is Jade's own bookkeeping, and `general.debug` is
      * developer output.
      */
+
+    /**
+     * Iris, the shader loader. Keys verified against a real `iris.properties`,
+     * which is a plain `java.util.Properties` file rather than TOML.
+     *
+     * [enableShaders] is a genuine off switch rather than a reconfiguration:
+     * with shaders disabled Iris hands rendering straight back to Sodium. That
+     * puts this in the same small group as Shield Statuses and Ixeris - a
+     * bundled jar the ClickGUI can actually switch off, not merely adjust.
+     */
+    object Iris : ValueGroup("Iris") {
+        private val store = ModConfigStore.properties("iris.properties")
+
+        val enableShaders by boolean("EnableShaders", store.readBoolean("enableShaders") ?: true)
+            .onChanged { write("enableShaders" to it) }
+
+        /**
+         * The pack to load, by folder name under `shaderpacks/`. Empty means
+         * none, which is how Iris ships and why bundling it costs nothing until
+         * somebody asks for a pack.
+         */
+        val shaderPack by text("ShaderPack", store.readString("shaderPack") ?: "")
+            .onChanged { write("shaderPack" to it) }
+
+        val colorSpace by enumChoice("ColorSpace", irisColorSpace(store))
+            .onChanged { write("colorSpace" to it.key) }
+
+        val maxShadowRenderDistance by int(
+            "MaxShadowRenderDistance",
+            store.readInt("maxShadowRenderDistance") ?: 32,
+            1..64
+        ).onChanged { write("maxShadowRenderDistance" to it) }
+
+        /** Lets a pack Iris does not recognise load anyway. Upstream warns about it. */
+        val allowUnknownShaders by boolean(
+            "AllowUnknownShaders",
+            store.readBoolean("allowUnknownShaders") ?: false
+        ).onChanged { write("allowUnknownShaders" to it) }
+
+        val disableUpdateMessage by boolean(
+            "DisableUpdateMessage",
+            store.readBoolean("disableUpdateMessage") ?: false
+        ).onChanged { write("disableUpdateMessage" to it) }
+
+        val enableDebugOptions by boolean(
+            "EnableDebugOptions",
+            store.readBoolean("enableDebugOptions") ?: false
+        ).onChanged { write("enableDebugOptions" to it) }
+
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "iris", pair)
+    }
+
+    /**
+     * ItemPhysic. Keys verified against a real `itemphysic-client.json`, which
+     * nests everything under `rendering`, hence the dotted paths.
+     *
+     * [vanillaRendering] is the off switch: with it on, ItemPhysic hands dropped
+     * items back to the vanilla renderer and stops changing anything.
+     *
+     * Worth knowing while testing: the client's own `FlatItems` module also
+     * changes how dropped items are drawn. They are not the same feature -
+     * FlatItems lays the sprite flat, ItemPhysic drops and tumbles the model -
+     * but they act on the same render path, so run one at a time when judging
+     * either.
+     */
+    object ItemPhysic : ValueGroup("ItemPhysic") {
+        private val store = ModConfigStore.json("itemphysic-client.json")
+
+        val vanillaRendering by boolean(
+            "VanillaRendering",
+            store.readBoolean("rendering.vanillaRendering") ?: false
+        ).onChanged { write("rendering.vanillaRendering" to it) }
+
+        /** Upstream's older tumble, kept for people who prefer it. */
+        val oldRotation by boolean("OldRotation", store.readBoolean("rendering.oldRotation") ?: false)
+            .onChanged { write("rendering.oldRotation" to it) }
+
+        val rotateSpeed by float("RotateSpeed", store.readFloat("rendering.rotateSpeed") ?: 1f, 0f..5f)
+            .onChanged { write("rendering.rotateSpeed" to it) }
+
+        val showPickupTooltip by boolean(
+            "ShowPickupTooltip",
+            store.readBoolean("rendering.showPickupTooltip") ?: true
+        ).onChanged { write("rendering.showPickupTooltip" to it) }
+
+        val tooltipOnlyOnGround by boolean(
+            "TooltipOnlyOnGround",
+            store.readBoolean("rendering.showPickupTooltipOnlyOnGround") ?: false
+        ).onChanged { write("rendering.showPickupTooltipOnlyOnGround" to it) }
+
+        val tooltipExtended by boolean(
+            "TooltipExtended",
+            store.readBoolean("rendering.showPickupTooltipExtended") ?: false
+        ).onChanged { write("rendering.showPickupTooltipExtended" to it) }
+
+        val tooltipKeybind by boolean(
+            "TooltipNeedsKeybind",
+            store.readBoolean("rendering.showPickupTooltipKeybind") ?: false
+        ).onChanged { write("rendering.showPickupTooltipKeybind" to it) }
+
+        val disableThrowHud by boolean(
+            "DisableThrowHUD",
+            store.readBoolean("rendering.disableThrowHUD") ?: false
+        ).onChanged { write("rendering.disableThrowHUD" to it) }
+
+        val tooltipOffsetX by int(
+            "TooltipOffsetX",
+            store.readInt("rendering.tooltipOffsetX") ?: 0,
+            -200..200
+        ).onChanged { write("rendering.tooltipOffsetX" to it) }
+
+        val tooltipOffsetY by int(
+            "TooltipOffsetY",
+            store.readInt("rendering.tooltipOffsetY") ?: 0,
+            -200..200
+        ).onChanged { write("rendering.tooltipOffsetY" to it) }
+
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "itemphysic", pair)
+    }
+
+    /**
+     * Xaero's Minimap. Keys verified against a real
+     * `xaero/minimap/profiles/default.cfg`, which is `key = value` with a `##`
+     * comment header and no sections.
+     *
+     * **[displayRadar] ships off, and that is a scope decision rather than a
+     * taste one.** Xaero's radar draws players and mobs as dots on the minimap
+     * whether or not you can see them, which is an entity locator through
+     * terrain - the line this project does not cross. It is exposed rather than
+     * removed so the choice is visible and the player's own, but it is not on
+     * by default and should not be made so.
+     *
+     * [displayMinimap] is the off switch, which matters more here than usual:
+     * the client already draws its own minimap, so running both puts two on
+     * screen at once.
+     */
+    object XaerosMinimap : ValueGroup("XaerosMinimap") {
+        private val store = ModConfigStore.equalsSeparated("xaero/minimap/profiles/default.cfg")
+
+        val displayMinimap by boolean("DisplayMinimap", store.readBoolean("display_minimap") ?: true)
+            .onChanged { write("display_minimap" to it) }
+
+        /** See the scope note on this group. Off by default, deliberately. */
+        val displayRadar by boolean("EntityRadar", store.readBoolean("display_radar") ?: false)
+            .onChanged { write("display_radar" to it) }
+
+        val minimapUiScale by int("UIScale", store.readInt("minimap_ui_scale") ?: 1, 0..10)
+            .onChanged { write("minimap_ui_scale" to it) }
+
+        val arrowScale by float("ArrowScale", store.readFloat("minimap_arrow_scale") ?: 1.5f, 0f..5f)
+            .onChanged { write("minimap_arrow_scale" to it) }
+
+        val arrowOpacity by int("ArrowOpacity", store.readInt("minimap_arrow_opacity") ?: 100, 0..100)
+            .onChanged { write("minimap_arrow_opacity" to it) }
+
+        val waypointsOnMinimap by boolean(
+            "WaypointsOnMinimap",
+            store.readBoolean("waypoints_on_minimap") ?: true
+        ).onChanged { write("waypoints_on_minimap" to it) }
+
+        val waypointsInWorld by boolean(
+            "WaypointsInWorld",
+            store.readBoolean("waypoints_in_world") ?: true
+        ).onChanged { write("waypoints_in_world" to it) }
+
+        val deathpoints by boolean("Deathpoints", store.readBoolean("deathpoints") ?: true)
+            .onChanged { write("deathpoints" to it) }
+
+        val safeMode by boolean("SafeMode", store.readBoolean("minimap_safe_mode") ?: false)
+            .onChanged { write("minimap_safe_mode" to it) }
+
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "xaerominimap", pair)
+    }
+
     object Jade : ValueGroup("Jade") {
 
         init {
@@ -1318,6 +1495,19 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
  */
 interface ConfigKeyed {
     val key: String
+}
+
+/**
+ * Iris' colour space, read out of `net.irisshaders.iris.gl.image.ColorSpace` in
+ * the jar rather than from a config sample - a config only ever shows the one
+ * value currently selected.
+ */
+enum class IrisColorSpace(override val tag: String, override val key: String) : Tagged, ConfigKeyed {
+    SRGB("sRGB", "SRGB"),
+    DCI_P3("DCI-P3", "DCI_P3"),
+    DISPLAY_P3("Display-P3", "DISPLAY_P3"),
+    REC2020("Rec. 2020", "REC2020"),
+    ADOBE_RGB("Adobe RGB", "ADOBE_RGB")
 }
 
 /** `IWailaConfig.DisplayMode`. */

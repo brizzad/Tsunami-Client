@@ -88,6 +88,15 @@ sealed class ModConfigStore(protected val path: Path) {
         /** Shield Statuses, via WalksyLib: an array of named records. */
         fun namedRecords(fileName: String) = NamedRecordConfigStore(configDir.resolve(fileName))
 
+        /**
+         * `key = value` with no section headers, as Xaero writes its profile
+         * `.cfg` files. Same shape as [toml] but flat: Xaero's file opens with a
+         * `##` comment banner and never uses `[section]`, so treating a header
+         * as one would invent a prefix that no key in the file carries.
+         */
+        fun equalsSeparated(fileName: String) =
+            LineConfigStore(configDir.resolve(fileName), separator = " = ", sections = false)
+
         /** BadOptimizations' `key: value` text file. Flat, no sections. */
         fun colonSeparated(fileName: String) =
             LineConfigStore(configDir.resolve(fileName), separator = ": ", sections = false)
