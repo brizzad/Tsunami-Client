@@ -58,11 +58,40 @@ import net.ccbluex.liquidbounce.utils.client.logger
  * was read from the mod itself - from its config file where one existed, or
  * from the field names in its jar - rather than guessed at.
  *
- * Not yet covered, and why: Replay Mod and WorldEdit CUI are off by default and
- * have never written a config here, so there are no keys to read. Simple Voice Chat is a
- * deliberate hold rather than an oversight - it configures a microphone and a
+ * Every key here is checked against a real config by
+ * `scripts/verify-bridge-keys.mjs`, which is what catches a mistyped path - a
+ * write that lands on a key the mod never reads looks identical to a setting
+ * that works.
+ *
+ * ## Not covered, and why
+ *
+ * **Lithium and FerriteCore have nothing a player should be given.** Lithium's
+ * `lithium.properties` is empty by design and exists only to disable individual
+ * mixins while debugging; FerriteCore's is the same shape. Neither is a settings
+ * screen, and dressing mixin kill-switches up as options would be worse than
+ * leaving them out.
+ *
+ * **C2ME, Replay Mod and WorldEdit CUI are off by default and have never
+ * written a config**, so there are no keys to read. Bridging them means enabling
+ * each once, letting it write, and reading the result - worth doing, but it
+ * cannot be done from the source alone, and a guessed key is exactly the failure
+ * mode above.
+ *
+ * **Simple Voice Chat is a deliberate hold.** It configures a microphone and a
  * push-to-talk key, and half-bridging that is how someone ends up transmitting
  * when they think they are muted.
+ *
+ * **ViaFabricPlus is not bridged, and has no technical reason not to be:**
+ * `viafabricplus/settings.json` is ordinary nested JSON that [JsonConfigStore]
+ * already handles. It is simply not done yet.
+ *
+ * ## The toggle a bundled jar cannot have
+ *
+ * A jar cannot be unloaded at runtime, so for most of these the ClickGUI can
+ * reconfigure the mod but not switch it off - that is the launcher's per-build
+ * mod list. The exceptions are the mods carrying their own enable flag:
+ * [ShieldStatuses]' ModEnabled and [Ixeris]' per-platform switches are exposed
+ * here precisely because they are real off switches.
  */
 object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
 
@@ -102,6 +131,61 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         /** Zero lets Sodium pick, which is almost always the right answer. */
         val chunkBuilderThreads by int("ChunkBuilderThreads", store.readInt(KEY_THREADS) ?: 0, 0..16)
             .onChanged { write(KEY_THREADS to it) }
+
+        /** Skips fluid faces that are covered by neighbouring fluid. */
+        val hiddenFluidCulling by boolean("HiddenFluidCulling", store.readBoolean("quality.hidden_fluid_culling") ?: true)
+            .onChanged { write("quality.hidden_fluid_culling" to it) }
+
+        /** Fits fluid surfaces to their neighbours more accurately. Costs a little. */
+        val improvedFluidShaping by boolean(
+            "ImprovedFluidShaping",
+            store.readBoolean("quality.improved_fluid_shaping") ?: false
+        ).onChanged { write("quality.improved_fluid_shaping" to it) }
+
+        /** Sorts entities by their closest point rather than their origin. */
+        val closestPointEntitySort by boolean(
+            "ClosestPointEntitySort",
+            store.readBoolean("quality.use_closest_point_entity_sort") ?: false
+        ).onChanged { write("quality.use_closest_point_entity_sort" to it) }
+
+        /** Nearest is vanilla's look. Linear smooths textures and softens the pixel art. */
+        val pixelFiltering by enumChoice(
+            "PixelFiltering",
+            sodiumEnum(SodiumFilterMode.entries, store, "quality.pixel_filtering_mode", SodiumFilterMode.NEAREST)
+        ).onChanged { write("quality.pixel_filtering_mode" to it.key) }
+
+        /** How long a built chunk may wait before it is uploaded. */
+        val chunkBuildDefer by enumChoice(
+            "ChunkBuildDefer",
+            sodiumEnum(SodiumDeferMode.entries, store, "performance.chunk_build_defer_mode", SodiumDeferMode.ALWAYS)
+        ).onChanged { write("performance.chunk_build_defer_mode" to it.key) }
+
+        /**
+         * Skips OpenGL error checking. Faster, and the first thing to turn off
+         * when chasing a driver crash.
+         */
+        val noErrorContext by boolean(
+            "NoErrorGLContext",
+            store.readBoolean("performance.use_no_error_g_l_context") ?: true
+        ).onChanged { write("performance.use_no_error_g_l_context" to it) }
+
+        /** How far Sodium will split quads to sort translucency correctly. */
+        val quadSplitting by enumChoice(
+            "QuadSplitting",
+            sodiumEnum(SodiumQuadSplitting.entries, store, "performance.quad_splitting_mode", SodiumQuadSplitting.SAFE)
+        ).onChanged { write("performance.quad_splitting_mode" to it.key) }
+
+        /** Sorts translucent faces by distance. Off makes glass and water look wrong. */
+        val terrainSorting by boolean(
+            "TerrainSorting",
+            store.readBoolean("debug.terrain_sorting_enabled") ?: true
+        ).onChanged { write("debug.terrain_sorting_enabled" to it) }
+
+        /** Diagnostic only, and it costs memory to collect. */
+        val memoryTracing by boolean(
+            "MemoryTracing",
+            store.readBoolean("advanced.enable_memory_tracing") ?: false
+        ).onChanged { write("advanced.enable_memory_tracing" to it) }
 
         private fun write(pair: Pair<String, Any>) = applyTo(store, "sodium", pair)
     }
@@ -1352,4 +1436,29 @@ private fun walksyColor(color: Color4b): JsonObject {
         addProperty("pulse", false)
         addProperty("pulseSpeed", 5)
     }
+}
+
+/** Reads a stored enum from a JSON store, matching the constant the mod writes. */
+private fun <T> sodiumEnum(entries: List<T>, store: ModConfigStore, key: String, fallback: T): T
+    where T : Enum<T>, T : ConfigKeyed =
+    store.readString(key)?.let { raw -> entries.firstOrNull { it.key == raw } } ?: fallback
+
+/** `com.mojang.blaze3d.textures.FilterMode`, read from the deobfuscated 26.2 jar. */
+enum class SodiumFilterMode(override val tag: String, override val key: String) : Tagged, ConfigKeyed {
+    NEAREST("Nearest", "NEAREST"),
+    LINEAR("Linear", "LINEAR")
+}
+
+/** `DeferMode` in the Sodium jar. */
+enum class SodiumDeferMode(override val tag: String, override val key: String) : Tagged, ConfigKeyed {
+    ALWAYS("Always", "ALWAYS"),
+    ONE_FRAME("OneFrame", "ONE_FRAME"),
+    ZERO_FRAMES("ZeroFrames", "ZERO_FRAMES")
+}
+
+/** `QuadSplittingMode` in the Sodium jar. */
+enum class SodiumQuadSplitting(override val tag: String, override val key: String) : Tagged, ConfigKeyed {
+    OFF("Off", "OFF"),
+    SAFE("Safe", "SAFE"),
+    UNLIMITED("Unlimited", "UNLIMITED")
 }

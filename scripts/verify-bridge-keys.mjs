@@ -170,6 +170,16 @@ while ((m = shieldRe.exec(source))) {
     if (!byStore.has("shieldstatus.json")) byStore.set("shieldstatus.json", new Set());
     byStore.get("shieldstatus.json").add(m[1]);
 }
+
+/*
+ * Sodium's original five keys are `private const val KEY_*` inside the object,
+ * so the literal scan below cannot see them either. Same treatment.
+ */
+const sodiumConstRe = /^ {4}private const val KEY_[A-Z_]+ = "([^"]+)"/gm;
+while ((m = sodiumConstRe.exec(source))) {
+    if (!byStore.has("sodium-options.json")) byStore.set("sodium-options.json", new Set());
+    byStore.get("sodium-options.json").add(m[1]);
+}
 while ((m = keyRe.exec(source))) {
     const span = spans.find((s) => m.index >= s.at && m.index < s.end);
     if (!span) continue;
