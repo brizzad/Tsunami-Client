@@ -160,13 +160,14 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
      * and still works - this is a cost, not a break - but it is the reason to
      * think twice before making Vulkan the default.
      *
-     * ## Still unverified
+     * ## Verified in a world
      *
-     * Terrain has not been seen drawn on Vulkan. The client reaches the title
-     * screen and initialises everything, but Tsunami replaces the title screen
-     * with its own browser one, which swallows vanilla's `--quickPlaySingleplayer`,
-     * so an automated run cannot get into a world. Loading a world by hand is
-     * the check that is still outstanding.
+     * Checked on 2026-09-01 by loading a world through the client's own
+     * `POST /api/v1/client/worlds/join` and capturing the window on each
+     * backend. Terrain draws correctly on Vulkan and the frame is
+     * indistinguishable from the OpenGL one at the same position; frame rate is
+     * comparable too (250-280 either way on a GTX 1660 Ti). No render or Sodium
+     * exception appears in the log.
      *
      * ## Turning it off
      *
@@ -184,10 +185,16 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
          * early. A default of false there is harmless - the stored value
          * replaces it as soon as the config loads.
          *
-         * The switch can still drift from the option if somebody changes the
-         * backend in vanilla's video settings instead. Nothing here fights
-         * that; the last write wins, and vanilla's own screen is the other
-         * legitimate way to set it.
+         * **This value wins at startup.** Loading the config fires `onChanged`,
+         * so whatever is stored here is written back to `options.txt` on every
+         * launch. Setting the backend in vanilla's video settings therefore
+         * survives only until the next start - observed, not assumed: a session
+         * launched on OpenGL with this stored as true rewrote the option to
+         * `vulkan` while running.
+         *
+         * That is the right way round for a client whose ClickGUI is the one
+         * config surface, but it does mean vanilla's screen is not a second
+         * equal way to set this.
          */
         @Suppress("unused")
         val enabled by boolean(

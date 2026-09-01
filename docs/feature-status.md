@@ -103,7 +103,7 @@ wording is quoted in the source: appearance only, actual hits unmodified.
 | RAM display | done | `{session.memory.percent}` |
 | Sodium profile | done | default |
 | Lithium, FerriteCore, ImmediatelyFast, EntityCulling, C2ME | done | versions pinned to real 26.2 Fabric builds |
-| **Vulkan rendering** | built | vanilla's own backend, via `BundledMods` → `Vulkan`; see below |
+| **Vulkan rendering** | done | vanilla's own backend, via `BundledMods` → `Vulkan`; see below |
 | **ModernFix** | **blocked** | no 26.2 Fabric build; newest Fabric is 1.21.1 |
 | **Shader support** | **deferred** | Iris `1.11.1+26.2-fabric` (LGPL-3.0) exists and fits; see below |
 | ~~Starlight~~, ~~OptiFine~~ | excluded | both conflict with Sodium |
@@ -153,11 +153,37 @@ Chromium browser, so under Vulkan they composite on the CPU. They still work -
 the browser initialises and serves the theme - but that is the argument against
 making Vulkan a default.
 
-**Status is `built`, not `done`, and the remaining gap is specific: terrain has
-not been seen drawn.** The client reaches the title screen and initialises
-everything, but Tsunami replaces the title screen with its own browser screen,
-which swallows vanilla's `--quickPlaySingleplayer`, so an automated run cannot
-enter a world. Loading a world by hand and looking at it is what is left.
+**Terrain was then checked in a world, and it renders.** The client's own
+`POST /api/v1/client/worlds/join` loads a save without touching the UI - which is
+the way round the title-screen problem, since Tsunami replaces the title screen
+with its own browser one and that swallows vanilla's `--quickPlaySingleplayer`.
+With a world open on each backend and the window captured both times, the Vulkan
+frame is indistinguishable from the OpenGL frame at the same position. Frame rate
+is comparable as well: 250-280 either way on a GTX 1660 Ti. No render or Sodium
+exception appears in the log.
+
+**One false alarm is worth recording, because the mistake is easy to repeat.**
+The first Vulkan capture looked badly corrupted - a flat red plane over the
+ground, blue bands, beams through the sky - and that was read as broken terrain.
+It was not. It is what this client looks like with seventy modules on:
+`LightLevels` paints ground a mob can spawn on, `ChunkBorders` draws the vertical
+beams, `Waypoints` draws its marker. The OpenGL baseline showed exactly the same
+picture. **Do not judge a render change from a screenshot without a same-scene
+baseline on the other path** - a client this dense in overlays looks alarming
+when it is working perfectly.
+
+**The one real difference is the browser, not the world.** MCEF logs
+`GPU acceleration only supports the OpenGL backend. Current backend: Vulkan`, and
+the window title says `Accelerated Paint is ON` on OpenGL and does not on Vulkan.
+The ClickGUI and themed HUD composite on the CPU under Vulkan. They work - both
+captures show the HUD drawn correctly - but that is the reason not to make Vulkan
+the default.
+
+**Behaviour worth knowing: the ClickGUI value wins at startup.** Loading the
+config fires the setting's `onChanged`, so the stored toggle is written back to
+`options.txt` every launch. A backend chosen in vanilla's video settings survives
+only until the next start. Observed rather than assumed - a session launched on
+OpenGL with the toggle stored as on rewrote the option to `vulkan` while running.
 
 ## HUD and visual — 21/27
 
