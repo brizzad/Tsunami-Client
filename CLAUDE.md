@@ -50,6 +50,56 @@ unzip -o -q "$JAR" 'net/minecraft/client/renderer/entity/ItemEntityRenderer.clas
 `scripts/hooks/pre-commit`) and runs `scripts/audit.mjs`, refusing the commit if
 it fails. The launcher repo has the same one. `--no-verify` bypasses it.
 
+## Driving a running client over its own REST API
+
+**This is the strongest verification available here, and it was not written
+down before.** The ClickGUI is a browser you cannot script a click inside, but
+it is only a client of the interop server the game itself runs - so anything
+the ClickGUI can do, curl can do, against a real running client.
+
+Pin the port and auth code, which are otherwise random per launch:
+
+```sh
+JAVA_HOME="$JDK25" LB_INTEROP_PORT=8099 LB_INTEROP_AUTH_CODE=devcode01   ./gradlew runClient > /tmp/runclient.log 2>&1 &
+
+# wait for it, then every request carries ?lb_code=<code>
+curl -s "http://127.0.0.1:8099/api/v1/client/modules?lb_code=devcode01"
+curl -s "http://127.0.0.1:8099/api/v1/client/modules/settings?name=BundledMods&lb_code=devcode01"
+```
+
+The routes are whatever `src-theme/src/integration/rest.ts` calls - read it
+rather than guessing, the shapes are not all alike. The three that matter:
+
+| What | Route |
+| --- | --- |
+| List modules, with `enabled` | `GET /client/modules` |
+| One module's settings tree | `GET /client/modules/settings?name=X` |
+| Write it back | `PUT /client/modules/settings?name=X` |
+| Toggle a module | `POST /client/modules/toggle` with `{name, enabled}` |
+
+Auth is `?lb_code=` on the query string (or the `lb_auth` cookie); an
+`Authorization` header is **not** accepted and returns
+`{"reason":"Authentication required"}`.
+
+What this buys: a settings change can be pushed exactly as the ClickGUI would
+push it, and then checked where it actually landed - including in a bundled
+mod's own config file under `run/config/`. That is a genuine end-to-end test of
+a ClickGUI bridge without a single click.
+
+**The dev client has the bundled mods.** `gradle/libs.versions.toml` carries
+Sodium, Lithium, Iris and ViaFabricPlus as `maven.modrinth` dependencies, so
+`runClient` really loads them and writes real config files. The mods that are
+*not* in that catalogue - AppleSkin, Jade, MoreCulling and the rest - come only
+from the launcher, so their groups still appear in the ClickGUI but
+`ModConfigStore.isModLoaded` is false and the write is skipped with a chat
+line. Read a bridge's keys from the launcher's game directory instead:
+`%APPDATA%TsunamiTsunamiLauncherdatagameDirlocalconfig`.
+
+**Float settings round-trip through a float.** Setting 0.7 + 0.1 from
+JavaScript sends 0.7999999999999999 and reads back 0.8. That is the language,
+not the client - compare with a tolerance or use values that are exact in
+binary.
+
 ## Changing the theme — the ClickGUI and the HUD
 
 The interface is a **Svelte 5** app in `src-theme/`, built into the jar. Its
