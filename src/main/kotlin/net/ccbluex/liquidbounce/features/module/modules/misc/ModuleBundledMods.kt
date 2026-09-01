@@ -56,9 +56,8 @@ import net.ccbluex.liquidbounce.utils.client.logger
  * was read from the mod itself - from its config file where one existed, or
  * from the field names in its jar - rather than guessed at.
  *
- * Not yet covered, and why: Shield Statuses, Replay Mod and WorldEdit CUI were
- * not inspected, and AppleSkin stores its settings through NeoForge's
- * TOML config spec, which this bridge does not speak. Simple Voice Chat is a
+ * Not yet covered, and why: Replay Mod and WorldEdit CUI are off by default and
+ * have never written a config here, so there are no keys to read. Simple Voice Chat is a
  * deliberate hold rather than an oversight - it configures a microphone and a
  * push-to-talk key, and half-bridging that is how someone ends up transmitting
  * when they think they are muted.
@@ -72,6 +71,7 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(EntityCulling)
         tree(SkinLayers)
         tree(Jade)
+        tree(AppleSkin)
     }
 
     /**
@@ -752,6 +752,75 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
             val preventShaders by boolean("PreventShaders", seBool("extra_settings.prevent_shaders", false))
                 .onChanged { seWrite("extra_settings.prevent_shaders" to it) }
         }
+    }
+
+    /**
+     * AppleSkin. Keys verified against a real `appleskin.json5`.
+     *
+     * This module's own notes used to say AppleSkin "stores its settings
+     * through NeoForge's TOML config spec, which this bridge does not speak".
+     * That is wrong, and it is why the mod went unbridged: the Fabric build
+     * writes plain JSON with `//` comments, and Gson reads comments in the
+     * lenient mode `JsonParser` already uses. Checked by parsing the real file
+     * with the same call `JsonConfigStore` makes - nine keys, all readable.
+     *
+     * Rewriting the file drops upstream's comments, which AppleSkin restores
+     * the next time it saves. It never fails to read its own file for want of
+     * them.
+     */
+    object AppleSkin : ValueGroup("AppleSkin") {
+        private val store = ModConfigStore.json("appleskin.json5")
+
+        /** Hunger and saturation numbers on a food item's tooltip, on shift. */
+        val foodTooltip by boolean("FoodTooltip", store.readBoolean("showFoodValuesInTooltip") ?: true)
+            .onChanged { write("showFoodValuesInTooltip" to it) }
+
+        /** The same tooltip without having to hold shift. */
+        val foodTooltipAlways by boolean(
+            "FoodTooltipAlways",
+            store.readBoolean("showFoodValuesInTooltipAlways") ?: true
+        ).onChanged { write("showFoodValuesInTooltipAlways" to it) }
+
+        /** Saturation drawn over the hunger bar. The headline feature. */
+        val saturationOverlay by boolean(
+            "SaturationOverlay",
+            store.readBoolean("showSaturationHudOverlay") ?: true
+        ).onChanged { write("showSaturationHudOverlay" to it) }
+
+        /** What the food you are holding would restore, previewed on the bar. */
+        val heldFoodPreview by boolean(
+            "HeldFoodPreview",
+            store.readBoolean("showFoodValuesHudOverlay") ?: true
+        ).onChanged { write("showFoodValuesHudOverlay" to it) }
+
+        val previewFromOffhand by boolean(
+            "PreviewFromOffhand",
+            store.readBoolean("showFoodValuesHudOverlayWhenOffhand") ?: true
+        ).onChanged { write("showFoodValuesHudOverlayWhenOffhand" to it) }
+
+        /** Exhaustion as a bar behind the hunger row - how close the next tick is. */
+        val exhaustionUnderlay by boolean(
+            "ExhaustionUnderlay",
+            store.readBoolean("showFoodExhaustionHudUnderlay") ?: true
+        ).onChanged { write("showFoodExhaustionHudUnderlay" to it) }
+
+        /** Estimated health the held food would restore, on the health bar. */
+        val healthPreview by boolean(
+            "HealthPreview",
+            store.readBoolean("showFoodHealthHudOverlay") ?: true
+        ).onChanged { write("showFoodHealthHudOverlay" to it) }
+
+        /** Whether the preview icons shake along with vanilla's own animation. */
+        val vanillaAnimations by boolean(
+            "VanillaAnimations",
+            store.readBoolean("showVanillaAnimationsOverlay") ?: true
+        ).onChanged { write("showVanillaAnimationsOverlay" to it) }
+
+        /** How visible the flashing preview icons get at their peak. */
+        val flashAlpha by float("FlashAlpha", store.readFloat("maxHudOverlayFlashAlpha") ?: 0.65f, 0f..1f)
+            .onChanged { write("maxHudOverlayFlashAlpha" to it) }
+
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "appleskin", pair)
     }
 
     internal fun applyTo(store: ModConfigStore, modId: String, vararg pairs: Pair<String, Any>) {
