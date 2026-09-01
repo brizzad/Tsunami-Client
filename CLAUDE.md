@@ -85,22 +85,26 @@ parent refetches, the child goes on displaying its own stale copy.
 ### Driving theme components headlessly
 
 `runClient` is the bar, but MCEF downloads ~150 MB before the UI exists at all
-and you cannot script a click inside it. Svelte components can be driven in jsdom
-instead — that is how the ClickGUI binding fix was proved. It works, but only
-with all four of these right, and each one fails differently:
+and you cannot script a click inside it. There is a harness that mounts the real
+components in jsdom and asserts on what they **commit**:
 
-1. Compile with `svelte/compiler`, `generate: "client"`, writing the output
-   **inside `src-theme/`** so the emitted bare `svelte/internal/client` imports
-   resolve. Rewrite `.svelte"` to `.svelte.js"` in that output.
-2. Run as `node --conditions=browser --conditions=development`. Without it node
-   picks svelte's *server* build and `mount()` throws
-   `lifecycle_function_unavailable`.
-3. jsdom is not a project dependency. Install it outside the repo and import it
-   by absolute `file:///.../jsdom/lib/api.js` — ESM ignores `NODE_PATH`.
-4. Copy jsdom's globals onto `globalThis` before importing a component, and
-   include `HTMLMediaElement` (compiled components reference it). `navigator`
-   needs `Object.defineProperty`; plain assignment throws. Then call `flushSync()`
-   from `svelte` after each dispatched event.
+```sh
+cd src-theme
+npm i --no-save jsdom          # deliberately not a package.json dependency
+node scripts/headless/run.mjs  # 0 pass, 1 fail, 2 jsdom missing
+```
+
+It builds with vite and the project's own svelte plugin, stubbing `integration/ws`
+(opens a socket on import) and `integration/rest` (talks HTTP). The rest stub
+generates its unimplemented exports from the real module, so adding a rest call
+does not break it.
+
+It currently covers the ClickGUI binding regression, and it has been seen red:
+checked out against the pre-fix `SettingsPane.svelte` it fails with exit 1.
+`scripts/headless/README.md` has the rest, including the six environment traps
+that are already handled — and the rule for new cases, which is to **assert on
+what reached the backend, never on what the DOM shows**. The bug it was built
+for drew the right thing on screen and stored the wrong thing.
 
 ## Merging a mod's source in as a module — the recipe
 
