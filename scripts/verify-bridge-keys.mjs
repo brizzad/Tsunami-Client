@@ -31,6 +31,24 @@ const SOURCE = "src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules
 const source = fs.readFileSync(SOURCE, "utf8");
 
 /*
+ * The per-mod helper files beside it. Jade, Sodium Extra and Shield Statuses keep their
+ * stores, key constants and readers in their own Bundled*Config.kt - one file per mod,
+ * because kept together they outgrow what detekt allows in a single file.
+ *
+ * Those have to be scanned too. A key constant that moves out of the module file and is
+ * not picked up here is not reported as missing: the scan simply never sees it, so
+ * coverage silently drops and the run still exits clean. That happened - splitting the
+ * shield helpers out took this from 209 keys to 198 with a green result.
+ */
+const helperDir = path.dirname(SOURCE);
+const sources = [source].concat(
+    fs
+        .readdirSync(helperDir)
+        .filter((f) => f.startsWith("Bundled") && f.endsWith("Config.kt"))
+        .map((f) => fs.readFileSync(path.join(helperDir, f), "utf8"))
+);
+
+/*
  * Which file each top-level bridge group writes to.
  *
  * Attribution is by group rather than by nearest store declaration, because
@@ -177,17 +195,20 @@ let m;
  * literals inside the group, because the paths are long enough to be unreadable
  * inline. Pick those up by their SHIELD_ prefix.
  */
-const shieldRe = /^private const val SHIELD_[A-Z_]+ = "([^"]+\/[^"]+)"/gm;
-while ((m = shieldRe.exec(source))) {
-    if (!byStore.has("shieldstatus.json")) byStore.set("shieldstatus.json", new Set());
-    byStore.get("shieldstatus.json").add(m[1]);
+const shieldRe = /^(?:private|internal) const val SHIELD_[A-Z_]+ = "([^"]+\/[^"]+)"/gm;
+for (const text of sources) {
+    shieldRe.lastIndex = 0;
+    while ((m = shieldRe.exec(text))) {
+        if (!byStore.has("shieldstatus.json")) byStore.set("shieldstatus.json", new Set());
+        byStore.get("shieldstatus.json").add(m[1]);
+    }
 }
 
 /*
  * Sodium's original five keys are `private const val KEY_*` inside the object,
  * so the literal scan below cannot see them either. Same treatment.
  */
-const sodiumConstRe = /^ {4}private const val KEY_[A-Z_]+ = "([^"]+)"/gm;
+const sodiumConstRe = /^ {4}(?:private|internal) const val KEY_[A-Z_]+ = "([^"]+)"/gm;
 while ((m = sodiumConstRe.exec(source))) {
     if (!byStore.has("sodium-options.json")) byStore.set("sodium-options.json", new Set());
     byStore.get("sodium-options.json").add(m[1]);

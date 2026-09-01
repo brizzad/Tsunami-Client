@@ -215,7 +215,11 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
             logger.info("Graphics backend set to ${target.serializedName}; applies on restart")
 
             if (useVulkan) {
-                chat("Vulkan will be used from the next launch. All bundled mods still load; the ClickGUI and HUD lose GPU acceleration, because the browser they run in only accelerates on OpenGL.")
+                chat(
+                    "Vulkan will be used from the next launch. All bundled mods still load; " +
+                        "the ClickGUI and HUD lose GPU acceleration, because the browser they " +
+                        "run in only accelerates on OpenGL."
+                )
             } else {
                 chat("OpenGL will be used from the next launch.")
             }
@@ -246,8 +250,8 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
             .onChanged { write(KEY_THREADS to it) }
 
         /** Skips fluid faces that are covered by neighbouring fluid. */
-        val hiddenFluidCulling by boolean("HiddenFluidCulling", store.readBoolean("quality.hidden_fluid_culling") ?: true)
-            .onChanged { write("quality.hidden_fluid_culling" to it) }
+        val hiddenFluidCulling by boolean("HiddenFluidCulling", store.readBoolean(KEY_HIDDEN_FLUID) ?: true)
+            .onChanged { write(KEY_HIDDEN_FLUID to it) }
 
         /** Fits fluid surfaces to their neighbours more accurately. Costs a little. */
         val improvedFluidShaping by boolean(
@@ -377,7 +381,6 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         private fun write(vararg pairs: Pair<String, Any>) =
             applyTo(store, "3dskinlayers", *pairs)
     }
-
 
     /**
      * Jade, the WAILA-style block and entity readout.
@@ -757,6 +760,7 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
     private const val KEY_FACE_CULLING = "performance.use_block_face_culling"
     private const val KEY_ANIMATE = "performance.animate_only_visible_textures"
     private const val KEY_THREADS = "performance.chunk_builder_threads"
+    private const val KEY_HIDDEN_FLUID = "quality.hidden_fluid_culling"
 
     /**
      * Writes a change through to the mod, or explains why it did nothing.
@@ -1305,34 +1309,6 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
     }
 }
 
-private const val JADE_ID = "jade"
-
-/**
- * Jade's config, which lives in a subdirectory rather than beside the others.
- *
- * Top level rather than a member of [ModuleBundledMods.Jade] on purpose: the nested
- * groups read it while their own objects are being constructed, which happens inside
- * the enclosing object's own construction. Reaching back into a half-built object
- * there is how this becomes a null at startup rather than a compile error.
- */
-private val jadeStore = ModConfigStore.json("jade/jade.json")
-
-private fun jadeBool(key: String, fallback: Boolean) = jadeStore.readBoolean(key) ?: fallback
-
-private fun jadeInt(key: String, fallback: Int) = jadeStore.readInt(key) ?: fallback
-
-private fun jadeFloat(key: String, fallback: Float) = jadeStore.readFloat(key) ?: fallback
-
-/**
- * Reads a stored enum, matching on the name Jade writes rather than the ClickGUI label.
- *
- * An unknown value falls back rather than throwing: Jade may add a constant in a later
- * version, and a config this client cannot parse is not a reason to refuse to start.
- */
-private fun <T> jadeEnum(entries: List<T>, key: String, fallback: T): T
-    where T : Enum<T>, T : ConfigKeyed =
-    jadeStore.readString(key)?.let { raw -> entries.firstOrNull { it.key == raw } } ?: fallback
-
 /**
  * A choice whose ClickGUI label and the mod's own config value differ.
  *
@@ -1420,32 +1396,6 @@ enum class JadePetArmor(override val tag: String, override val key: String) : Ta
     SHOW_DAMAGEABLE("ShowDamageable", "SHOW_DAMAGEABLE")
 }
 
-private const val SODIUM_EXTRA_ID = "sodium-extra"
-
-/**
- * Sodium Extra's config store and helpers.
- *
- * Top level rather than members of [ModuleBundledMods.SodiumExtra], for the same
- * reason as the Jade helpers above: the nested groups read it while their own
- * objects are being constructed, which happens inside the enclosing object's
- * construction. Reaching back into a half-built object there gives a null at
- * startup rather than a compile error.
- */
-private val sodiumExtraStore = ModConfigStore.json("sodium-extra-options.json")
-
-private fun seBool(key: String, fallback: Boolean) = sodiumExtraStore.readBoolean(key) ?: fallback
-
-private fun seInt(key: String, fallback: Int) = sodiumExtraStore.readInt(key) ?: fallback
-
-/** Matches on the constant Sodium Extra writes, falling back rather than throwing. */
-private fun <T> seEnum(entries: List<T>, key: String, fallback: T): T where T : Enum<T>, T : ConfigKeyed {
-    val stored = sodiumExtraStore.readString(key) ?: return fallback
-    return entries.firstOrNull { it.key == stored } ?: fallback
-}
-
-private fun seWrite(pair: Pair<String, Any>) =
-    ModuleBundledMods.applyTo(sodiumExtraStore, SODIUM_EXTRA_ID, pair)
-
 /** `SodiumExtraGameOptions$OverlayCorner`, read from the jar. */
 enum class SodiumExtraCorner(override val tag: String, override val key: String) : Tagged, ConfigKeyed {
     TOP_LEFT("TopLeft", "TOP_LEFT"),
@@ -1480,75 +1430,6 @@ enum class MoreCullingLeaves(override val tag: String, override val key: String)
     DEPTH("Depth", "DEPTH"),
     RANDOM("Random", "RANDOM"),
     VERTICAL("Vertical", "VERTICAL")
-}
-
-private const val SHIELD_ID = "shieldstatus"
-
-private const val SHIELD_SELF_ONLY = "Color/General Options/Self State Only"
-private const val SHIELD_INTERPOLATE = "Color/General Options/Interpolate Shield Color"
-private const val SHIELD_GRAYSCALE = "Color/General Options/Grayscale Shield Texture"
-private const val SHIELD_CUSTOM_ENABLED = "Color/Enabled Shield Options/Custom Enabled Shield Color"
-private const val SHIELD_ENABLED_COLOR = "Color/Enabled Shield Options/Enabled Color"
-private const val SHIELD_CUSTOM_ACTIVE = "Color/Using Shield Options/Custom Active Shield Color"
-private const val SHIELD_ACTIVE_COLOR = "Color/Using Shield Options/Active Color"
-private const val SHIELD_CUSTOM_RISING = "Color/Rising Shield Options/Custom Rising Shield Color"
-private const val SHIELD_RISING_COLOR = "Color/Rising Shield Options/Rising Color"
-private const val SHIELD_CUSTOM_DISABLED = "Color/Disabled Shield Options/Custom Disabled Shield Color"
-private const val SHIELD_DISABLED_COLOR = "Color/Disabled Shield Options/Disabled Color"
-
-/** Top level for the same construction-order reason as the Jade helpers. */
-private val shieldStore = ModConfigStore.namedRecords("shieldstatus.json")
-
-private fun shieldWrite(pair: Pair<String, Any>) =
-    ModuleBundledMods.applyTo(shieldStore, SHIELD_ID, pair)
-
-/** Reads a WalksyLib colour record back into a [Color4b]. */
-private fun shieldColor(path: String, fallback: Color4b): Color4b {
-    val stored = shieldStore.readObject(path) ?: return fallback
-
-    return runCatching {
-        Color4b(
-            stored.get("r").asInt,
-            stored.get("g").asInt,
-            stored.get("b").asInt,
-            stored.get("a").asInt,
-        )
-    }.getOrDefault(fallback)
-}
-
-/**
- * Builds the colour record WalksyLib expects.
- *
- * `ColorTypeAdapter` in the jar reads all of `r`, `g`, `b`, `a`, `value`,
- * `hue`, `saturation`, `brightness`, `rainbow`, `rainbowSpeed`, `pulse` and
- * `pulseSpeed`, so writing only the channels would leave the packed int and
- * the HSB triple describing the *previous* colour. Its own picker edits in
- * HSB, so a stale triple is what it would show you.
- *
- * Rainbow and pulse are animation modes rather than colours; they are written
- * off, because there is no ClickGUI control for them here and silently leaving
- * a colour animating would contradict the swatch the player just set.
- */
-private fun walksyColor(color: Color4b): JsonObject {
-    val hsb = FloatArray(3)
-    java.awt.Color.RGBtoHSB(color.r, color.g, color.b, hsb)
-
-    val packed = (color.a shl 24) or (color.r shl 16) or (color.g shl 8) or color.b
-
-    return JsonObject().apply {
-        addProperty("r", color.r)
-        addProperty("g", color.g)
-        addProperty("b", color.b)
-        addProperty("a", color.a)
-        addProperty("value", packed)
-        addProperty("hue", hsb[0])
-        addProperty("saturation", hsb[1])
-        addProperty("brightness", hsb[2])
-        addProperty("rainbow", false)
-        addProperty("rainbowSpeed", 5)
-        addProperty("pulse", false)
-        addProperty("pulseSpeed", 5)
-    }
 }
 
 /** Reads a stored enum from a JSON store, matching the constant the mod writes. */

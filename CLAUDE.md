@@ -24,12 +24,14 @@ node scripts/audit.mjs                                   # phone-home, SVG, kept
 node scripts/audit-mixins.mjs                            # did a strip break a kept module
 ```
 
-**`./gradlew build` fails on `:detekt`**, not on your change. Four style findings
-in the bundled-mods bridge (`ModConfigStore.kt`, `ModuleBundledMods.kt`) fail the
-task; `./gradlew build -x detekt` is green, and so are `compileTestKotlin` and
-`:test` as of 2026-09-01. `docs/known-issues.md` has the four and the choice they
-need. The older orphaned-`NoFall`-test failure this warning used to describe is
-fixed (`545542955`).
+**`./gradlew build` is green** as of 2026-09-01 - compile, `:test` and `:detekt`
+all pass. Both things that used to break it are fixed: the orphaned `NoFall` test
+(`545542955`) and four detekt findings in the bundled-mods bridge.
+
+Keep it that way. `:detekt` runs as part of `build`, and two of its limits are
+close: a file may hold **11 top-level functions** and a class 11, so a bridge that
+adds helpers goes in its own `Bundled<Mod>Config.kt` beside the module rather than
+on the end of `ModuleBundledMods.kt`. `LineConfigStore` is at 11 of 11.
 
 Compiling is not verifying. Mixin targets are resolved at runtime, so a green
 compile says nothing about whether an injection actually applies. Two ways to do
@@ -339,7 +341,7 @@ Facts that cost a whole debugging round because they were not written down:
   **Never `bind:` into a `$:` derived array** — that is the whole bug. Cause,
   fix and the jsdom before/after are in `docs/known-issues.md`; the in-game
   check is still outstanding.
-- **`./gradlew build` fails** on `:detekt`'s four style findings. See above.
+- **`./gradlew build` is green**, including `:detekt`. See the note above on keeping it so.
 
 ## Verifying a feature before calling it done
 

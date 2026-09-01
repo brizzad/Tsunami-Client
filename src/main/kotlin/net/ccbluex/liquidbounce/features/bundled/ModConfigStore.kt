@@ -349,6 +349,38 @@ class LineConfigStore(
         else -> "\"$value\""
     }
 
+    /**
+     * Adds the keys the file has never held - a mod that only writes a setting
+     * once it differs from its default. Adding one is the only way to set it,
+     * and *where* it goes decides whether it works.
+     *
+     * A bare key appended to the end of a sectioned file belongs to whichever
+     * section happens to be last, so a top-level key has to go in before the
+     * first section header. A key that names a section this file does not have
+     * is skipped rather than guessed at: writing it into the wrong table is
+     * worse than not writing it.
+     */
+    private fun addMissing(out: MutableList<String>, remaining: Map<String, Any>) {
+        val firstSection = out.indexOfFirst {
+            val t = it.trim()
+            sections && t.startsWith("[") && t.endsWith("]")
+        }
+
+        for ((key, value) in remaining) {
+            if (sections && key.contains('.')) {
+                logger.warn("Not adding ${path.fileName} key $key: its section is not in the file")
+                continue
+            }
+
+            val line = "$key$separator${format(value)}"
+            if (firstSection >= 0) {
+                out.add(firstSection, line)
+            } else {
+                out.add(line)
+            }
+        }
+    }
+
     override fun write(values: Map<String, Any>) {
         val existing = lines() ?: return
         val remaining = values.toMutableMap()
@@ -383,35 +415,7 @@ class LineConfigStore(
             out.add("$indent$name$separator${format(replacement)}")
         }
 
-        /*
-         * A key the file has never held - a mod that only writes a setting
-         * once it differs from its default. Adding it is the only way to set
-         * it, and *where* it goes decides whether it works.
-         *
-         * A bare key appended to the end of a sectioned file belongs to
-         * whichever section happens to be last, so a top-level key has to go
-         * in before the first section header. A key that names a section this
-         * file does not have is skipped rather than guessed at: writing it
-         * into the wrong table is worse than not writing it.
-         */
-        val firstSection = out.indexOfFirst {
-            val t = it.trim()
-            sections && t.startsWith("[") && t.endsWith("]")
-        }
-
-        for ((key, value) in remaining) {
-            if (sections && key.contains('.')) {
-                logger.warn("Not adding ${path.fileName} key $key: its section is not in the file")
-                continue
-            }
-
-            val line = "$key$separator${format(value)}"
-            if (firstSection >= 0) {
-                out.add(firstSection, line)
-            } else {
-                out.add(line)
-            }
-        }
+        addMissing(out, remaining)
 
         runCatching {
             Files.write(path, out)
