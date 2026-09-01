@@ -383,6 +383,62 @@ already live:
 | `hypixel`, `uhcoverlay`, `tiertagger` | Server-specific, and two of the three need a user API key — the same batch already deferred in the niche section |
 | `itemPhysic`, `packOrganizer` | Unchanged from the render section above |
 
+## Everything is configurable in the ClickGUI
+
+The strategy doc has one hard rule: every mod, merged or bundled, is configured
+through Tsunami's ClickGUI rather than its own screen. That was true of the
+merged modules and only a third true of the bundled ones, so it was audited
+end to end.
+
+**Merged modules were already right.** Each is a `ClientModule`, so each has a
+toggle and a keybind for free, and the settings were already complete:
+BetterHitreg 9, Hitboxes ~20, ArmorHud 15, PotionTimers 8, ColorSaturation 8,
+FlatItems 4, MotionBlur 3. What BetterHitreg leaves out - the metronome, the
+combat analytics - is scope, recorded in its `package-info.java`, not an
+oversight.
+
+**Bundled mods were the gap: five of twenty had any ClickGUI presence.** Now
+eleven do, 209 settings in all.
+
+| Mod | Settings | Note |
+| --- | ---: | --- |
+| Sodium | 14 | was 5; the other nine are real options from its own page |
+| Sodium Extra | 45 | was unbridged - FPS readout, animations, particles, toasts |
+| Jade | 83 | already done |
+| MoreCulling | 12 | TOML, needed `LineConfigStore` |
+| BadOptimizations | 12 | `key: value` text |
+| ShieldStatuses | 12 | array-of-named-records, needed `NamedRecordConfigStore` |
+| AppleSkin | 9 | JSON5; was skipped on a false claim about NeoForge TOML |
+| Ixeris | 8 | TOML |
+| SkinLayers | 6 | already done |
+| ImmediatelyFast | 4 | already done |
+| EntityCulling | 4 | already done |
+
+**Not bridged, with the reason:**
+
+- **Lithium, FerriteCore** - nothing a player should see. Their properties
+  files are mixin kill-switches for debugging, empty by default.
+- **C2ME, Replay Mod, WorldEdit CUI** - off by default and have never written
+  a config, so there are no keys to read. Needs a launch each; a guessed key
+  is the exact failure `scripts/verify-bridge-keys.mjs` exists to catch.
+- **Simple Voice Chat** - deliberate hold. Half-bridging a microphone and a
+  push-to-talk key is how someone transmits while believing they are muted.
+- **ViaFabricPlus** - **no technical reason.** Its `settings.json` is ordinary
+  nested JSON that `JsonConfigStore` already handles. Simply not done.
+
+**The limit that cannot be fixed here:** a jar cannot be unloaded at runtime,
+so for most bundled mods the ClickGUI reconfigures but cannot switch off - that
+is the launcher's per-build mod list. Shield Statuses and Ixeris are the
+exceptions, because they carry their own enable flags.
+
+**Verified in a running client, not compiled.** The ClickGUI cannot be clicked
+by a script, but it is only a client of the interop server the game runs, so
+every setting was pushed through the same `PUT /client/modules/settings` the
+ClickGUI uses and read back. 205 bundled settings committed; Sodium's writes
+were followed all the way into `run/config/sodium-options.json`. The fourteen
+Feather modules were checked the same way: 14/14 toggles, 81/81 settings.
+`CLAUDE.md` has the recipe.
+
 ## The backend gap
 
 Five items across three categories are blocked on the same missing thing: the
