@@ -44,7 +44,7 @@ class TextExtensionsKtTest {
         assertEquals("example.com:12345", "example.com:12345".hideSensitiveAddress())
         assertEquals("localhost", "localhost".hideSensitiveAddress())
         assertEquals("localhost:25565", "localhost:25565".hideSensitiveAddress())
-        assertEquals("liquidbounce.net", "liquidbounce.net".hideSensitiveAddress())
+        assertEquals("tsunami.net", "tsunami.net".hideSensitiveAddress())
         assertEquals("liquidproxy.net", "liquidproxy.net".hideSensitiveAddress())
 
         // Edge cases

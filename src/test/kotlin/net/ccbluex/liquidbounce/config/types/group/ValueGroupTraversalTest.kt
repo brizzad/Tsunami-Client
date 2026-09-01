@@ -59,11 +59,11 @@ class ValueGroupTraversalTest {
 
         assertEquals(
             listOf("Setting"),
-            root.collectValuesRecursively("LIQUIDBOUNCE.ROOT.VISIBLE").map(Value<*>::name).toList()
+            root.collectValuesRecursively("TSUNAMI.ROOT.VISIBLE").map(Value<*>::name).toList()
         )
         assertEquals(
             listOf("Root", "Visible"),
-            root.collectValueGroupsRecursively("liquidbounce.root.visible").map(ValueGroup::name).toList()
+            root.collectValueGroupsRecursively("tsunami.root.visible").map(ValueGroup::name).toList()
         )
     }
 
