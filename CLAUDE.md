@@ -24,9 +24,12 @@ node scripts/audit.mjs                                   # phone-home, SVG, kept
 node scripts/audit-mixins.mjs                            # did a strip break a kept module
 ```
 
-**Do not run `./gradlew build`.** It fails on an orphaned test for the deleted
-`NoFall` module — a known issue, recorded in `docs/known-issues.md` with its fix.
-It is not your change that broke it.
+**`./gradlew build` fails on `:detekt`**, not on your change. Four style findings
+in the bundled-mods bridge (`ModConfigStore.kt`, `ModuleBundledMods.kt`) fail the
+task; `./gradlew build -x detekt` is green, and so are `compileTestKotlin` and
+`:test` as of 2026-09-01. `docs/known-issues.md` has the four and the choice they
+need. The older orphaned-`NoFall`-test failure this warning used to describe is
+fixed (`545542955`).
 
 Compiling is not verifying. Mixin targets are resolved at runtime, so a green
 compile says nothing about whether an injection actually applies. Two ways to do
@@ -336,7 +339,7 @@ Facts that cost a whole debugging round because they were not written down:
   **Never `bind:` into a `$:` derived array** — that is the whole bug. Cause,
   fix and the jsdom before/after are in `docs/known-issues.md`; the in-game
   check is still outstanding.
-- **`./gradlew build` fails** on the orphaned `NoFall` test. See above.
+- **`./gradlew build` fails** on `:detekt`'s four style findings. See above.
 
 ## Verifying a feature before calling it done
 

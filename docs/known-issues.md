@@ -144,34 +144,46 @@ piece of work, with `const` becoming `$:` and each editor re-checked.
 
 ---
 
-## `./gradlew build` fails on an orphaned NoFall test
+## `./gradlew build` fails on detekt
 
 **Severity: medium.** CI's second job runs the full `./gradlew build`, so the
-tree is red there until this is removed.
+tree is red there until these are resolved.
 
-`src/test/kotlin/net/ccbluex/liquidbounce/features/module/modules/player/nofall/modes/NoFallMlgPlacementTest.kt`
-tests `NoFall`, which was deleted during the cheat strip. `compileTestKotlin`
-fails on seven unresolved references — `wasMlgPlacementApplied`,
-`MlgPlacementActionType`, `shouldPrepareMlgAction` — all of which lived in the
-deleted module.
+**The NoFall orphan that used to be this entry is fixed** (`545542955`, "Get the
+test suite running again"). Verified on 2026-09-01: `compileTestKotlin` and
+`:test` are both green. What is left is a different task failing.
+
+`:detekt` reports four style violations, all in the bundled-mods ClickGUI bridge:
+
+| File | Finding |
+| --- | --- |
+| `features/bundled/ModConfigStore.kt:352` | `write` has cognitive complexity 17; the maximum is 16 |
+| `features/module/modules/misc/ModuleBundledMods.kt:21` | 13 functions in the file; the maximum is 11 |
+| `ModuleBundledMods.kt:218` | line longer than the configured maximum |
+| `ModuleBundledMods.kt:249` | line longer than the configured maximum |
 
 ### Reproducing it
 
 ```sh
-./gradlew compileTestKotlin
+./gradlew detekt
 ```
+
+`./gradlew build -x detekt` is green, so this is the only thing between the tree
+and a passing build.
 
 ### The fix
 
-Delete the file, and the now-empty `nofall` directory with it. There is nothing
-to salvage: the module it covers is gone on purpose and is not coming back.
+The two long lines are trivial. The other two are a judgement call rather than a
+mechanical fix: `ModuleBundledMods.kt` grows a function per bridged mod, so it
+will cross the file limit again with the next bridge, and `ModConfigStore.write`
+is branchy because it dispatches over the four config shapes in use. Either
+split them along those seams — one file per group of bridges, one writer per
+shape — or raise the two thresholds in the detekt config deliberately. Do not
+suppress them file-by-file, which hides the next instance too.
 
-Nothing else in the test source set references it, and `./gradlew build -x test
--x compileTestKotlin -x compileTestJava` is green, so this is the only thing
-between the tree and a passing build.
+### The lesson from the orphan this entry used to describe
 
-This is the second orphan the strip left behind. The first was the four modules
-that loaded and did nothing, which is what `scripts/audit.mjs` now checks for.
-Worth noting that `audit.mjs` reports **clean** here — it checks that kept
-modules still have the code they depend on, not that deleted modules left no
-test behind. A `kept-tests` check would have caught this.
+Worth keeping now that the defect is gone. `audit.mjs` reported **clean**
+throughout: it checks that kept modules still have the code they depend on, not
+that deleted modules left no test behind. A `kept-tests` check would have caught
+it, and does not exist yet.
