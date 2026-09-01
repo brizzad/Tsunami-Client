@@ -104,8 +104,8 @@ wording is quoted in the source: appearance only, actual hits unmodified.
 | Sodium profile | done | default |
 | Lithium, FerriteCore, ImmediatelyFast, EntityCulling, C2ME | done | versions pinned to real 26.2 Fabric builds |
 | **Vulkan rendering** | done | vanilla's own backend, via `BundledMods` → `Vulkan`; see below |
-| **ModernFix** | **blocked** | no 26.2 Fabric build; newest Fabric is 1.21.1 |
-| **Shader support** | **deferred** | Iris `1.11.1+26.2-fabric` (LGPL-3.0) exists and fits; see below |
+| **ModernFix** | **blocked** | no 26.2 Fabric build; newest Fabric is 26.1.2, re-checked 2026-09-01 |
+| Shader support | done | bundled: Iris `1.11.2+26.2-fabric` (LGPL-3.0), on by default and inert until a pack is chosen |
 | ~~Starlight~~, ~~OptiFine~~ | excluded | both conflict with Sodium |
 
 ModernFix is absent from Modrinth for 26.2 Fabric, re-checked on 2026-08-28 and
@@ -185,6 +185,45 @@ config fires the setting's `onChanged`, so the stored toggle is written back to
 only until the next start. Observed rather than assumed - a session launched on
 OpenGL with the toggle stored as on rewrote the option to `vulkan` while running.
 
+
+**Four approved features were added on 2026-09-01, and one could not be.**
+
+* **Shaders** ship as Iris. The old note said Iris was deferred because it wanted
+  a newer Sodium than the bundle pinned. That was half wrong twice over. The
+  Sodium pin was held at 0.9.0 on the belief that 0.9.1 was an alpha, and it is
+  not - it is a release published 2026-07-08. And Iris never constrained the
+  decision at all: both 1.11.1 and 1.11.2 declare `sodium: ["0.9.x"]` in their
+  own jars, so either runs on either. The version ids Modrinth lists as
+  dependencies are advisory, not what Fabric enforces. Sodium is now 0.9.1 and
+  Iris 1.11.2.
+* **Item physics** is bundled with CreativeCore. It cannot be merged -
+  LGPL-2.1-*only* has no upgrade path into GPL-3 - and that costs a second jar,
+  which is a deliberate call rather than an oversight. Worth knowing while
+  testing: `FlatItems` also changes how dropped items draw, so judge one at a
+  time.
+* **The glint colorizer** is bundled rather than merged, even though CC0 permits
+  merging. The mod is not the small tweak the licence implies: 2,059 lines
+  across 34 files, eleven mixins plus a Sodium-specific one, its own GLSL
+  outline shaders and its own accesswidener. It also settles the old question of
+  what there is to hook in 26.2, where the glint class family is gone - it hooks
+  `RenderType`/`RenderSetup`, `EquipmentLayerRenderer`, `ItemRenderState` and
+  `ModelPart` instead.
+* **Xaero's Minimap** is bundled, off by default. The licence check came first
+  and settled the shape: All Rights Reserved with no published source, so there
+  is no derivative-works grant and nothing to derive from, and the approved
+  "port with minimal changes" is not available. Bundling stands on the footing
+  3D Skin Layers already established - the user's own launcher fetches from the
+  author's distribution, so nothing is redistributed here. **If Tsunami ever
+  mirrors these artifacts, both entries have to be revisited first.** It is off
+  by default because this fork already ships a complete minimap and enabling
+  both draws two.
+  * **Its radar ships off, and that is a scope decision.** `display_radar` draws
+    players and mobs on the minimap whether or not you can see them, which is an
+    entity locator through terrain. The setting is exposed rather than removed so
+    the choice is visible and the player's own, but it is off and should stay so.
+* **Spotify still cannot be done.** Craftify has no 26.2 build - its newest is
+  1.21.11 - and it is All Rights Reserved. Either alone would block it.
+
 ## HUD and visual — 21/27
 
 | Item | Status | Notes |
@@ -214,9 +253,9 @@ OpenGL with the toggle stored as on rewrote the option to `vulkan` while running
 | AppleSkin food HUD | done | bundled: AppleSkin `3.0.10+mc26.2` |
 | Minimap | present | **not** ported from Xaero's; see below |
 | Motion blur | done | bundled: Natural Motion Blur `1.4.4` (LGPL-3.0), off by default |
-| **Item physics** | **deferred** | ItemPhysic `1.8.15` does build for 26.2 now, but see below |
+| Item physics | done | bundled: ItemPhysic `1.8.15` + CreativeCore `2.14.16`; bundle-only, LGPL-2.1-only |
 | 3D skins | done | bundled: 3D Skin Layers `1.11.2`; see the licence note below |
-| **Glint colorizer** | **deferred** | ZEEG still needs Mod Menu, but it is no longer the only option; see below |
+| Glint colorizer | done | bundled: Enchantment Glint Outline `3.3` (CC0); see the merge-vs-bundle note below |
 | 2D items | built | `FlatItems`, merged from beamingblue's Flat Items `1.1.1+26.2` (MIT) |
 | **Resource pack organiser** | **deferred** | a Svelte UI project in its own right; no 26.2 mod either |
 | ~~Real-world clock~~ | excluded | as specified |
@@ -283,7 +322,7 @@ answer to that question.
 | **Name history** | **blocked** | Mojang removed the endpoint |
 | **Cross-server chat** | **deferred** | needs a chat server |
 | **Screenshot uploader** | **deferred** | needs an image host |
-| **Spotify** | **blocked** | Craftify is All Rights Reserved and has no 26.2 build; both are fatal |
+| **Spotify** | **blocked** | Craftify is All Rights Reserved and stops at 1.21.11; re-checked 2026-09-01, both still fatal |
 | ~~IP protection~~, ~~launcher minigames~~ | excluded | as specified |
 
 **Name history was tested, not assumed.**
@@ -457,27 +496,50 @@ FlatItems 4, MotionBlur 3. What BetterHitreg leaves out - the metronome, the
 combat analytics - is scope, recorded in its `package-info.java`, not an
 oversight.
 
-**Bundled mods were the gap: five of twenty had any ClickGUI presence.** Now
-eleven do, 209 settings in all.
+**Bundled mods were the gap: five of twenty-four had any ClickGUI presence.**
+Now fifteen do, 243 settings in all.
 
 | Mod | Settings | Note |
 | --- | ---: | --- |
-| Sodium | 14 | was 5; the other nine are real options from its own page |
-| Sodium Extra | 45 | was unbridged - FPS readout, animations, particles, toasts |
 | Jade | 83 | already done |
+| Sodium Extra | 45 | was unbridged - FPS readout, animations, particles, toasts |
+| Sodium | 14 | was 5; the other nine are real options from its own page |
 | MoreCulling | 12 | TOML, needed `LineConfigStore` |
 | BadOptimizations | 12 | `key: value` text |
 | ShieldStatuses | 12 | array-of-named-records, needed `NamedRecordConfigStore` |
+| ItemPhysic | 10 | nested JSON; `vanillaRendering` is a real off switch |
 | AppleSkin | 9 | JSON5; was skipped on a false claim about NeoForge TOML |
+| XaerosMinimap | 9 | `key = value`, needed `equalsSeparated`; radar ships off |
 | Ixeris | 8 | TOML |
-| SkinLayers | 6 | already done |
+| GlintOutline | 8 | flat JSON; colour is `[r, g, b]`, needed `readArray` |
+| Iris | 7 | `.properties`; `enableShaders` is a real off switch |
+| SkinLayers | 6 | already done - and silently broken until 2026-09-01, see below |
 | ImmediatelyFast | 4 | already done |
 | EntityCulling | 4 | already done |
+
+**Two bridges were writing nothing, and the failure mode is worth naming.**
+`applyTo` gates every write on `isModLoaded(modId)`, which takes the **Fabric**
+mod id from `fabric.mod.json` - not the Modrinth slug the launcher installs by.
+Where the two differ, the key still resolves, the ClickGUI stores the value and
+shows it back, `verify-bridge-keys.mjs` still passes, and the write is dropped
+with a chat line. Nothing says the setting did nothing.
+
+`3dskinlayers` should have been `skinlayers3d` - the slug and the id are
+reversed - so all six SkinLayers settings had never written anything since the
+bridge was built. `enchantment-glint-outline` should have been
+`enchant-outline`, caught the same way before it shipped.
+
+`verify-bridge-keys.mjs` now checks every bridge id against the fabric mod id of
+an installed jar, and distinguishes "not installed here" from "no jar declares
+this, but one nearby does" - the second is the bug and fails the run.
 
 **Not bridged, with the reason:**
 
 - **Lithium, FerriteCore** - nothing a player should see. Their properties
   files are mixin kill-switches for debugging, empty by default.
+- **Cloth Config, WalksyLib, CreativeCore** - libraries, not features. They are
+  in the bundle because MoreCulling, Shield Statuses and ItemPhysic will not
+  load without them.
 - **C2ME, Replay Mod, WorldEdit CUI** - off by default and have never written
   a config, so there are no keys to read. Needs a launch each; a guessed key
   is the exact failure `scripts/verify-bridge-keys.mjs` exists to catch.
@@ -486,18 +548,37 @@ eleven do, 209 settings in all.
 - **ViaFabricPlus** - **no technical reason.** Its `settings.json` is ordinary
   nested JSON that `JsonConfigStore` already handles. Simply not done.
 
-**The limit that cannot be fixed here:** a jar cannot be unloaded at runtime,
-so for most bundled mods the ClickGUI reconfigures but cannot switch off - that
-is the launcher's per-build mod list. Shield Statuses and Ixeris are the
-exceptions, because they carry their own enable flags.
+**The limit that cannot be fixed here:** a jar cannot be unloaded at runtime, so
+for a bundled mod the ClickGUI can only reconfigure, not remove - what it ships
+at all is the launcher's per-build mod list.
+
+Six carry their own enable flag and so *can* be switched off from the ClickGUI,
+which is as close to a toggle as a bundled jar gets:
+
+| Mod | The switch | What off means |
+| --- | --- | --- |
+| Shield Statuses | its own enable flag | stops tinting |
+| Ixeris | per-platform enable flags | input handling returns to vanilla |
+| Iris | `enableShaders` | rendering goes straight back to Sodium |
+| ItemPhysic | `vanillaRendering` | dropped items render the vanilla way |
+| Xaero's Minimap | `display_minimap` | draws nothing; the built-in minimap remains |
+| Glint Outline | `enabled` | the vanilla glint comes back |
+
+The rest reconfigure only. That is a property of the mods, not of the bridge.
 
 **Verified in a running client, not compiled.** The ClickGUI cannot be clicked
 by a script, but it is only a client of the interop server the game runs, so
 every setting was pushed through the same `PUT /client/modules/settings` the
-ClickGUI uses and read back. 205 bundled settings committed; Sodium's writes
-were followed all the way into `run/config/sodium-options.json`. The fourteen
-Feather modules were checked the same way: 14/14 toggles, 81/81 settings.
-`CLAUDE.md` has the recipe.
+ClickGUI uses - and then, which is the part that matters, the mod's own config
+file was read back off disk. A PUT that round-trips proves only that the client
+stored the value, which is exactly what the two dead bridges did for months.
+
+Re-run on 2026-09-01 across the whole bundle: **15/15 groups, 243 settings, every
+group's own config file observed changing.** On the module side: 74 registered,
+72 of 72 toggled off and back with the state read back each time, 74 of 74
+settings trees readable, 1072 leaf settings, and no missing-description warnings.
+ClickGui and HUD are not toggled - turning either off removes the interface being
+tested through. `CLAUDE.md` has the recipe.
 
 ## The backend gap — half closed, 2026-09-01
 
