@@ -20,6 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import zlib from "node:zlib";
 
 const args = process.argv.slice(2);
 const dirFlag = args.indexOf("--config-dir");
@@ -277,4 +278,192 @@ if (unknownGroups.length) {
 }
 
 console.log(`\n${resolved} resolved, ${missing} missing, ${unverified} unverified\n`);
+
+/*
+ * Second check: does each bridge name a mod id that actually exists?
+ *
+ * `applyTo` gates every write on `ModConfigStore.isModLoaded(modId)`, and that
+ * takes the **Fabric** mod id out of `fabric.mod.json` - not the Modrinth slug
+ * the launcher installs by. Where the two differ the failure is silent in the
+ * worst possible way: the key resolves, so the check above passes; the ClickGUI
+ * stores the value and shows it back; and the write is dropped with a chat line.
+ * Nothing tells you the setting did nothing.
+ *
+ * That shipped twice. `3dskinlayers` should have been `skinlayers3d` - the slug
+ * and the id are reversed - and all six SkinLayers settings had never written
+ * anything at all. `enchantment-glint-outline` should have been
+ * `enchant-outline`. Both were found by pushing a value through a running client
+ * and reading the mod's own file back, which is far too slow a way to catch a
+ * typo.
+ */
+function fabricIdsFrom(dir) {
+    const ids = new Map();
+    let jars = [];
+    try {
+        jars = fs.readdirSync(dir).filter((f) => f.endsWith(".jar")).map((f) => path.join(dir, f));
+    } catch {
+        return ids;
+    }
+
+    for (const jar of jars) {
+        const id = readFabricId(jar);
+        if (id) ids.set(id, path.basename(jar));
+    }
+    return ids;
+}
+
+/**
+ * Pulls `fabric.mod.json` out of a jar and returns its `id`, or null.
+ *
+ * Reads the central directory rather than walking local file headers. Most mod
+ * jars are written with data descriptors, which leave the compressed size as 0
+ * in the local header and fill it in after the data - so a local-header walk
+ * finds nothing for exactly the jars this needs to read. The central directory
+ * always carries the real sizes.
+ */
+function readFabricId(jar) {
+    let buf;
+    try {
+        buf = fs.readFileSync(jar);
+    } catch {
+        return null;
+    }
+
+    // End of Central Directory, scanning back over the optional trailing comment.
+    let eocd = -1;
+    for (let i = buf.length - 22; i >= 0 && i > buf.length - 70000; i--) {
+        if (buf.readUInt32LE(i) === 0x06054b50) {
+            eocd = i;
+            break;
+        }
+    }
+    if (eocd < 0) return null;
+
+    let at = buf.readUInt32LE(eocd + 16);
+    const count = buf.readUInt16LE(eocd + 10);
+
+    for (let i = 0; i < count; i++) {
+        const nameLen = buf.readUInt16LE(at + 28);
+        const extraLen = buf.readUInt16LE(at + 30);
+        const cmtLen = buf.readUInt16LE(at + 32);
+        const name = buf.subarray(at + 46, at + 46 + nameLen).toString("utf8");
+
+        if (name === "fabric.mod.json") {
+            const method = buf.readUInt16LE(at + 10);
+            const compSize = buf.readUInt32LE(at + 20);
+            const lho = buf.readUInt32LE(at + 42);
+            const dataAt = lho + 30 + buf.readUInt16LE(lho + 26) + buf.readUInt16LE(lho + 28);
+            const entry = buf.subarray(dataAt, dataAt + compSize);
+            try {
+                const text = method === 0
+                    ? entry.toString("utf8")
+                    : zlib.inflateRawSync(entry).toString("utf8");
+                // Some mods ship trailing commas, which JSON.parse rejects.
+                return JSON.parse(text.replace(/,(\s*[}\]])/g, "$1")).id ?? null;
+            } catch {
+                return null;
+            }
+        }
+
+        at += 46 + nameLen + extraLen + cmtLen;
+    }
+    return null;
+}
+
+
+const modsDir = path.join(path.dirname(configDir), "mods");
+const installed = fabricIdsFrom(modsDir);
+
+/*
+ * The dev client resolves its mods through Gradle rather than a mods folder, so
+ * its jars sit in the Modrinth cache. Read those too - otherwise a mod the
+ * launcher bundles but has not downloaded yet reads as a wrong id, which is the
+ * one thing this check exists to tell apart.
+ */
+const cacheRoot = path.join(os.homedir(), ".gradle/caches/modules-2/files-2.1/maven.modrinth");
+
+function cachedJars(root, depth = 0) {
+    if (depth > 4) return [];
+    let entries = [];
+    try {
+        entries = fs.readdirSync(root, {withFileTypes: true});
+    } catch {
+        return [];
+    }
+    const out = [];
+    for (const e of entries) {
+        const p = path.join(root, e.name);
+        if (e.isDirectory()) {
+            out.push(...cachedJars(p, depth + 1));
+        } else if (e.name.endsWith(".jar")) {
+            out.push(p);
+        }
+    }
+    return out;
+}
+
+for (const jar of cachedJars(cacheRoot)) {
+    const id = readFabricId(jar);
+    if (id && !installed.has(id)) installed.set(id, path.basename(jar));
+}
+
+console.log("\nbridge mod ids");
+
+const idRe = /applyTo\(\s*store\s*,\s*"([^"]+)"/g;
+const bridgeIds = new Set();
+for (const text of sources) {
+    idRe.lastIndex = 0;
+    let hit;
+    while ((hit = idRe.exec(text))) bridgeIds.add(hit[1]);
+}
+
+const squash = (v) => v.replace(/[^a-z0-9]/g, "");
+let wrongIds = 0;
+let uncheckedIds = 0;
+
+if (installed.size === 0) {
+    console.log(`  ----  no jars found, so ${bridgeIds.size} id(s) unchecked`);
+    uncheckedIds = bridgeIds.size;
+} else {
+    for (const id of [...bridgeIds].sort()) {
+        if (installed.has(id)) {
+            console.log(`  ok    ${id}`);
+            continue;
+        }
+
+        /*
+         * Not installed here is not the same as wrong. A near match *is* wrong:
+         * it means the mod is present under a different id, which is exactly how
+         * `3dskinlayers` sat beside a jar declaring `skinlayers3d` while all six
+         * of its settings silently did nothing.
+         */
+        const near = [...installed.keys()].filter((k) => {
+            const a = squash(k);
+            const b = squash(id);
+            if (a === b) return false;
+            const sorted = (v) => [...v].sort().join("");
+            return a.includes(b) || b.includes(a) || sorted(a) === sorted(b);
+        });
+
+        if (near.length) {
+            wrongIds++;
+            console.log(`  FAIL  ${id} - no jar declares this; did you mean ${near.join(", ")}?`);
+        } else {
+            uncheckedIds++;
+            console.log(`  ----  ${id} - not installed here, so unchecked`);
+        }
+    }
+}
+
+if (wrongIds > 0) {
+    console.log(`\n${wrongIds} bridge(s) name a mod id nothing declares - those writes are dropped silently\n`);
+    process.exit(1);
+}
+
+const checked = bridgeIds.size - uncheckedIds;
+console.log(`\n  ${checked}/${bridgeIds.size} bridge mod ids match an installed jar` +
+    (uncheckedIds ? `, ${uncheckedIds} not installed here` : ""));
+console.log();
+
+
 process.exit(missing === 0 ? 0 : 1);
