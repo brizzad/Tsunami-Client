@@ -72,6 +72,9 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(SkinLayers)
         tree(Jade)
         tree(AppleSkin)
+        tree(MoreCulling)
+        tree(Ixeris)
+        tree(BadOptimizations)
     }
 
     /**
@@ -823,6 +826,193 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         private fun write(pair: Pair<String, Any>) = applyTo(store, "appleskin", pair)
     }
 
+    /**
+     * MoreCulling. Keys verified against a real `moreculling.toml`.
+     *
+     * Culls block faces and block entities that cannot be seen - the half
+     * EntityCulling does not do. Its own screen is a Cloth Config page reached
+     * through Sodium's video settings, which is two menus deep from anywhere a
+     * player would look.
+     *
+     * `dontCull` is not here: it is a block-id allow list, and a text field for
+     * registry names belongs in a list editor rather than a settings row.
+     */
+    object MoreCulling : ValueGroup("MoreCulling") {
+        private val store = ModConfigStore.toml("moreculling.toml")
+
+        val signTextCulling by boolean("SignTextCulling", store.readBoolean("signTextCulling") ?: true)
+            .onChanged { write("signTextCulling" to it) }
+
+        val rainCulling by boolean("RainCulling", store.readBoolean("rainCulling") ?: true)
+            .onChanged { write("rainCulling" to it) }
+
+        val blockStateCulling by boolean("BlockStateCulling", store.readBoolean("useBlockStateCulling") ?: true)
+            .onChanged { write("useBlockStateCulling" to it) }
+
+        val paintingCulling by boolean("PaintingCulling", store.readBoolean("paintingCulling") ?: true)
+            .onChanged { write("paintingCulling" to it) }
+
+        val endGatewayCulling by boolean("EndGatewayCulling", store.readBoolean("endGatewayCulling") ?: false)
+            .onChanged { write("endGatewayCulling" to it) }
+
+        val itemFrameRenderer by boolean(
+            "CustomItemFrameRenderer",
+            store.readBoolean("useCustomItemFrameRenderer") ?: true
+        ).onChanged { write("useCustomItemFrameRenderer" to it) }
+
+        val itemFrameMapCulling by boolean("ItemFrameMapCulling", store.readBoolean("itemFrameMapCulling") ?: true)
+            .onChanged { write("itemFrameMapCulling" to it) }
+
+        /** Draws distant item frames at lower detail. */
+        val itemFrameLOD by boolean("ItemFrameLOD", store.readBoolean("useItemFrameLOD") ?: true)
+            .onChanged { write("useItemFrameLOD" to it) }
+
+        val itemFrameLODRange by int("ItemFrameLODRange", store.readInt("itemFrameLODRange") ?: 11, 1..64)
+            .onChanged { write("itemFrameLODRange" to it) }
+
+        val leavesCullingMode by enumChoice(
+            "LeavesCullingMode",
+            tomlEnum(MoreCullingLeaves.entries, store, "leavesCullingMode", MoreCullingLeaves.DEFAULT)
+        ).onChanged { write("leavesCullingMode" to it.key) }
+
+        /** How many layers into a leaf block are still drawn. */
+        val leavesCullingAmount by int("LeavesCullingAmount", store.readInt("leavesCullingAmount") ?: 2, 1..8)
+            .onChanged { write("leavesCullingAmount" to it) }
+
+        val includeMangroveRoots by boolean(
+            "IncludeMangroveRoots",
+            store.readBoolean("includeMangroveRoots") ?: false
+        ).onChanged { write("includeMangroveRoots" to it) }
+
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "moreculling", pair)
+    }
+
+    /**
+     * Ixeris. Keys verified against a real `ixeris.toml`.
+     *
+     * Moves GLFW window-event polling off the render thread. Its per-platform
+     * switches are here because a player on a machine where it misbehaves needs
+     * a way to turn it off without deleting the jar, and the two debug-logging
+     * options are not, because upstream marks them Debug Only and they write a
+     * stack trace per call.
+     */
+    object Ixeris : ValueGroup("Ixeris") {
+        private val store = ModConfigStore.toml("ixeris.toml")
+
+        val onWindows by boolean("EnabledOnWindows", store.readBoolean("enabledOnWindows") ?: true)
+            .onChanged { write("enabledOnWindows" to it) }
+
+        val onMacOS by boolean("EnabledOnMacOS", store.readBoolean("enabledOnMacOS") ?: false)
+            .onChanged { write("enabledOnMacOS" to it) }
+
+        val onLinux by boolean("EnabledOnLinux", store.readBoolean("enabledOnLinux") ?: true)
+            .onChanged { write("enabledOnLinux" to it) }
+
+        val onOther by boolean(
+            "EnabledOnOtherPlatforms",
+            store.readBoolean("enabledOnOtherPlatforms") ?: true
+        ).onChanged { write("enabledOnOtherPlatforms" to it) }
+
+        /** Upstream calls this experimental. Off unless you are chasing frames. */
+        val aggressiveCaching by boolean("AggressiveCaching", store.readBoolean("aggressiveCaching") ?: false)
+            .onChanged { write("aggressiveCaching" to it) }
+
+        val flexibleThreading by boolean("FlexibleThreading", store.readBoolean("flexibleThreading") ?: true)
+            .onChanged { write("flexibleThreading" to it) }
+
+        /** Upstream's own note: "might reduce performance considerably". */
+        val fullyBlockingMode by boolean("FullyBlockingMode", store.readBoolean("fullyBlockingMode") ?: false)
+            .onChanged { write("fullyBlockingMode" to it) }
+
+        /** Zero lets Ixeris decide, which is the right answer almost always. */
+        val pollingThreadPriority by int(
+            "PollingThreadPriority",
+            store.readInt("eventPollingThreadPriority") ?: 0,
+            0..10
+        ).onChanged { write("eventPollingThreadPriority" to it) }
+
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "ixeris", pair)
+    }
+
+    /**
+     * BadOptimizations. Keys verified against a real `badoptimizations.txt`,
+     * which is `key: value` rather than TOML or properties.
+     *
+     * Upstream's own file says every one of these needs a restart, which is
+     * what this whole module already tells you.
+     */
+    object BadOptimizations : ValueGroup("BadOptimizations") {
+        private val store = ModConfigStore.colonSeparated("badoptimizations.txt")
+
+        val lightmapCaching by boolean(
+            "LightmapCaching",
+            store.readBoolean("enable_lightmap_caching") ?: true
+        ).onChanged { write("enable_lightmap_caching" to it) }
+
+        val skyColorCaching by boolean(
+            "SkyColorCaching",
+            store.readBoolean("enable_sky_color_caching") ?: true
+        ).onChanged { write("enable_sky_color_caching" to it) }
+
+        val skyAngleCaching by boolean(
+            "SkyAngleCaching",
+            store.readBoolean("enable_sky_angle_caching_in_worldrenderer") ?: true
+        ).onChanged { write("enable_sky_angle_caching_in_worldrenderer" to it) }
+
+        val entityRendererCaching by boolean(
+            "EntityRendererCaching",
+            store.readBoolean("enable_entity_renderer_caching") ?: true
+        ).onChanged { write("enable_entity_renderer_caching" to it) }
+
+        val blockEntityRendererCaching by boolean(
+            "BlockEntityRendererCaching",
+            store.readBoolean("enable_block_entity_renderer_caching") ?: true
+        ).onChanged { write("enable_block_entity_renderer_caching" to it) }
+
+        val entityFlagCaching by boolean(
+            "EntityFlagCaching",
+            store.readBoolean("enable_entity_flag_caching") ?: true
+        ).onChanged { write("enable_entity_flag_caching" to it) }
+
+        val particleManager by boolean(
+            "ParticleManagerOptimization",
+            store.readBoolean("enable_particle_manager_optimization") ?: true
+        ).onChanged { write("enable_particle_manager_optimization" to it) }
+
+        val toastOptimizations by boolean(
+            "ToastOptimizations",
+            store.readBoolean("enable_toast_optimizations") ?: true
+        ).onChanged { write("enable_toast_optimizations" to it) }
+
+        val redundantFov by boolean(
+            "RemoveRedundantFovCalculations",
+            store.readBoolean("enable_remove_redundant_fov_calculations") ?: true
+        ).onChanged { write("enable_remove_redundant_fov_calculations" to it) }
+
+        val debugRendererDisable by boolean(
+            "DisableUnneededDebugRenderer",
+            store.readBoolean("enable_debug_renderer_disable_if_not_needed") ?: true
+        ).onChanged { write("enable_debug_renderer_disable_if_not_needed" to it) }
+
+        /**
+         * How much in-game time must pass before the lightmap is rebuilt.
+         * Upstream's own note: below 2 disables the optimisation entirely.
+         */
+        val lightmapInterval by int(
+            "LightmapUpdateTicks",
+            store.readInt("lightmap_time_change_needed_for_update") ?: 40,
+            0..200
+        ).onChanged { write("lightmap_time_change_needed_for_update" to it) }
+
+        val skyColorInterval by int(
+            "SkyColorUpdateTicks",
+            store.readInt("skycolor_time_change_needed_for_update") ?: 40,
+            0..200
+        ).onChanged { write("skycolor_time_change_needed_for_update" to it) }
+
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "badoptimizations", pair)
+    }
+
     internal fun applyTo(store: ModConfigStore, modId: String, vararg pairs: Pair<String, Any>) {
         if (!ModConfigStore.isModLoaded(modId)) {
             chat("§7$modId is not installed, so that setting has nothing to change.")
@@ -989,4 +1179,25 @@ enum class SodiumExtraContrast(override val tag: String, override val key: Strin
     NONE("None", "NONE"),
     BACKGROUND("Background", "BACKGROUND"),
     SHADOW("Shadow", "SHADOW")
+}
+
+/**
+ * Reads a stored enum from a line-based config, matching on the constant the
+ * mod writes rather than the ClickGUI label. An unknown value falls back
+ * rather than throwing, the same as [jadeEnum].
+ */
+private fun <T> tomlEnum(entries: List<T>, store: ModConfigStore, key: String, fallback: T): T
+    where T : Enum<T>, T : ConfigKeyed =
+    store.readString(key)?.let { raw -> entries.firstOrNull { it.key == raw } } ?: fallback
+
+/** `LeavesCullingMode` in the MoreCulling jar. */
+enum class MoreCullingLeaves(override val tag: String, override val key: String) : Tagged, ConfigKeyed {
+    DEFAULT("Default", "DEFAULT"),
+    FAST("Fast", "FAST"),
+    STATE("State", "STATE"),
+    CHECK("Check", "CHECK"),
+    GAP("Gap", "GAP"),
+    DEPTH("Depth", "DEPTH"),
+    RANDOM("Random", "RANDOM"),
+    VERTICAL("Vertical", "VERTICAL")
 }

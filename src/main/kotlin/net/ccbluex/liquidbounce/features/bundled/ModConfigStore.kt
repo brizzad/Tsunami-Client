@@ -56,6 +56,7 @@ sealed class ModConfigStore(protected val path: Path) {
     abstract fun readBoolean(key: String): Boolean?
     abstract fun readInt(key: String): Int?
     abstract fun readFloat(key: String): Float?
+    abstract fun readString(key: String): String?
     abstract fun write(values: Map<String, Any>)
 
     protected fun exists() = Files.isRegularFile(path)
@@ -77,6 +78,14 @@ sealed class ModConfigStore(protected val path: Path) {
         fun json(fileName: String) = JsonConfigStore(configDir.resolve(fileName))
 
         fun properties(fileName: String) = PropertiesConfigStore(configDir.resolve(fileName))
+
+        /** TOML, as MoreCulling and Ixeris write it. Sections become dotted paths. */
+        fun toml(fileName: String) =
+            LineConfigStore(configDir.resolve(fileName), separator = " = ", sections = true)
+
+        /** BadOptimizations' `key: value` text file. Flat, no sections. */
+        fun colonSeparated(fileName: String) =
+            LineConfigStore(configDir.resolve(fileName), separator = ": ", sections = false)
     }
 }
 
@@ -103,8 +112,24 @@ class JsonConfigStore(path: Path) : ModConfigStore(path) {
         }.getOrNull()
     }
 
+    /**
+     * Splits a dotted path, treating a backslash-escaped dot as part of a key name.
+     *
+     * A dot normally means "descend into this object", which is how Sodium nests by
+     * category. Jade needs both at once: its plugin sections are real objects, but the
+     * keys inside them are flat strings that themselves contain dots -
+     * `harvest_tool.effective_tool` is one key, not two levels. Splitting that naively
+     * writes a key Jade never reads and leaves the real one untouched, which looks
+     * exactly like a setting that silently does nothing.
+     */
+    /** A dot that is not escaped with a backslash. */
+    private val unescapedDot = Regex("""(?<!\\)\.""")
+
+    private fun segments(key: String): List<String> =
+        key.split(unescapedDot).map { it.replace("\\.", ".") }
+
     private fun resolve(root: JsonObject, key: String, create: Boolean): Pair<JsonObject, String>? {
-        val parts = key.split('.')
+        val parts = segments(key)
         var node = root
 
         for (part in parts.dropLast(1)) {
@@ -143,6 +168,13 @@ class JsonConfigStore(path: Path) : ModConfigStore(path) {
         val (holder, leaf) = resolve(root, key, create = false) ?: return null
         val element = holder.get(leaf) ?: return null
         return runCatching { element.asFloat }.getOrNull()
+    }
+
+    override fun readString(key: String): String? {
+        val root = root() ?: return null
+        val (holder, leaf) = resolve(root, key, create = false) ?: return null
+        val element = holder.get(leaf) ?: return null
+        return runCatching { element.asString }.getOrNull()
     }
 
     override fun write(values: Map<String, Any>) {
@@ -195,6 +227,9 @@ class PropertiesConfigStore(path: Path) : ModConfigStore(path) {
     override fun readFloat(key: String): Float? =
         load()?.getProperty(key)?.toFloatOrNull()
 
+    override fun readString(key: String): String? =
+        load()?.getProperty(key)
+
     override fun write(values: Map<String, Any>) {
         val properties = load() ?: return
 
@@ -206,6 +241,175 @@ class PropertiesConfigStore(path: Path) : ModConfigStore(path) {
             Files.newBufferedWriter(path).use {
                 properties.store(it, "Written by Tsunami. Edit in the ClickGUI.")
             }
+        }.onFailure {
+            logger.warn("Could not write ${path.fileName}", it)
+        }
+    }
+}
+
+/**
+ * A line-oriented `key <sep> value` config, edited in place.
+ *
+ * Covers the two shapes that are not JSON here: TOML, as MoreCulling and
+ * Ixeris write it, and the `key: value` text file BadOptimizations writes.
+ * Both are flat lists of assignments with `#` comments, and TOML adds
+ * `[section]` headers, which this addresses as a dotted path -
+ * `modCompatibility.minecraft`.
+ *
+ * ## Why it rewrites lines rather than reserialising
+ *
+ * Every one of these files is mostly comments, and the comments are the
+ * documentation: BadOptimizations explains what each optimisation costs, and
+ * Ixeris warns which of its options are debug-only. A parse-and-reserialise
+ * would drop all of it and hand the player back a file they can no longer
+ * read. [PropertiesConfigStore] does exactly that, which is a good reason not
+ * to reuse it here.
+ *
+ * So a write finds the line that assigns the key and replaces only the value
+ * on it. Everything else in the file - comments, blank lines, ordering,
+ * sections, and any key this bridge does not know about - is passed through
+ * untouched.
+ *
+ * This is not a TOML parser and does not try to be. Multi-line values, inline
+ * tables and arrays-of-tables are not supported; arrays are read as their raw
+ * text and never written. Nothing bridged here uses them, and a mod that did
+ * would want its own store rather than a guess.
+ */
+class LineConfigStore(
+    path: Path,
+    private val separator: String,
+    private val sections: Boolean,
+) : ModConfigStore(path) {
+
+    private fun lines(): List<String>? {
+        if (!exists()) {
+            return null
+        }
+
+        return runCatching {
+            Files.readAllLines(path)
+        }.onFailure {
+            logger.warn("Could not read ${path.fileName}", it)
+        }.getOrNull()
+    }
+
+    /** The assignment on a line, as section-qualified key to raw value. */
+    private fun entries(lines: List<String>): Map<String, String> {
+        val found = LinkedHashMap<String, String>()
+        var section = ""
+
+        for (line in lines) {
+            val trimmed = line.trim()
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                continue
+            }
+
+            if (sections && trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                section = trimmed.removeSurrounding("[", "]").trim() + "."
+                continue
+            }
+
+            val at = trimmed.indexOf(separator.trim())
+            if (at <= 0) {
+                continue
+            }
+
+            val key = trimmed.substring(0, at).trim()
+            val value = trimmed.substring(at + separator.trim().length).trim()
+            found[section + key] = value
+        }
+
+        return found
+    }
+
+    /** TOML quotes its strings; the readers below want the text inside. */
+    private fun unquote(raw: String) = raw.trim().removeSurrounding("\"")
+
+    private fun raw(key: String): String? = lines()?.let { entries(it)[key] }
+
+    override fun readBoolean(key: String) = raw(key)?.lowercase()?.toBooleanStrictOrNull()
+
+    override fun readInt(key: String) = raw(key)?.toIntOrNull()
+
+    override fun readFloat(key: String) = raw(key)?.toFloatOrNull()
+
+    override fun readString(key: String) = raw(key)?.let(::unquote)
+
+    /**
+     * Quotes a string and leaves everything else bare, which is what both
+     * formats want: `true`, `11`, `2.0`, `"DEFAULT"`.
+     */
+    private fun format(value: Any) = when (value) {
+        is Boolean, is Int, is Long, is Float, is Double -> value.toString()
+        else -> "\"$value\""
+    }
+
+    override fun write(values: Map<String, Any>) {
+        val existing = lines() ?: return
+        val remaining = values.toMutableMap()
+        val out = ArrayList<String>(existing.size)
+        var section = ""
+
+        for (line in existing) {
+            val trimmed = line.trim()
+
+            if (sections && trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                section = trimmed.removeSurrounding("[", "]").trim() + "."
+                out.add(line)
+                continue
+            }
+
+            val at = trimmed.indexOf(separator.trim())
+            if (trimmed.isEmpty() || trimmed.startsWith("#") || at <= 0) {
+                out.add(line)
+                continue
+            }
+
+            val key = section + trimmed.substring(0, at).trim()
+            val replacement = remaining.remove(key)
+            if (replacement == null) {
+                out.add(line)
+                continue
+            }
+
+            // Keep the line's own indentation and spelling of the separator.
+            val indent = line.takeWhile { it.isWhitespace() }
+            val name = trimmed.substring(0, at).trim()
+            out.add("$indent$name$separator${format(replacement)}")
+        }
+
+        /*
+         * A key the file has never held - a mod that only writes a setting
+         * once it differs from its default. Adding it is the only way to set
+         * it, and *where* it goes decides whether it works.
+         *
+         * A bare key appended to the end of a sectioned file belongs to
+         * whichever section happens to be last, so a top-level key has to go
+         * in before the first section header. A key that names a section this
+         * file does not have is skipped rather than guessed at: writing it
+         * into the wrong table is worse than not writing it.
+         */
+        val firstSection = out.indexOfFirst {
+            val t = it.trim()
+            sections && t.startsWith("[") && t.endsWith("]")
+        }
+
+        for ((key, value) in remaining) {
+            if (sections && key.contains('.')) {
+                logger.warn("Not adding ${path.fileName} key $key: its section is not in the file")
+                continue
+            }
+
+            val line = "$key$separator${format(value)}"
+            if (firstSection >= 0) {
+                out.add(firstSection, line)
+            } else {
+                out.add(line)
+            }
+        }
+
+        runCatching {
+            Files.write(path, out)
         }.onFailure {
             logger.warn("Could not write ${path.fileName}", it)
         }

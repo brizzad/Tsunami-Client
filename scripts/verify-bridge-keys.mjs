@@ -49,6 +49,19 @@ const groupStores = {
     SkinLayers: "skinlayers.json",
     Jade: "jade/jade.json",
     AppleSkin: "appleskin.json5",
+    MoreCulling: "moreculling.toml",
+    Ixeris: "ixeris.toml",
+    BadOptimizations: "badoptimizations.txt",
+};
+
+/*
+ * The line-based configs, and the separator each uses. Anything not listed
+ * here is treated as JSON.
+ */
+const lineFormats = {
+    "moreculling.toml": {separator: "=", sections: true},
+    "ixeris.toml": {separator: "=", sections: true},
+    "badoptimizations.txt": {separator: ":", sections: false},
 };
 
 /** Split on unescaped dots, exactly as JsonConfigStore does. */
@@ -80,6 +93,24 @@ function resolves(root, key) {
 function readJson(file) {
     const raw = fs.readFileSync(file, "utf8");
     return JSON.parse(raw.replace(/^\s*\/\/.*$/gm, ""));
+}
+
+/** Mirrors LineConfigStore.entries: section-qualified key to raw value. */
+function readLines(file, {separator, sections}) {
+    const out = {};
+    let section = "";
+    for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+        const t = line.trim();
+        if (!t || t.startsWith("#")) continue;
+        if (sections && t.startsWith("[") && t.endsWith("]")) {
+            section = t.slice(1, -1).trim() + ".";
+            continue;
+        }
+        const at = t.indexOf(separator);
+        if (at <= 0) continue;
+        out[section + t.slice(0, at).trim()] = t.slice(at + separator.length).trim();
+    }
+    return out;
 }
 
 /*
@@ -127,15 +158,16 @@ for (const [store, keys] of [...byStore].sort()) {
         unverified += keys.size;
         continue;
     }
+    const lineFormat = lineFormats[store];
     let root;
     try {
-        root = readJson(file);
+        root = lineFormat ? readLines(file, lineFormat) : readJson(file);
     } catch (err) {
         console.log(`  FAIL  ${store} - could not parse: ${err.message}`);
         missing += keys.size;
         continue;
     }
-    const bad = [...keys].filter((k) => !resolves(root, k));
+    const bad = [...keys].filter((k) => (lineFormat ? !(k in root) : !resolves(root, k)));
     resolved += keys.size - bad.length;
     missing += bad.length;
     if (bad.length === 0) {
