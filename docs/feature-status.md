@@ -769,10 +769,21 @@ that `fabric.mod.json` really says `liquidbounce` / `Tsunami` / the tagged
 version, publishes the asset and prints the catalogue block to paste into
 `data/builds.json`. `docs/backend-contract.md` in the launcher repo is the spec.
 
-**Status: built, not done.** Every step up to the moment the launcher writes the
-jar is verified - `verify-api.mjs --jar` downloads the published file from the
-live catalogue and confirms the digest - but the install has not been seen in a
-running client, which is this document's own bar. Do that before the row moves.
+**Status: done**, checked in a running client on 2026-09-02. The launcher
+downloaded the jar from the catalogue, logged
+`The build publishes its own client jar; installing it from the catalogue`,
+installed it as `mods/Tsunami.jar` with a sha1 matching the published asset, and
+the game reached `Tsunami has been successfully initialized`. The window title is
+what proves *which* jar ran: it carries the commit, and read
+`Tsunami v0.40.1 (dev) git-9bc5af3` - the tagged release.
+
+**That launch also found a defect, which is the argument for the bar.** A machine
+that had followed the old instructions installed the client twice - the published
+`Tsunami.jar` and the hand-copied `tsunami-client.jar` from `custom_mods`, both
+declaring the mod id `liquidbounce`. Fabric loaded one, warned about neither, and
+named neither. Everything short of launching had passed: the digest check, the
+API verification, the unit tests. `run_client` now skips the legacy copy whenever
+the build publishes its own.
 
 Two things it did not close. Automating `data/builds.json` still needs a
 cross-repository credential, because a workflow's `GITHUB_TOKEN` cannot write to
