@@ -70,7 +70,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      # Tests and detekt gate `nextgen` in build.yml. Skipping them here would
+      # Tests and detekt gate `main` in build.yml. Skipping them here would
       # mean a tag could publish something that never passed either.
       - name: Build
         env:
