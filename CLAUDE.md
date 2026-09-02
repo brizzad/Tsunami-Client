@@ -248,6 +248,18 @@ a `ValueGroup` per mod backed by `ModConfigStore`.
 * **Read the real keys.** Launch once, then read the config the mod actually wrote
   (`gameDir/local/config/...`), or the field names in its jar. Do not guess - every
   group in that file says where its keys came from.
+* **A mod that has never written its config will silently drop your writes.**
+  Every store refuses to create a file the mod has not made, because inventing a
+  schema produces something the mod cannot load. That is right by default and it
+  is invisible: the ClickGUI stores the value and says "Saved". Two things now
+  guard it. `ModConfigStore.write` **returns `Boolean`**, and `applyTo` tells the
+  player when a write was skipped instead of claiming it saved. And
+  `ModConfigStore.json(file, seed)` takes a complete set of defaults, so a bridge
+  that has read the mod's whole config class can create a valid file on the first
+  change. **Only pass a seed when you have read the entire schema out of the
+  jar** - Player Health Indicators is the worked example, three fields and their
+  defaults taken from `javap` on its `Config` class. A partial seed is worse than
+  none.
 * **Enum constants come from the jar**, not from the config sample: a config only shows
   the value currently selected. `javap -p` on the enum class lists them all. Ignore the
   synthetic `VALUES` field.

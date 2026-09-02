@@ -235,6 +235,7 @@ OpenGL with the toggle stored as on rewrote the option to `vulkan` while running
 | Boss bar | present | hide via `AntiBlind` → `BOSS_BARS` |
 | Chat customisation | present | `BetterChat` |
 | Titles / nametags | present | `BetterTitle`, `Nametags` |
+| Player health | done | bundled: Player Health Indicators `1.1.2` (MIT); replaced the `Nametags` Health text part |
 | Particle toggle | present | `Particles` |
 | Chunk borders | done | frame diff 7.55 |
 | Block outline | present | `BlockOutline` |
@@ -339,6 +340,67 @@ the exact category this fork spent a session removing. Not built.
 | One-click Fabric mod install | present | launcher: install, list and delete custom mods |
 | Anti-forced-resource-pack | done | `NoServerResourcePack`, two modes |
 | **Community marketplace** | **deferred** | needs a backend |
+
+**Player health moved from a nametag part to the real mod (2026-09-02).**
+`NametagTextFormatter` had a `HEALTH` part printing `18 HP` in green/yellow/red.
+It was removed at Nathan's direction and replaced by **Player Health Indicators**
+`1.1.2` (MIT), which draws vanilla heart sprites on the player instead of text
+above them.
+
+The fork matters here. The original `playerhealthindicators` by Gaider10 stops at
+1.21, so a fork is unavoidable; there are two, and only one is acceptable:
+
+* `player-health-indicators-unofficial` - **bundled.** MIT, no dependencies
+  beyond Fabric API, a faithful continuation.
+* `player-health-indicators-invisible-support` - **rejected**, despite being the
+  more popular of the two at 258k downloads. Its entire reason for existing is to
+  show hearts for players under invisibility. That reveals a player you were not
+  meant to see, which is the entity-locator line.
+
+**It cannot see through terrain, and that was read out of the jar rather than
+assumed.** The renderer submits with `RenderTypes.entityCutout`, which is
+depth-tested, so a wall occludes the hearts exactly as it occludes the player.
+The old nametag part needed `Nametags -> RequireLineOfSight` to get the same
+property, because nametags draw in screen space after the world.
+
+Three settings bridged, keys and defaults from `javap` on `Config` and the file
+name from its constant pool: `Enabled` (`renderingEnabled`), `HeartStacking`,
+`HeartOffset`.
+
+**Crystal optimisers: one of four, off by default, and the reasoning is the
+point.** Nathan asked for "any crystal optimizer". None of them is what the name
+suggests - **not one is a rendering or FPS optimisation.** Every mod in the
+category cuts the delay on placing and breaking end crystals. The four available
+for 26.2 Fabric:
+
+| Mod | What it does | Licence | Verdict |
+| --- | --- | --- | --- |
+| Marlow's | removes a broken crystal locally instead of waiting for the server | MIT | **bundled, off by default** |
+| Client Side Crystals | renders your own placement instantly, "to look like zero ping" | ARR | not bundled |
+| Kind's | handles place *and* break client-side so actions feel instant | ARR | not bundled |
+| FastCrystal | **removes all interact and attack cooldowns**, duplicates attack packets | ARR | **excluded** |
+
+FastCrystal and Kind's are the excluded category outright - removing an attack
+cooldown is automating a reaction that decides a fight, which `CLAUDE.md` lists
+as permanently out of scope. They are not bundled at any setting.
+
+Marlow's was chosen and it is still a judgement call rather than an obvious one,
+so here is the whole basis. It is the only MIT option. It has 4.4M downloads. And
+uniquely in the category it ships a **server opt-out protocol** - `OptOutPacket`,
+`ChallengePacket`, `ChallengeResponsePacket`, `OptOutCache` in the jar - so a
+partnered server can tell the client to disable it and the client complies. That
+is the same shape as `ServerIntegration` and it is the strongest fair-play
+signal available here.
+
+It is **off by default** because it is latency compensation on a fight-deciding
+action rather than a readout of something the game already told you. Shipping it
+switched off puts the choice in front of the player instead of making it for
+them, the same call as Xaero's radar.
+
+**It has no config, so it has no ClickGUI bridge.** No config class exists in the
+jar - checked, not assumed. Its only switch is the launcher's mod list, which
+removes the jar rather than quieting it. That is the documented answer for a mod
+with no off flag of its own.
 
 ## Trust — 1/1
 
@@ -577,7 +639,7 @@ the third time that mismatch has come up here and the reason
 for a bundled mod the ClickGUI can only reconfigure, not remove - what it ships
 at all is the launcher's per-build mod list.
 
-Eleven can be switched off from the ClickGUI, which is as close to a toggle as a
+Twelve can be switched off from the ClickGUI, which is as close to a toggle as a
 bundled jar gets:
 
 | Mod | The switch | What off means |
@@ -593,6 +655,7 @@ bundled jar gets:
 | AppleSkin | every `show*` flag at once | food HUD and tooltips go back to vanilla |
 | Simple Voice Chat | `disabled` | both sound and microphone off |
 | Replay Mod | every recording flag at once | records nothing |
+| Player Health Indicators | `renderingEnabled` | no hearts drawn |
 
 **The last two were added on 2026-09-02, and the sentence that used to stand
 here - "the rest reconfigure only, that is a property of the mods, not of the

@@ -26,8 +26,6 @@ import net.ccbluex.liquidbounce.utils.text.joinToText
 import net.ccbluex.liquidbounce.utils.client.player
 import net.ccbluex.liquidbounce.utils.text.textOf
 import net.ccbluex.liquidbounce.utils.combat.EntityTaggingManager
-import net.ccbluex.liquidbounce.utils.entity.getActualHealth
-import net.ccbluex.liquidbounce.utils.entity.hasHealthScoreboard
 import net.ccbluex.liquidbounce.utils.entity.ping
 import net.ccbluex.liquidbounce.utils.entity.shortName
 import net.ccbluex.liquidbounce.utils.text.PlainText
@@ -105,23 +103,6 @@ internal object NametagTextFormatter : ValueGroup("Text") {
                     isBaby -> textOf(BABY_TEXT, coloredName)
                     else -> coloredName
                 }
-            }
-        },
-
-        HEALTH("Health") {
-            override fun apply(entity: Entity): Component? {
-                if (entity !is LivingEntity) return null
-
-                val actualHealth = (entity.getActualHealth() +
-                    if (entity.hasHealthScoreboard()) 0f else entity.absorptionAmount).toInt()
-
-                val healthColor = when {
-                    actualHealth >= 14 -> ChatFormatting.GREEN
-                    actualHealth >= 8 -> ChatFormatting.YELLOW
-                    else -> ChatFormatting.RED
-                }
-
-                return "$actualHealth HP".asPlainText(healthColor)
             }
         },
 

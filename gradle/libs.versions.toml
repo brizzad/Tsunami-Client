@@ -59,6 +59,7 @@ shieldStatuses = "4.1.8+26.2"
 replaymod = "26.2-2.6.27"
 worldeditcui = "26.2+02"
 voicechat = "fabric-2.6.22+26.2"
+healthindicators = "lD3WoqGn"
 walksylib = "1.0.12+26.2"
 moreculling = "D5oVCouK"
 clothConfig = "26.2.155+fabric"
@@ -154,6 +155,7 @@ shieldStatuses = { group = "maven.modrinth", name = "shield-statuses", version.r
 replaymod = { group = "maven.modrinth", name = "replaymod", version.ref = "replaymod" }
 worldeditcui = { group = "maven.modrinth", name = "worldedit-cui", version.ref = "worldeditcui" }
 voicechat = { group = "maven.modrinth", name = "simple-voice-chat", version.ref = "voicechat" }
+healthindicators = { group = "maven.modrinth", name = "player-health-indicators-unofficial", version.ref = "healthindicators" }
 walksylib = { group = "maven.modrinth", name = "walksylib", version.ref = "walksylib" }
 moreculling = { group = "maven.modrinth", name = "moreculling", version.ref = "moreculling" }
 clothConfig = { group = "maven.modrinth", name = "cloth-config", version.ref = "clothConfig" }

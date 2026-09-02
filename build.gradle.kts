@@ -123,6 +123,7 @@ dependencies {
     runtimeOnly(libs.replaymod)
     runtimeOnly(libs.worldeditcui)
     runtimeOnly(libs.voicechat)
+    runtimeOnly(libs.healthindicators)
     runtimeOnly(libs.clothConfig)
     runtimeOnly(libs.moreculling)
     runtimeOnly(libs.badoptimizations)

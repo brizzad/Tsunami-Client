@@ -116,6 +116,7 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(GlintOutline)
         tree(VoiceChat)
         tree(ReplayMod)
+        tree(HealthIndicators)
     }
 
     /**
@@ -763,6 +764,53 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         )
 
         private fun write(vararg pairs: Pair<String, Any>) = applyTo(store, "replaymod", *pairs)
+    }
+
+    /**
+     * Player Health Indicators - hearts above other players.
+     *
+     * Keys and their defaults read out of `Config` in the jar with `javap`, and
+     * the file name out of its constant pool, rather than guessed.
+     *
+     * **It cannot see through terrain, and that was checked rather than assumed.**
+     * The renderer submits with `RenderTypes.entityCutout`, which is depth-tested,
+     * so a wall occludes the hearts the way it occludes the player. That is what
+     * keeps this on the right side of the entity-locator line, and it is why the
+     * `-invisible-support` fork - which exists specifically to show hearts through
+     * invisibility - is not the one bundled.
+     */
+    object HealthIndicators : ValueGroup("HealthIndicators") {
+        // Seeded, because this mod writes its config only once something changes
+        // in its own screen - so without a seed the very first ClickGUI change
+        // would be silently dropped on a fresh install. The three fields and
+        // their defaults are the whole of its Config class, read with javap:
+        // renderingEnabled=true, heartStackingEnabled=true, heartOffset=2.
+        private val store = ModConfigStore.json(
+            "healthindicators.json",
+            JsonObject().apply {
+                addProperty("renderingEnabled", true)
+                addProperty("heartStackingEnabled", true)
+                addProperty("heartOffset", 2)
+            }
+        )
+
+        /** The mod's own master flag. */
+        val enabled by boolean("Enabled", store.readBoolean("renderingEnabled") ?: true)
+            .onChanged { write("renderingEnabled" to it) }
+
+        /** Stack the hearts into rows instead of running them off sideways. */
+        val heartStacking by boolean(
+            "HeartStacking",
+            store.readBoolean("heartStackingEnabled") ?: true
+        ).onChanged { write("heartStackingEnabled" to it) }
+
+        /** Vertical offset above the nametag. The jar's own default is 2. */
+        val heartOffset by int("HeartOffset", store.readInt("heartOffset") ?: 2, 0..10)
+            .onChanged { write("heartOffset" to it) }
+
+        // Mod id "healthindicators", read from the jar's fabric.mod.json. It
+        // happens to match neither of this project's two slugs for it.
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "healthindicators", pair)
     }
 
     object Jade : ValueGroup("Jade") {
@@ -1700,7 +1748,16 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
             return
         }
 
-        store.write(pairs.toMap())
+        // write() returns false when the mod has never written its config and the
+        // bridge supplied no seed, in which case nothing reached disk. Saying
+        // "saved" there is the failure this whole class of bug is made of.
+        if (!store.write(pairs.toMap())) {
+            logger.warn("Skipped ${pairs.size} value(s) for $modId: it has no config file yet")
+            chat("§7$modId has not written its config yet, so that setting did not save. " +
+                "Open its own screen once, or change it again after the next launch.")
+            return
+        }
+
         logger.info("Wrote ${pairs.size} value(s) to the $modId config")
         chat("§7Saved to $modId. It applies the next time the game starts.")
     }

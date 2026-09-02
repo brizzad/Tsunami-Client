@@ -59,7 +59,16 @@ sealed class ModConfigStore(protected val path: Path) {
     abstract fun readInt(key: String): Int?
     abstract fun readFloat(key: String): Float?
     abstract fun readString(key: String): String?
-    abstract fun write(values: Map<String, Any>)
+    /**
+     * Writes [values], returning whether they actually reached the file.
+     *
+     * **False is a real outcome, not an error.** Every store here refuses to
+     * write a config the mod has never created, because inventing a schema we
+     * have only seen part of produces a file the mod cannot load. The caller
+     * has to know that happened - reporting "saved" over a write that was
+     * skipped is exactly the silent failure this class exists to avoid.
+     */
+    abstract fun write(values: Map<String, Any>): Boolean
 
     protected fun exists() = Files.isRegularFile(path)
 
@@ -77,7 +86,16 @@ sealed class ModConfigStore(protected val path: Path) {
         fun isModLoaded(modId: String): Boolean =
             FabricLoader.getInstance().isModLoaded(modId)
 
-        fun json(fileName: String) = JsonConfigStore(configDir.resolve(fileName))
+        /**
+         * [seed] is the mod's own complete set of defaults, and supplying it is
+         * a claim that the whole schema is known - read out of the mod's config
+         * class, not inferred from a sample. With one, a setting changed before
+         * the mod has ever written its config still lands. Without one, that
+         * write is skipped, which is the safe default for a schema we have only
+         * partly seen.
+         */
+        fun json(fileName: String, seed: JsonObject? = null) =
+            JsonConfigStore(configDir.resolve(fileName), seed)
 
         fun properties(fileName: String) = PropertiesConfigStore(configDir.resolve(fileName))
 
@@ -110,7 +128,7 @@ sealed class ModConfigStore(protected val path: Path) {
  * ImmediatelyFast keeps them flat. A dotted key covers both without each
  * caller caring which it is talking to.
  */
-class JsonConfigStore(path: Path) : ModConfigStore(path) {
+class JsonConfigStore(path: Path, private val seed: JsonObject? = null) : ModConfigStore(path) {
 
     private val gson = GsonBuilder().setPrettyPrinting().create()
 
@@ -201,10 +219,13 @@ class JsonConfigStore(path: Path) : ModConfigStore(path) {
         return holder.get(leaf)?.takeIf { it.isJsonArray }?.asJsonArray
     }
 
-    override fun write(values: Map<String, Any>) {
-        // No file means the mod has never run. Writing one now would be a guess
-        // at a schema we have only seen part of, so leave it for the mod.
-        val root = root() ?: return
+    override fun write(values: Map<String, Any>): Boolean {
+        // No file means the mod has never run. Writing one now would normally be
+        // a guess at a schema we have only seen part of, so it is left to the
+        // mod - unless the bridge supplied a [seed], which means the caller has
+        // read the mod's whole config class and can write a complete, valid
+        // file rather than a partial one.
+        val root = root() ?: seed?.deepCopy() ?: return false
 
         for ((key, value) in values) {
             val (holder, leaf) = resolve(root, key, create = true) ?: continue
@@ -222,11 +243,12 @@ class JsonConfigStore(path: Path) : ModConfigStore(path) {
             }
         }
 
-        runCatching {
+        return runCatching {
+            Files.createDirectories(path.parent)
             Files.writeString(path, gson.toJson(root))
         }.onFailure {
             logger.warn("Could not write ${path.fileName}", it)
-        }
+        }.isSuccess
     }
 }
 
@@ -259,20 +281,20 @@ class PropertiesConfigStore(path: Path) : ModConfigStore(path) {
     override fun readString(key: String): String? =
         load()?.getProperty(key)
 
-    override fun write(values: Map<String, Any>) {
-        val properties = load() ?: return
+    override fun write(values: Map<String, Any>): Boolean {
+        val properties = load() ?: return false
 
         for ((key, value) in values) {
             properties.setProperty(key, value.toString())
         }
 
-        runCatching {
+        return runCatching {
             Files.newBufferedWriter(path).use {
                 properties.store(it, "Written by Tsunami. Edit in the ClickGUI.")
             }
         }.onFailure {
             logger.warn("Could not write ${path.fileName}", it)
-        }
+        }.isSuccess
     }
 }
 
@@ -405,8 +427,8 @@ class LineConfigStore(
         }
     }
 
-    override fun write(values: Map<String, Any>) {
-        val existing = lines() ?: return
+    override fun write(values: Map<String, Any>): Boolean {
+        val existing = lines() ?: return false
         val remaining = values.toMutableMap()
         val out = ArrayList<String>(existing.size)
         var section = ""
@@ -441,11 +463,11 @@ class LineConfigStore(
 
         addMissing(out, remaining)
 
-        runCatching {
+        return runCatching {
             Files.write(path, out)
         }.onFailure {
             logger.warn("Could not write ${path.fileName}", it)
-        }
+        }.isSuccess
     }
 }
 
@@ -536,8 +558,8 @@ class NamedRecordConfigStore(path: Path) : ModConfigStore(path) {
     /** The whole `value` object, for a record whose value is not a scalar. */
     fun readObject(key: String): JsonObject? = value(key)?.takeIf { it.isJsonObject }?.asJsonObject
 
-    override fun write(values: Map<String, Any>) {
-        val array = root() ?: return
+    override fun write(values: Map<String, Any>): Boolean {
+        val array = root() ?: return false
         var wrote = 0
 
         for ((key, value) in values) {
@@ -567,13 +589,13 @@ class NamedRecordConfigStore(path: Path) : ModConfigStore(path) {
         }
 
         if (wrote == 0) {
-            return
+            return false
         }
 
-        runCatching {
+        return runCatching {
             Files.writeString(path, gson.toJson(array))
         }.onFailure {
             logger.warn("Could not write ${path.fileName}", it)
-        }
+        }.isSuccess
     }
 }
