@@ -79,6 +79,6 @@
     font-size: 14px;
     font-weight: bold;
     text-shadow: 1px 1px var(--item-count-shadow-color); // This is inconsistent with other UI elements but it looks better so I will let it pass ~Senk Ju
-    font-family: monospace;
+    font-variant-numeric: tabular-nums;
   }
 </style>

@@ -45,15 +45,51 @@ body {
 }
 
 
+/*
+ * Scrollbars were a solid 10px bar in the accent colour on every scrollable
+ * surface, which is loud enough to read as a UI element in its own right and
+ * competes with the thing being scrolled. Slim and neutral, tinting toward the
+ * accent only under the cursor.
+ */
 ::-webkit-scrollbar-track {
     background-color: transparent;
 }
 
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: var(--accent-color);
-    border-radius: 10px;
+    background-color: color-mix(in srgb, var(--text-color) 18%, transparent);
+    border: 2px solid transparent;
+    background-clip: content-box;
+    border-radius: 8px;
+    transition: background-color 120ms ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 70%, transparent);
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+}
+
+
+/*
+ * Every animation in this interface is decoration - a fade, a slide, a knob
+ * sliding across a switch. None of it carries meaning that is lost by removing
+ * it, so honour the OS setting rather than overriding somebody's accessibility
+ * preference for the sake of polish.
+ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }

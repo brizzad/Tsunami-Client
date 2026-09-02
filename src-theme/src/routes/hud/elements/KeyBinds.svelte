@@ -116,7 +116,7 @@
     .key-bind {
       display: inline-flex;
       align-items: center;
-      font-family: monospace;
+      font-variant-numeric: tabular-nums;
       font-size: 11px;
       color: var(--keybinds-accent-color);
       font-weight: 600;

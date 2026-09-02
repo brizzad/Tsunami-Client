@@ -3,6 +3,8 @@
     import type {ConfigurableSetting} from "../../integration/types";
     import GenericSetting from "./setting/common/GenericSetting.svelte";
     import {convertToSpacedString, spaceSeperatedNames} from "../../theme/theme_config";
+    import {fly} from "svelte/transition";
+    import {cubicOut} from "svelte/easing";
 
     export let name: string | null;
     export let enabled: boolean;
@@ -59,6 +61,8 @@
             <span>Its settings appear here.</span>
         </div>
     {:else}
+        {#key name}
+        <div class="content" in:fly|global={{duration: 150, y: 6, easing: cubicOut}}>
         <header>
             <div class="title">
                 <h2>{$spaceSeperatedNames ? convertToSpacedString(name) : name}</h2>
@@ -96,6 +100,8 @@
                 {/each}
             {/if}
         </div>
+        </div>
+        {/key}
     {/if}
 </div>
 
@@ -105,6 +111,14 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
+  }
+
+  /* Wrapper for the keyed fade; it must not change the pane's own layout. */
+  .content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
   }
 
   header {

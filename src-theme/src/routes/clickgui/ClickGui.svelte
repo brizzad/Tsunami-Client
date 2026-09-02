@@ -246,8 +246,12 @@
   .window {
     display: flex;
     flex-direction: column;
-    width: min(1040px, 90vw);
-    height: min(640px, 86vh);
+    /* Percentages of the stage, not vh. The stage is already a scaled virtual
+       viewport - ScaledClickGuiContent sizes it 2/scale * 100vw|vh and then
+       scales it down - so a vh here resolves against the real screen and the
+       window runs off the bottom of it. Seen in a running client. */
+    width: min(1040px, 92%);
+    height: min(640px, 88%);
     border-radius: 16px;
     overflow: hidden;
     background-color: var(--clickgui-base-90-color);

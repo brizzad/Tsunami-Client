@@ -80,7 +80,7 @@
 
     .duration {
       margin-left: auto;
-      font-family: monospace;
+      font-variant-numeric: tabular-nums;
       color: var(--effects-duration-color);
       font-size: 12px;
     }

@@ -63,7 +63,12 @@
     text-align: left;
     cursor: pointer;
     font-family: inherit;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    transition: background-color 120ms ease, border-color 120ms ease, transform 90ms ease;
+
+    /* Acknowledges the click without moving anything around it. */
+    &:active {
+      transform: scale(0.995);
+    }
 
     &:hover {
       background-color: var(--clickgui-module-hover-background-color);
