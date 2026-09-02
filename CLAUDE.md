@@ -24,8 +24,30 @@ node scripts/audit.mjs                                   # phone-home, SVG, kept
 node scripts/audit-mixins.mjs                            # did a strip break a kept module
 ```
 
-**`./gradlew build` is green** as of 2026-09-01 - compile, `:test` and `:detekt`
-all pass. Both things that used to break it are fixed: the orphaned `NoFall` test
+**Run `./gradlew clean build` before believing a green build.** A plain
+`./gradlew build` here is incremental, and it will not recompile a file whose own
+source has not changed - so a retained file that imports a *deleted* package stays
+green locally forever. That is not hypothetical: `ClientboundRemoveEntitiesPacketAddition`
+imported CrystalAura's triggerer and survived the strip on 2026-08-25 (whose commit
+message says "mixins outstanding"), and every local build passed for eight days
+while the tree did not compile from clean. It was caught on 2026-09-02, by CI, the
+first time CI ever ran on Tsunami's code - see the branch note below.
+
+No audit catches this class of fault. `phone-home`, `svg-xml`, `anchors` and
+`kept-modules` all pass on a tree that will not compile; `kept-modules` looks for
+deleted lines naming a *kept* module, which is the opposite direction. Only a clean
+compile finds it.
+
+**The default branch is `main`, and it is Tsunami** (changed 2026-09-02). It used
+to be `nextgen`, and `origin/nextgen` is *upstream LiquidBounce* - it kept taking
+CCBlueX commits through 2026-08-28 and still carries KillAura, Aimbot, XRay,
+Scaffold and ESP. All the fork's work had only ever lived on feature branches, so
+`build.yml` - which triggers on the default branch - had been compiling upstream's
+tree rather than this one. `nextgen` is left in place as the upstream mirror it
+already was. Do not merge it into `main`; it would restore the cheat modules.
+
+**`./gradlew build` is green** as of 2026-09-02 - compile, `:test` and `:detekt`
+all pass, from clean. Both things that used to break it are fixed: the orphaned `NoFall` test
 (`545542955`) and four detekt findings in the bundled-mods bridge.
 
 Keep it that way. `:detekt` runs as part of `build`, and two of its limits are

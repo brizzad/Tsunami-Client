@@ -90,7 +90,6 @@
     "minecraft.item.MixinItemInHandRenderer",
     "minecraft.item.MixinItemStack",
     "minecraft.network.MixinAddressCheck",
-    "minecraft.network.MixinClientboundRemoveEntitiesPacket",
     "minecraft.network.MixinClientHandshakePacketListenerImplMixin",
     "minecraft.network.MixinClientIntentionPacket",
     "minecraft.network.MixinClientPacketListener",
