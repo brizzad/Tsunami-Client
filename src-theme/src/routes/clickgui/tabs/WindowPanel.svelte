@@ -40,13 +40,14 @@
     top: 70px;
     left: 50%;
     transform: translateX(-50%);
-    width: min(820px, 92vw);
-    --window-max-height: 70vh;
-    background-color: var(--clickgui-window-background-color);
+    width: min(1040px, 92vw);
+    --window-max-height: 78vh;
+    background-color: var(--clickgui-base-90-color);
     max-height: var(--window-max-height, none);
-    border-radius: 5px;
+    border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 0 10px var(--clickgui-window-shadow-color);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(18px);
     user-select: none;
   }
 
@@ -55,12 +56,12 @@
     grid-template-columns: max-content max-content 1fr;
     align-items: center;
     column-gap: 12px;
-    background-color: var(--clickgui-window-header-background-color);
-    padding: 16px 22px;
-    font-size: 16px;
+    background-color: transparent;
+    padding: 14px 18px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--clickgui-text-color);
-    border-bottom: 2px solid var(--clickgui-window-header-border-color);
+    border-bottom: 1px solid var(--clickgui-base-70-color);
   }
 
   .title-text {
@@ -98,7 +99,7 @@
   }
 
   .content {
-    padding: 12px 22px 18px;
+    padding: 14px 18px 20px;
     overflow: auto;
     max-height: calc(var(--window-max-height, 9999px) - 60px);
   }

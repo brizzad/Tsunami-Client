@@ -133,6 +133,7 @@
 
         <div class="layout">
             <nav class="sidebar">
+                <div class="nav-scroll">
                 <p class="nav-label">Modules</p>
 
                 <button
@@ -166,17 +167,26 @@
                     {/each}
                 {/if}
 
-                <div class="nav-spacer"></div>
+                </div>
 
-                <p class="nav-label">Client</p>
+                <!--
+                    Pinned, not part of the scroll. These are the only route to
+                    the HUD editor and the global settings now that the floating
+                    tab strip is gone, and with six jump links above them they
+                    fall off the bottom of a scrolling sidebar - which is exactly
+                    what happened the first time this was run.
+                -->
+                <div class="nav-footer">
+                    <p class="nav-label">Client</p>
 
-                <button class="nav-item" type="button" onclick={onOpenHudEditor}>
-                    <span>HUD Editor</span>
-                </button>
+                    <button class="nav-item" type="button" onclick={onOpenHudEditor}>
+                        <span>HUD Editor</span>
+                    </button>
 
-                <button class="nav-item" type="button" onclick={onOpenSettings}>
-                    <span>Settings</span>
-                </button>
+                    <button class="nav-item" type="button" onclick={onOpenSettings}>
+                        <span>Settings</span>
+                    </button>
+                </div>
             </nav>
 
             <section class="list" bind:this={listEl}>
@@ -338,10 +348,27 @@
   .sidebar {
     display: flex;
     flex-direction: column;
+    border-right: 1px solid var(--clickgui-base-70-color);
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .nav-scroll {
+    display: flex;
+    flex-direction: column;
     gap: 2px;
     padding: 12px 10px;
-    border-right: 1px solid var(--clickgui-base-70-color);
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+  }
+
+  .nav-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px 12px;
+    border-top: 1px solid var(--clickgui-base-70-color);
   }
 
   .nav-label {
@@ -355,11 +382,6 @@
     &:first-child {
       margin-top: 2px;
     }
-  }
-
-  .nav-spacer {
-    flex: 1;
-    min-height: 12px;
   }
 
   .nav-item {
