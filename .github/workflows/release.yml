@@ -70,8 +70,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      # Tests and detekt gate `main` in build.yml. Skipping them here would
-      # mean a tag could publish something that never passed either.
+      # The full build, tests and detekt included. build.yml deliberately skips
+      # both on the default branch - upstream ran that job to publish nightlies
+      # fast - so this is the only place either one gates an artifact anybody
+      # downloads. Do not add -x test here to save four minutes.
       - name: Build
         env:
           CI: true
