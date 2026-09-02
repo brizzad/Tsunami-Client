@@ -76,6 +76,7 @@ src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/scaffold/
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/traps/traps/TrapPlayerSimulation.kt	Debug	ModuleDebug.DebuggedBox(
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/traps/traps/TrapPlayerSimulation.kt	Debug	ModuleDebug.DebuggedBox(target.dimensions.makeBoundingBox(positions.last()), Color4b.RED.with(a = 127))
 src/main/kotlin/net/ccbluex/liquidbounce/features/module/modules/world/traps/traps/TrapPlayerSimulation.kt	Debug	ModuleDebug.debugGeometry(
+src/main/kotlin/net/ccbluex/liquidbounce/integration/theme/component/HudComponent.kt	Hud	) : ToggleableValueGroup(parent = ModuleHud, name = name, enabled = enabled) {
 src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "DeltaPitch", totalDelta.deltaPitch)
 src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "DeltaYaw", totalDelta.deltaYaw)
 src/main/kotlin/net/ccbluex/liquidbounce/utils/aiming/features/processors/anglesmooth/impl/AiAngleSmooth.kt	Debug	ModuleDebug.debugParameter(this, "Output [0]", output[0])

@@ -77,6 +77,13 @@ unzip -o -q "$JAR" 'net/minecraft/client/renderer/entity/ItemEntityRenderer.clas
 `scripts/hooks/pre-commit`) and runs `scripts/audit.mjs`, refusing the commit if
 it fails. The launcher repo has the same one. `--no-verify` bypasses it.
 
+**Its `kept-modules` check lags one commit.** `audit-mixins.mjs` runs
+`git diff <upstream> HEAD`, which is committed state, so the hook is judging the
+*previous* commit rather than the one being made. A change that trips it commits
+cleanly and then blocks the next, unrelated commit - which reads as that commit's
+fault and is not. Run `node scripts/audit.mjs` by hand after committing if you
+touched a file naming a kept module.
+
 ## Driving a running client over its own REST API
 
 **This is the strongest verification available here, and it was not written
