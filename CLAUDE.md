@@ -91,14 +91,30 @@ push it, and then checked where it actually landed - including in a bundled
 mod's own config file under `run/config/`. That is a genuine end-to-end test of
 a ClickGUI bridge without a single click.
 
-**The dev client has the bundled mods.** `gradle/libs.versions.toml` carries
-Sodium, Lithium, Iris and ViaFabricPlus as `maven.modrinth` dependencies, so
-`runClient` really loads them and writes real config files. The mods that are
-*not* in that catalogue - AppleSkin, Jade, MoreCulling and the rest - come only
-from the launcher, so their groups still appear in the ClickGUI but
-`ModConfigStore.isModLoaded` is false and the write is skipped with a chat
-line. Read a bridge's keys from the launcher's game directory instead:
-`%APPDATA%TsunamiTsunamiLauncherdatagameDirlocalconfig`.
+**The dev client has the bundled mods, and as of 2026-09-02 it has nearly all of
+them.** `gradle/libs.versions.toml` carries them as `maven.modrinth`
+dependencies with `runtimeOnly` entries in `build.gradle.kts`, so `runClient`
+really loads them and writes real config files - Sodium, Lithium, Iris,
+ViaFabricPlus, Jade, AppleSkin, 3D Skin Layers, Xaero's Minimap, ItemPhysic,
+Shield Statuses, Glint Outline, and now Replay Mod, WorldEdit CUI and Simple
+Voice Chat.
+
+**This is how you get a bridge's real keys: add the mod here and launch once.**
+Replay Mod and Simple Voice Chat were bridged that way - neither had ever
+written a config, and a guessed key is the exact failure
+`verify-bridge-keys.mjs` exists to catch. WorldEdit CUI writes no config even
+when loaded; it has no settings worth bridging (`javap` on
+`CUIConfiguration` shows debug flags and colours, no enable).
+
+For a mod that is *not* in the catalogue, its group still appears in the
+ClickGUI but `ModConfigStore.isModLoaded` is false and the write is skipped
+with only a chat line. Read its keys from the launcher's game directory
+instead: `%APPDATA%TsunamiTsunamiLauncherdatagameDirlocalconfig`.
+
+**Watch the mod id, not the Modrinth slug.** `isModLoaded` takes the id from
+`fabric.mod.json`. `simple-voice-chat` is id `voicechat`; `3dskinlayers` is id
+`skinlayers3d`; `enchantment-glint-outline` is id `enchant-outline`. Get it
+wrong and everything looks fine while nothing is written.
 
 **Float settings round-trip through a float.** Setting 0.7 + 0.1 from
 JavaScript sends 0.7999999999999999 and reads back 0.8. That is the language,
@@ -241,6 +257,94 @@ a `ValueGroup` per mod backed by `ModConfigStore`.
   sub-groups are built inside the parent's own constructor, so reaching back for a
   parent member gets a null at startup, not a compile error. Give each group its own
   store, or put shared helpers at file top level - see the `jade*` helpers.
+
+### Every mod that is not buying frames must be toggleable
+
+**Nathan's rule, stated 2026-09-02 after finding Jade and 3D Skin Layers on by
+default with no way to turn them off:** if a mod is not helping FPS, it must have
+an off switch in the ClickGUI. A pure optimisation with nothing on screen does
+not need one - there is nothing to see, so there is nothing to turn off.
+
+Sorting a bundled mod is one question: **can the player see it?** Sodium,
+Lithium, FerriteCore, ImmediatelyFast, EntityCulling, MoreCulling,
+BadOptimizations, C2ME and Ixeris buy frames and draw nothing - no switch. Cloth
+Config, WalksyLib and CreativeCore are libraries - no switch. Everything else
+draws or does something, and needs one.
+
+AppleSkin is the one that looks like an optimisation and is not: it draws a
+saturation overlay, an exhaustion underlay and food values on tooltips. Judge by
+what reaches the screen, not by the mod's reputation or its config format.
+
+### Finding a mod's off switch - the recipe
+
+Do this in order. It is written down because the sentence it replaces -
+"the rest reconfigure only, that is a property of the mods" - was in
+`feature-status.md` for weeks and was simply wrong.
+
+1. **Read the mod's own config file off disk.** Not its wiki, not its
+   Modrinth page. `run/config/...` after a `runClient`.
+2. **If it has never written one, add it to the dev catalogue and launch.**
+   A version ref and library entry in `gradle/libs.versions.toml`, a
+   `runtimeOnly` in `build.gradle.kts`, then `runClient`. That is how Replay
+   Mod and Simple Voice Chat were bridged. **Never guess a key** -
+   `verify-bridge-keys.mjs` exists because guessed keys fail silently.
+3. **A single master flag?** Surface it as `Enabled` at the **top of the
+   group**. Jade always had one - `general.displayTooltip` - and it was already
+   bridged, as **"Tooltip"**, three levels down under `General`. A real off
+   switch named after the sub-feature it happens to control is invisible.
+   **Name it `Enabled` and put it first.**
+4. **No single flag, but a complete set?** Synthesise one. `Enabled` writes
+   every flag in the set at once, and each individual setting writes
+   `enabled && it` so the master keeps winning. 3D Skin Layers (seven layer
+   flags), AppleSkin (eight `show*` flags) and Replay Mod (three recording
+   flags) all work this way. Default the master from whether *any* member is
+   currently on, so someone who turned them all off by hand is not overridden.
+5. **Neither exists?** Say so in `feature-status.md` with what you checked.
+   WorldEdit CUI has no enable flag at all (`javap` on `CUIConfiguration`:
+   debug flags and colours), and ViaFabricPlus has a protocol selector rather
+   than a switch. For those the toggle is the launcher's **Recommended mods**
+   list in `VersionSelect.svelte`, where every bundled mod except Sodium is
+   `required: false` and unticking it means the jar is never installed. That is
+   the stronger toggle anyway - it removes rather than quiets.
+
+Two things that will bite you while doing this:
+
+* **Reading a sibling setting inside `onChanged` needs an explicit type.**
+  `val enabled: Boolean by boolean(...)`, not `val enabled by boolean(...)`.
+  Without it the compiler reports "Type checking has run into a recursive
+  problem" - the delegate's type depends on a lambda that depends on the
+  delegate. Every gated setting in the group needs the annotation too.
+* **The mod id is not the Modrinth slug.** `simple-voice-chat` is id
+  `voicechat`, `3dskinlayers` is `skinlayers3d`, `enchantment-glint-outline`
+  is `enchant-outline`. `applyTo` gates on the id, so getting it wrong stores
+  and redisplays the value while writing nothing. Read it from the jar's
+  `fabric.mod.json` and let `verify-bridge-keys.mjs` confirm it.
+
+### Proving a switch works
+
+A `PUT` that round-trips proves nothing - that is exactly what the two dead
+bridges did for months. Push the setting through the interop server the way the
+ClickGUI would, then **read the mod's own config file back off disk**, and do it
+in both directions so you know the restore path works too:
+
+```sh
+curl -s "http://127.0.0.1:8099/api/v1/client/modules/settings?name=BundledMods&lb_code=devcode01" -o bm.json
+# flip the group's Enabled to false in bm.json, then:
+curl -s -X PUT "http://127.0.0.1:8099/api/v1/client/modules/settings?name=BundledMods&lb_code=devcode01"   -H "Content-Type: application/json" --data-binary @bm.json
+# then read run/config/<the mod's own file> and check the keys actually moved
+```
+
+**`runClient` leaves the game JVM alive when the Gradle wrapper is killed**, and
+it keeps `LB_INTEROP_PORT`. A stale client answering on 8099 looks exactly like
+a fresh one, and you will test the old jar without noticing - that happened here.
+Kill it by command line before relaunching:
+
+```sh
+# PowerShell
+Get-CimInstance Win32_Process -Filter "Name='java.exe'" |
+  Where-Object { $_.CommandLine -match 'net.fabricmc|knot' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+```
 
 ### Dotted paths, and the trap Jade sprang
 

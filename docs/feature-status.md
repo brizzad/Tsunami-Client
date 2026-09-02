@@ -540,20 +540,45 @@ this, but one nearby does" - the second is the bug and fails the run.
 - **Cloth Config, WalksyLib, CreativeCore** - libraries, not features. They are
   in the bundle because MoreCulling, Shield Statuses and ItemPhysic will not
   load without them.
-- **C2ME, Replay Mod, WorldEdit CUI** - off by default and have never written
-  a config, so there are no keys to read. Needs a launch each; a guessed key
-  is the exact failure `scripts/verify-bridge-keys.mjs` exists to catch.
-- **Simple Voice Chat** - deliberate hold. Half-bridging a microphone and a
-  push-to-talk key is how someone transmits while believing they are muted.
-- **ViaFabricPlus** - **no technical reason.** Its `settings.json` is ordinary
-  nested JSON that `JsonConfigStore` already handles. Simply not done.
+- **C2ME** - off by default, an optimisation, and nothing on screen to switch.
+- **WorldEdit CUI** - loaded in the dev catalogue on 2026-09-02 and it writes no
+  config at all. `javap` on `CUIConfiguration` shows `debugMode`,
+  `promiscuous`, `clearAllOnKey` and a list of colours - **no enable flag
+  exists**, so there is nothing to bridge. It also draws nothing unless you are
+  on a WorldEdit server with a selection made. The toggle is the launcher's mod
+  list.
+- **ViaFabricPlus** - has no on/off either. Its `settings.json` holds
+  `selected-protocol-version`, and when that is the native version - the
+  default - the mod is inert. The meaningful control is a protocol selector, not
+  a switch, and that is the flagship version-switching feature rather than
+  something to turn off.
+
+**Two of these were bridged on 2026-09-02, and the way it was done is the point:**
+
+- **Simple Voice Chat** - the old note called this a deliberate hold, and the
+  reasoning still stands for the *fine* settings: half-bridging a microphone and
+  a push-to-talk key is how someone transmits while believing they are muted.
+  But the mod has a single flag, `disabled`, whose own comment reads "both sound
+  and microphone off". That is the opposite of the hazard - one unambiguous
+  master - so `VoiceChat -> Enabled` bridges it and nothing else. Everything
+  finer stays in the mod's own screen, where the state on display is the state
+  that is live.
+- **Replay Mod** - had never written a config, so it was added to the dev
+  catalogue and launched once, which is how a key gets read rather than guessed.
+  It has no single enable flag; `Enabled` is synthesised over
+  `recording.recordSingleplayer`, `recordServer` and `autoStartRecording`, so
+  off means it records nothing - which is what off means for a recorder.
+
+Its mod id is `voicechat`, not the Modrinth slug `simple-voice-chat`. That is
+the third time that mismatch has come up here and the reason
+`verify-bridge-keys.mjs` runs: 14/14 ids now match an installed jar.
 
 **The limit that cannot be fixed here:** a jar cannot be unloaded at runtime, so
 for a bundled mod the ClickGUI can only reconfigure, not remove - what it ships
 at all is the launcher's per-build mod list.
 
-Six carry their own enable flag and so *can* be switched off from the ClickGUI,
-which is as close to a toggle as a bundled jar gets:
+Eleven can be switched off from the ClickGUI, which is as close to a toggle as a
+bundled jar gets:
 
 | Mod | The switch | What off means |
 | --- | --- | --- |
@@ -563,8 +588,45 @@ which is as close to a toggle as a bundled jar gets:
 | ItemPhysic | `vanillaRendering` | dropped items render the vanilla way |
 | Xaero's Minimap | `display_minimap` | draws nothing; the built-in minimap remains |
 | Glint Outline | `enabled` | the vanilla glint comes back |
+| Jade | `general.displayTooltip` | the overlay does not draw |
+| 3D Skin Layers | every layer flag at once | layers fall back to flat vanilla |
+| AppleSkin | every `show*` flag at once | food HUD and tooltips go back to vanilla |
+| Simple Voice Chat | `disabled` | both sound and microphone off |
+| Replay Mod | every recording flag at once | records nothing |
 
-The rest reconfigure only. That is a property of the mods, not of the bridge.
+**The last two were added on 2026-09-02, and the sentence that used to stand
+here - "the rest reconfigure only, that is a property of the mods, not of the
+bridge" - was wrong twice over.** Nathan reported both as un-toggleable and both
+were, but not for the reason recorded:
+
+* **Jade has a true master flag and it was already bridged.** `displayTooltip`
+  false means the overlay does not draw at all. It was exposed as **"Tooltip"**,
+  three levels down under `Jade -> General`, where nobody looking to turn Jade
+  off would think to look. Same key, same write, moved to the top of the group
+  and named `Enabled`. Nothing about the mod prevented this.
+* **3D Skin Layers has no single flag, but it does have a complete set** - one
+  per body part. `Enabled` is synthesised: off writes all seven layer keys
+  false in one click and every layer falls back to the flat vanilla rendering
+  the mod replaced. That is a real off switch, just spelled in seven booleans.
+
+The lesson is the one this document keeps recording. "That is a property of the
+mods" was an inference, and reading the mods' own config files off disk - which
+is what the bridge audit was *for* - disproves it in both cases. Two more are
+the same shape. **AppleSkin** was done for the same reason - it is not an
+optimisation, it draws a saturation overlay, an exhaustion underlay and food
+values on tooltips, and a mod you can see is a mod you can turn off.
+**BadOptimizations** was deliberately left alone: it is pure optimisation with
+nothing on screen, so there is nothing to switch off. That is Nathan's rule and
+it is the right cut - **if a mod is not buying frames, it must be toggleable.**
+
+Genuinely reconfigure-only, having checked rather than assumed: **Sodium**,
+**Sodium Extra**, **ImmediatelyFast**, **EntityCulling** and **MoreCulling**.
+These are pure optimisations with no off flag anywhere in their config. For
+them the toggle is the launcher's own **Recommended mods** list
+(`VersionSelect.svelte`), where every bundled mod except Sodium is
+`required: false` and can be unticked so the jar is never installed. That is
+the better answer for all of them anyway - it removes the jar rather than
+quieting it.
 
 **Verified in a running client, not compiled.** The ClickGUI cannot be clicked
 by a script, but it is only a client of the interop server the game runs, so

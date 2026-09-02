@@ -114,6 +114,8 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         tree(ItemPhysic)
         tree(XaerosMinimap)
         tree(GlintOutline)
+        tree(VoiceChat)
+        tree(ReplayMod)
     }
 
     /**
@@ -201,7 +203,10 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
          * equal way to set this.
          */
         @Suppress("unused")
-        val enabled by boolean(
+        // Explicit type: the per-layer lambdas below read this property, and
+        // without it Kotlin's inference chases itself in a circle - the delegate's
+        // type depends on a lambda that depends on the delegate.
+        val enabled: Boolean by boolean(
             "Enabled",
             runCatching { currentApi() == PreferredGraphicsApi.VULKAN }.getOrDefault(false)
         ).onChanged { preferVulkan(it) }
@@ -362,25 +367,59 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
     object SkinLayers : ValueGroup("SkinLayers") {
         private val store = ModConfigStore.json("skinlayers.json")
 
-        val hat by boolean("Hat", store.readBoolean("enableHat") ?: true)
-            .onChanged { write("enableHat" to it) }
+        /**
+         * Master switch, and a synthesised one. 3D Skin Layers has no enable
+         * flag of its own - what it has is one flag per body part - so off here
+         * writes every one of them false in a single click and each layer falls
+         * back to the flat vanilla rendering the mod replaced. On restores the
+         * per-part choices below rather than switching everything on blindly.
+         *
+         * Defaults to off only when the mod's own config already has every
+         * layer off, so someone who turned them all off by hand is not
+         * overridden on the next start.
+         */
+        val enabled by boolean(
+            "Enabled",
+            (store.readBoolean("enableHat") ?: true) ||
+                (store.readBoolean("enableJacket") ?: true) ||
+                (store.readBoolean("enableLeftSleeve") ?: true) ||
+                (store.readBoolean("enableLeftPants") ?: true)
+        ).onChanged { applyAll(it) }
 
-        val jacket by boolean("Jacket", store.readBoolean("enableJacket") ?: true)
-            .onChanged { write("enableJacket" to it) }
+        val hat: Boolean by boolean("Hat", store.readBoolean("enableHat") ?: true)
+            .onChanged { write("enableHat" to (enabled && it)) }
 
-        val sleeves by boolean("Sleeves", store.readBoolean("enableLeftSleeve") ?: true)
-            .onChanged { write("enableLeftSleeve" to it, "enableRightSleeve" to it) }
+        val jacket: Boolean by boolean("Jacket", store.readBoolean("enableJacket") ?: true)
+            .onChanged { write("enableJacket" to (enabled && it)) }
 
-        val pants by boolean("Pants", store.readBoolean("enableLeftPants") ?: true)
-            .onChanged { write("enableLeftPants" to it, "enableRightPants" to it) }
+        val sleeves: Boolean by boolean("Sleeves", store.readBoolean("enableLeftSleeve") ?: true)
+            .onChanged {
+                write("enableLeftSleeve" to (enabled && it), "enableRightSleeve" to (enabled && it))
+            }
+
+        val pants: Boolean by boolean("Pants", store.readBoolean("enableLeftPants") ?: true)
+            .onChanged {
+                write("enableLeftPants" to (enabled && it), "enableRightPants" to (enabled && it))
+            }
 
         /** Player heads on blocks and in inventories get the same treatment. */
-        val skulls by boolean("Skulls", store.readBoolean("enableSkulls") ?: true)
-            .onChanged { write("enableSkulls" to it) }
+        val skulls: Boolean by boolean("Skulls", store.readBoolean("enableSkulls") ?: true)
+            .onChanged { write("enableSkulls" to (enabled && it)) }
 
         /** Beyond this, layers fall back to the flat vanilla rendering. */
         val renderDistance by int("RenderDistance", store.readInt("renderDistanceLOD") ?: 24, 4..64)
             .onChanged { write("renderDistanceLOD" to it) }
+
+        /** Re-applies every layer key against the master switch. */
+        private fun applyAll(on: Boolean) = write(
+            "enableHat" to (on && hat),
+            "enableJacket" to (on && jacket),
+            "enableLeftSleeve" to (on && sleeves),
+            "enableRightSleeve" to (on && sleeves),
+            "enableLeftPants" to (on && pants),
+            "enableRightPants" to (on && pants),
+            "enableSkulls" to (on && skulls)
+        )
 
         private fun write(vararg pairs: Pair<String, Any>) =
             // "skinlayers3d", not "3dskinlayers": the Modrinth slug and the Fabric
@@ -652,17 +691,100 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
         private fun write(pair: Pair<String, Any>) = applyTo(store, "enchant-outline", pair)
     }
 
+    /**
+     * Simple Voice Chat.
+     *
+     * **Only the master switch is bridged, and that is deliberate.** Half-bridging
+     * a microphone - a mute here, a push-to-talk key there - is how somebody
+     * transmits while believing they are muted. `disabled` is the mod's own single
+     * flag and its own comment says exactly what it covers: "both sound and
+     * microphone off". Everything finer stays in the mod's own screen, where the
+     * state on display is the state that is live.
+     */
+    object VoiceChat : ValueGroup("VoiceChat") {
+        private val store = ModConfigStore.properties("voicechat/voicechat-client.properties")
+
+        /** Inverted: the mod stores `disabled`, the ClickGUI offers `Enabled`. */
+        val enabled by boolean("Enabled", !(store.readBoolean("disabled") ?: false))
+            .onChanged { write("disabled" to !it) }
+
+        // "voicechat", not the Modrinth slug "simple-voice-chat". isModLoaded takes
+        // the Fabric mod id, and the two differ here - the same mismatch that left
+        // the SkinLayers bridge writing nothing for months.
+        private fun write(pair: Pair<String, Any>) = applyTo(store, "voicechat", pair)
+    }
+
+    /**
+     * Replay Mod. Keys read from the `replaymod.json` it writes on first launch.
+     */
+    object ReplayMod : ValueGroup("ReplayMod") {
+        private val store = ModConfigStore.json("replaymod.json")
+
+        /**
+         * Master switch, synthesised. Replay Mod has no single enable flag - what
+         * it has is one per recording source - so off stops it recording anything,
+         * which is what off means for a recorder. The jar stays loaded either way;
+         * removing it is the launcher's mod list.
+         *
+         * Explicit type: the per-source lambdas read this, and without it Kotlin's
+         * inference chases itself in a circle.
+         */
+        val enabled: Boolean by boolean(
+            "Enabled",
+            (store.readBoolean("recording.recordSingleplayer") ?: true) ||
+                (store.readBoolean("recording.recordServer") ?: true)
+        ).onChanged { applyAll(it) }
+
+        val recordSingleplayer: Boolean by boolean(
+            "RecordSingleplayer",
+            store.readBoolean("recording.recordSingleplayer") ?: true
+        ).onChanged { write("recording.recordSingleplayer" to (enabled && it)) }
+
+        val recordServer: Boolean by boolean(
+            "RecordServer",
+            store.readBoolean("recording.recordServer") ?: true
+        ).onChanged { write("recording.recordServer" to (enabled && it)) }
+
+        val autoStart: Boolean by boolean(
+            "AutoStartRecording",
+            store.readBoolean("recording.autoStartRecording") ?: true
+        ).onChanged { write("recording.autoStartRecording" to (enabled && it)) }
+
+        /** The recording indicator drawn while a replay is being captured. */
+        val indicator: Boolean by boolean(
+            "Indicator",
+            store.readBoolean("recording.indicator") ?: true
+        ).onChanged { write("recording.indicator" to it) }
+
+        private fun applyAll(on: Boolean) = write(
+            "recording.recordSingleplayer" to (on && recordSingleplayer),
+            "recording.recordServer" to (on && recordServer),
+            "recording.autoStartRecording" to (on && autoStart)
+        )
+
+        private fun write(vararg pairs: Pair<String, Any>) = applyTo(store, "replaymod", *pairs)
+    }
+
     object Jade : ValueGroup("Jade") {
+
+        /**
+         * Master switch, and Jade's own rather than a synthesised one:
+         * `general.displayTooltip` false means the overlay does not draw at all.
+         * It was already bridged, but as "Tooltip" three levels down under
+         * General, where nobody looking to turn Jade off would find it. Same key,
+         * same write - moved to where the question is asked.
+         */
+        val enabled by boolean("Enabled", jadeBool("general.displayTooltip", true))
+            .onChanged { write("general.displayTooltip" to it) }
 
         init {
             treeAll(General, Overlay, Content, Blocks, Entities, Accessibility)
         }
 
+        private fun write(vararg pairs: Pair<String, Any>) = applyTo(jadeStore, JADE_ID, *pairs)
+
         /** What Jade looks at, and when it shows itself. */
         object General : ValueGroup("General") {
-            val tooltip by boolean("Tooltip", jadeBool("general.displayTooltip", true))
-                .onChanged { write("general.displayTooltip" to it) }
-
             val blocks by boolean("Blocks", jadeBool("general.displayBlocks", true))
                 .onChanged { write("general.displayBlocks" to it) }
 
@@ -1221,54 +1343,86 @@ object ModuleBundledMods : ClientModule("BundledMods", ModuleCategories.MISC) {
     object AppleSkin : ValueGroup("AppleSkin") {
         private val store = ModConfigStore.json("appleskin.json5")
 
+        /**
+         * Master switch, synthesised. AppleSkin has no enable flag of its own -
+         * what it has is one flag per readout - so off here writes all eight
+         * false in a single click and the food HUD and tooltips go back to
+         * vanilla. On restores the individual choices below.
+         *
+         * AppleSkin is not an optimisation: it draws a saturation overlay, an
+         * exhaustion underlay and food values on tooltips. A mod you can see is
+         * a mod you can turn off.
+         *
+         * Explicit type: the per-readout lambdas read this, and without it
+         * Kotlin's inference chases itself in a circle.
+         */
+        val enabled: Boolean by boolean(
+            "Enabled",
+            (store.readBoolean("showSaturationHudOverlay") ?: true) ||
+                (store.readBoolean("showFoodValuesHudOverlay") ?: true) ||
+                (store.readBoolean("showFoodValuesInTooltip") ?: true)
+        ).onChanged { applyAll(it) }
+
         /** Hunger and saturation numbers on a food item's tooltip, on shift. */
-        val foodTooltip by boolean("FoodTooltip", store.readBoolean("showFoodValuesInTooltip") ?: true)
-            .onChanged { write("showFoodValuesInTooltip" to it) }
+        val foodTooltip: Boolean by boolean("FoodTooltip", store.readBoolean("showFoodValuesInTooltip") ?: true)
+            .onChanged { write("showFoodValuesInTooltip" to (enabled && it)) }
 
         /** The same tooltip without having to hold shift. */
-        val foodTooltipAlways by boolean(
+        val foodTooltipAlways: Boolean by boolean(
             "FoodTooltipAlways",
             store.readBoolean("showFoodValuesInTooltipAlways") ?: true
-        ).onChanged { write("showFoodValuesInTooltipAlways" to it) }
+        ).onChanged { write("showFoodValuesInTooltipAlways" to (enabled && it)) }
 
         /** Saturation drawn over the hunger bar. The headline feature. */
-        val saturationOverlay by boolean(
+        val saturationOverlay: Boolean by boolean(
             "SaturationOverlay",
             store.readBoolean("showSaturationHudOverlay") ?: true
-        ).onChanged { write("showSaturationHudOverlay" to it) }
+        ).onChanged { write("showSaturationHudOverlay" to (enabled && it)) }
 
         /** What the food you are holding would restore, previewed on the bar. */
-        val heldFoodPreview by boolean(
+        val heldFoodPreview: Boolean by boolean(
             "HeldFoodPreview",
             store.readBoolean("showFoodValuesHudOverlay") ?: true
-        ).onChanged { write("showFoodValuesHudOverlay" to it) }
+        ).onChanged { write("showFoodValuesHudOverlay" to (enabled && it)) }
 
-        val previewFromOffhand by boolean(
+        val previewFromOffhand: Boolean by boolean(
             "PreviewFromOffhand",
             store.readBoolean("showFoodValuesHudOverlayWhenOffhand") ?: true
-        ).onChanged { write("showFoodValuesHudOverlayWhenOffhand" to it) }
+        ).onChanged { write("showFoodValuesHudOverlayWhenOffhand" to (enabled && it)) }
 
         /** Exhaustion as a bar behind the hunger row - how close the next tick is. */
-        val exhaustionUnderlay by boolean(
+        val exhaustionUnderlay: Boolean by boolean(
             "ExhaustionUnderlay",
             store.readBoolean("showFoodExhaustionHudUnderlay") ?: true
-        ).onChanged { write("showFoodExhaustionHudUnderlay" to it) }
+        ).onChanged { write("showFoodExhaustionHudUnderlay" to (enabled && it)) }
 
         /** Estimated health the held food would restore, on the health bar. */
-        val healthPreview by boolean(
+        val healthPreview: Boolean by boolean(
             "HealthPreview",
             store.readBoolean("showFoodHealthHudOverlay") ?: true
-        ).onChanged { write("showFoodHealthHudOverlay" to it) }
+        ).onChanged { write("showFoodHealthHudOverlay" to (enabled && it)) }
 
         /** Whether the preview icons shake along with vanilla's own animation. */
-        val vanillaAnimations by boolean(
+        val vanillaAnimations: Boolean by boolean(
             "VanillaAnimations",
             store.readBoolean("showVanillaAnimationsOverlay") ?: true
-        ).onChanged { write("showVanillaAnimationsOverlay" to it) }
+        ).onChanged { write("showVanillaAnimationsOverlay" to (enabled && it)) }
 
         /** How visible the flashing preview icons get at their peak. */
         val flashAlpha by float("FlashAlpha", store.readFloat("maxHudOverlayFlashAlpha") ?: 0.65f, 0f..1f)
             .onChanged { write("maxHudOverlayFlashAlpha" to it) }
+
+        /** Re-applies every readout against the master switch. */
+        private fun applyAll(on: Boolean) {
+            write("showFoodValuesInTooltip" to (on && foodTooltip))
+            write("showFoodValuesInTooltipAlways" to (on && foodTooltipAlways))
+            write("showSaturationHudOverlay" to (on && saturationOverlay))
+            write("showFoodValuesHudOverlay" to (on && heldFoodPreview))
+            write("showFoodValuesHudOverlayWhenOffhand" to (on && previewFromOffhand))
+            write("showFoodExhaustionHudUnderlay" to (on && exhaustionUnderlay))
+            write("showFoodHealthHudOverlay" to (on && healthPreview))
+            write("showVanillaAnimationsOverlay" to (on && vanillaAnimations))
+        }
 
         private fun write(pair: Pair<String, Any>) = applyTo(store, "appleskin", pair)
     }

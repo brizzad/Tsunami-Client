@@ -54,6 +54,11 @@ sodiumExtra = "mc26.2-0.9.3+fabric"
 jade = "26.2.11+fabric"
 appleskin = "uo5bAN1Y"
 shieldStatuses = "4.1.8+26.2"
+# Off by default in the launcher, loaded here only so runClient writes their real
+# configs for the ClickGUI bridge to read. Versions track profiles.rs.
+replaymod = "26.2-2.6.27"
+worldeditcui = "26.2+02"
+voicechat = "fabric-2.6.22+26.2"
 walksylib = "1.0.12+26.2"
 moreculling = "D5oVCouK"
 clothConfig = "26.2.155+fabric"
@@ -146,6 +151,9 @@ sodiumExtra = { group = "maven.modrinth", name = "sodium-extra", version.ref = "
 jade = { group = "maven.modrinth", name = "jade", version.ref = "jade" }
 appleskin = { group = "maven.modrinth", name = "appleskin", version.ref = "appleskin" }
 shieldStatuses = { group = "maven.modrinth", name = "shield-statuses", version.ref = "shieldStatuses" }
+replaymod = { group = "maven.modrinth", name = "replaymod", version.ref = "replaymod" }
+worldeditcui = { group = "maven.modrinth", name = "worldedit-cui", version.ref = "worldeditcui" }
+voicechat = { group = "maven.modrinth", name = "simple-voice-chat", version.ref = "voicechat" }
 walksylib = { group = "maven.modrinth", name = "walksylib", version.ref = "walksylib" }
 moreculling = { group = "maven.modrinth", name = "moreculling", version.ref = "moreculling" }
 clothConfig = { group = "maven.modrinth", name = "cloth-config", version.ref = "clothConfig" }
