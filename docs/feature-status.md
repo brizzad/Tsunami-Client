@@ -90,6 +90,41 @@ outside the keybind system - three things every other feature here has.
 jasspir's mod is still the specification for what BetterHitreg does, and its
 wording is quoted in the source: appearance only, actual hits unmodified.
 
+**Crystal optimisers: one of four, off by default, and the reasoning is the
+point.** Nathan asked for "any crystal optimizer". None of them is what the name
+suggests - **not one is a rendering or FPS optimisation.** Every mod in the
+category cuts the delay on placing and breaking end crystals. The four available
+for 26.2 Fabric:
+
+| Mod | What it does | Licence | Verdict |
+| --- | --- | --- | --- |
+| Marlow's | removes a broken crystal locally instead of waiting for the server | MIT | **bundled, off by default** |
+| Client Side Crystals | renders your own placement instantly, "to look like zero ping" | ARR | not bundled |
+| Kind's | handles place *and* break client-side so actions feel instant | ARR | not bundled |
+| FastCrystal | **removes all interact and attack cooldowns**, duplicates attack packets | ARR | **excluded** |
+
+FastCrystal and Kind's are the excluded category outright - removing an attack
+cooldown is automating a reaction that decides a fight, which `CLAUDE.md` lists
+as permanently out of scope. They are not bundled at any setting.
+
+Marlow's was chosen and it is still a judgement call rather than an obvious one,
+so here is the whole basis. It is the only MIT option. It has 4.4M downloads. And
+uniquely in the category it ships a **server opt-out protocol** - `OptOutPacket`,
+`ChallengePacket`, `ChallengeResponsePacket`, `OptOutCache` in the jar - so a
+partnered server can tell the client to disable it and the client complies. That
+is the same shape as `ServerIntegration` and it is the strongest fair-play
+signal available here.
+
+It is **off by default** because it is latency compensation on a fight-deciding
+action rather than a readout of something the game already told you. Shipping it
+switched off puts the choice in front of the player instead of making it for
+them, the same call as Xaero's radar.
+
+**It has no config, so it has no ClickGUI bridge.** No config class exists in the
+jar - checked, not assumed. Its only switch is the launcher's mod list, which
+removes the jar rather than quieting it. That is the documented answer for a mod
+with no off flag of its own.
+
 ## Performance — 10/12
 
 | Item | Status | Notes |
@@ -299,48 +334,21 @@ blocker, which is why the row moved from blocked to deferred.
 
 Glint colorizer was recorded as a near miss on ZEEG, which is still true -
 ZEEG still declares Mod Menu as a *required* dependency, re-checked, and
-bundling Mod Menu means a second settings UI. But ZEEG is no longer the only
-26.2 option, which is what the old note got wrong. `enchantment-glint-outline`
-`3.3` is **CC0-1.0** with 936k downloads, and Mod Menu is *optional* to it. CC0
-is the most permissive licence there is, so it can be merged outright. Not
-built here only because it was not what this batch was for.
+bundling Mod Menu means a second settings UI. But ZEEG was never the only 26.2
+option, which is what the old note got wrong. `enchantment-glint-outline` `3.3`
+is **CC0-1.0** with 936k downloads, and Mod Menu is *optional* to it. It now
+ships, bundled rather than merged despite CC0 permitting either - the reasoning
+is in the render notes above, and it comes down to 2,059 lines across 34 files
+with its own GLSL shaders and accesswidener, which is not the small tweak the
+licence implies.
 
-The separate objection in the Feather audit below - that 26.2 has no glint
-class left to inject into - deserves a re-check too, because these mods build
-for 26.2 and therefore found something to hook. Whatever they hook is the
-answer to that question.
-
-## Social — 7/9
-
-| Item | Status | Notes |
-| --- | --- | --- |
-| Friends list | present | `FriendManager` + `.friend` |
-| Skin manager | present | `SkinChanger` |
-| Cosmetics | present | `Wings`, `Hats`, rendered locally — no infrastructure to depend on |
-| Server address / player count / ping | done | `{session.server.*}`, `{session.ping}` |
-| Nick hider | present | `NameProtect` |
-| Voice chat | done | Simple Voice Chat `fabric-2.6.22+26.2`, off by default |
-| Replay | done | Replay Mod `26.2-2.6.27`, off by default |
-| **Name history** | **blocked** | Mojang removed the endpoint |
-| **Cross-server chat** | **deferred** | needs a chat server |
-| **Screenshot uploader** | **deferred** | needs an image host |
-| **Spotify** | **blocked** | Craftify is All Rights Reserved and stops at 1.21.11; re-checked 2026-09-01, both still fatal |
-| ~~IP protection~~, ~~launcher minigames~~ | excluded | as specified |
-
-**Name history was tested, not assumed.**
-`api.mojang.com/user/profiles/<uuid>/names` returns **404 NOT_FOUND**; the
-session server still returns the current name only. The remaining route is
-third-party aggregators, which means sending player UUIDs to someone else —
-the exact category this fork spent a session removing. Not built.
-
-## Mod tools — 3/3
-
-| Item | Status | Notes |
-| --- | --- | --- |
-| Profile import / export | done | `.config export|import|profiles`, plain files |
-| One-click Fabric mod install | present | launcher: install, list and delete custom mods |
-| Anti-forced-resource-pack | done | `NoServerResourcePack`, two modes |
-| **Community marketplace** | **deferred** | needs a backend |
+**That also settled the objection recorded in the Feather audit below** - that
+26.2 has no glint class left to inject into. It does not: the
+`net.minecraft.client...glint` family really is gone. The mod hooks
+`RenderType`/`RenderSetup`, `EquipmentLayerRenderer`, `ItemRenderState` and
+`ModelPart` instead. "No obvious injection point" turned out to be a statement
+about how hard anyone had looked, which is the failure this document keeps
+recording.
 
 **Player health moved from a nametag part to the real mod (2026-09-02).**
 `NametagTextFormatter` had a `HEALTH` part printing `18 HP` in green/yellow/red.
@@ -388,40 +396,37 @@ crack/destroy pair migrated onto `ClientLevel` - and the method is now
 On by default, so it changes nothing until someone unticks it, and it sits in the
 same `DoRender` set as every other AntiBlind switch.
 
-**Crystal optimisers: one of four, off by default, and the reasoning is the
-point.** Nathan asked for "any crystal optimizer". None of them is what the name
-suggests - **not one is a rendering or FPS optimisation.** Every mod in the
-category cuts the delay on placing and breaking end crystals. The four available
-for 26.2 Fabric:
+## Social — 7/9
 
-| Mod | What it does | Licence | Verdict |
-| --- | --- | --- | --- |
-| Marlow's | removes a broken crystal locally instead of waiting for the server | MIT | **bundled, off by default** |
-| Client Side Crystals | renders your own placement instantly, "to look like zero ping" | ARR | not bundled |
-| Kind's | handles place *and* break client-side so actions feel instant | ARR | not bundled |
-| FastCrystal | **removes all interact and attack cooldowns**, duplicates attack packets | ARR | **excluded** |
+| Item | Status | Notes |
+| --- | --- | --- |
+| Friends list | present | `FriendManager` + `.friend` |
+| Skin manager | present | `SkinChanger` |
+| Cosmetics | present | `Wings`, `Hats`, rendered locally — no infrastructure to depend on |
+| Server address / player count / ping | done | `{session.server.*}`, `{session.ping}` |
+| Nick hider | present | `NameProtect` |
+| Voice chat | done | Simple Voice Chat `fabric-2.6.22+26.2`, off by default |
+| Replay | done | Replay Mod `26.2-2.6.27`, off by default |
+| **Name history** | **blocked** | Mojang removed the endpoint |
+| **Cross-server chat** | **deferred** | needs a chat server |
+| **Screenshot uploader** | **deferred** | needs an image host |
+| **Spotify** | **blocked** | Craftify is All Rights Reserved and stops at 1.21.11; re-checked 2026-09-01, both still fatal |
+| ~~IP protection~~, ~~launcher minigames~~ | excluded | as specified |
 
-FastCrystal and Kind's are the excluded category outright - removing an attack
-cooldown is automating a reaction that decides a fight, which `CLAUDE.md` lists
-as permanently out of scope. They are not bundled at any setting.
+**Name history was tested, not assumed.**
+`api.mojang.com/user/profiles/<uuid>/names` returns **404 NOT_FOUND**; the
+session server still returns the current name only. The remaining route is
+third-party aggregators, which means sending player UUIDs to someone else —
+the exact category this fork spent a session removing. Not built.
 
-Marlow's was chosen and it is still a judgement call rather than an obvious one,
-so here is the whole basis. It is the only MIT option. It has 4.4M downloads. And
-uniquely in the category it ships a **server opt-out protocol** - `OptOutPacket`,
-`ChallengePacket`, `ChallengeResponsePacket`, `OptOutCache` in the jar - so a
-partnered server can tell the client to disable it and the client complies. That
-is the same shape as `ServerIntegration` and it is the strongest fair-play
-signal available here.
+## Mod tools — 3/3
 
-It is **off by default** because it is latency compensation on a fight-deciding
-action rather than a readout of something the game already told you. Shipping it
-switched off puts the choice in front of the player instead of making it for
-them, the same call as Xaero's radar.
-
-**It has no config, so it has no ClickGUI bridge.** No config class exists in the
-jar - checked, not assumed. Its only switch is the launcher's mod list, which
-removes the jar rather than quieting it. That is the documented answer for a mod
-with no off flag of its own.
+| Item | Status | Notes |
+| --- | --- | --- |
+| Profile import / export | done | `.config export|import|profiles`, plain files |
+| One-click Fabric mod install | present | launcher: install, list and delete custom mods |
+| Anti-forced-resource-pack | done | `NoServerResourcePack`, two modes |
+| **Community marketplace** | **deferred** | needs a backend |
 
 ## Trust — 1/1
 
@@ -477,7 +482,7 @@ Deliberately not taken from Lunar:
 | Clock | Excluded in the brief - a real-world clock was cut as useless |
 | Scrollable Tooltips | Only 26.2 mod is Skyblock-specific under a custom licence; building it means hooking tooltip render and scroll for very little |
 | Menu Blur | `inventory-blur` is CC-BY-NC-4.0. NC cannot be merged into GPL, and taking an NC dependency is a bad fit for a project that may take donations |
-| Item Physics, 2D Items, Glint Colorizer | No 26.2 Fabric build exists; see the render section above |
+| ~~Item Physics, 2D Items, Glint Colorizer~~ | **All three shipped since** — ItemPhysic `1.8.15` bundled with CreativeCore, `FlatItems` merged from flat-items `1.1.1+26.2`, Enchantment Glint Outline `3.3` bundled. The row said no 26.2 Fabric build existed, which was true when written and had gone stale; the render section above has each one |
 | Screenshot Uploader | Needs an image host - backend gap below |
 | Hypixel Bedwars/Mods/Quickplay, UHC Overlay, Team View, PvP Info | Server-specific, and the Hypixel set needs a user API key |
 | Mumble Link | JNI shared memory, no 26.2 mod |
@@ -556,14 +561,14 @@ already live:
 
 | Feather mod | Why not |
 | --- | --- |
-| `glint` | **There is no glint class in 26.2 at all** — the whole `net.minecraft.client...glint` family is gone, checked against the deobfuscated jar rather than assumed. The earlier ZEEG note still stands, but the real blocker is now that there is no obvious injection point to colour |
+| ~~`glint`~~ | **Built since**, as bundled Enchantment Glint Outline `3.3` (CC0). This row used to say there was no glint class in 26.2 to inject into, which was half right and wholly misleading: the `net.minecraft.client...glint` family really is gone, and the mod hooks `RenderType`/`RenderSetup`, `EquipmentLayerRenderer`, `ItemRenderState` and `ModelPart` instead. "No obvious injection point" was a statement about how hard I had looked |
 | `uiScaling` | Feather ships this with "USE WITH CAUTION" in its own description. `Window.calculateScale` is injectable, but a GUI scale that goes wrong is unrecoverable without editing options.txt by hand |
 | `backups` | `LevelStorageAccess.makeWorldBackup` runs from the world-selection screen with the world closed. Calling it mid-session needs a forced save first or the archive is a torn one, and a backup you cannot trust is worse than none. Worth doing properly, as its own piece of work |
 | `soundfilters` | Reverb is OpenAL EFX. Same answer as Lunar's Better Sounds |
 | `screenshot` | Vanilla already prints a clickable "saved as" line. Clipboard image copy would mean AWT, which does not coexist with LWJGL on macOS |
 | `customf3`, `customadvancementsscreen`, `darkmode`, `searchkeybind`, `elytras`, `playerModel`, `camera` | Screen-chrome polish. In scope and cheap individually, but none of them is a gap anybody has named |
 | `hypixel`, `uhcoverlay`, `tiertagger` | Server-specific, and two of the three need a user API key — the same batch already deferred in the niche section |
-| `itemPhysic`, `packOrganizer` | Unchanged from the render section above |
+| `itemPhysic`, `packOrganizer` | Unchanged from the render section above — ItemPhysic is bundled; the pack organiser is still deferred as a Svelte UI project in its own right |
 
 ## Everything is configurable in the ClickGUI
 
@@ -751,6 +756,27 @@ a message. Those three need a real service with a real bill, and standing up
 the catalogue did not move them an inch closer. Do not read "the backend
 exists" as "the backend gap is closed".
 
-**The next step is on the launcher side, not here:** the client jar is still not
-published anywhere, so a launch depends on a file copied into `custom_mods` by
-hand. `docs/backend-contract.md` in the launcher repo has the options.
+**The client jar is published as of 2026-09-02**, which was the step this note
+used to name as next. It ships as a GitHub release asset on the client repo, the
+catalogue's build record points at it with a sha1, and the launcher installs it
+as a `ModSource::Url` - verifying that digest after downloading and against its
+cache before Fabric loads any of it. A launch no longer depends on a file
+somebody copied into `custom_mods`, and the old silent failure - plain Fabric,
+no HUD, dead ClickGUI key - is gone with it.
+
+Tagging the client runs `.github/workflows/release.yml`, which builds, checks
+that `fabric.mod.json` really says `liquidbounce` / `Tsunami` / the tagged
+version, publishes the asset and prints the catalogue block to paste into
+`data/builds.json`. `docs/backend-contract.md` in the launcher repo is the spec.
+
+**Status: built, not done.** Every step up to the moment the launcher writes the
+jar is verified - `verify-api.mjs --jar` downloads the published file from the
+live catalogue and confirms the digest - but the install has not been seen in a
+running client, which is this document's own bar. Do that before the row moves.
+
+Two things it did not close. Automating `data/builds.json` still needs a
+cross-repository credential, because a workflow's `GITHUB_TOKEN` cannot write to
+`brizzad/tsunami-api`; until then the release prints a block for one paste. And
+the build's `branch` stays `local` deliberately - publishing the jar makes
+renaming it to `nextgen` harmless for a *new* user, not free for one who already
+has worlds under `gameDir/local`.
