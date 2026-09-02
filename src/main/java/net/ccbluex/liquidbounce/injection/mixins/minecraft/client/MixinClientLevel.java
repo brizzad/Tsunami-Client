@@ -27,6 +27,7 @@ import net.ccbluex.liquidbounce.features.module.modules.render.DoRender;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleAntiBlind;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -76,6 +77,30 @@ public abstract class MixinClientLevel {
     @Inject(method = "addDestroyBlockEffect", at = @At("HEAD"), cancellable = true)
     private void hookAddBlockBreakParticles(BlockPos pos, BlockState state, CallbackInfo ci) {
         if (!ModuleAntiBlind.canRender(DoRender.BLOCK_BREAK_PARTICLES)) {
+            ci.cancel();
+        }
+    }
+
+    /**
+     * The crumble particles that come off a block while you are still mining it,
+     * as opposed to the burst when it finally breaks.
+     * <p>
+     * These are a separate effect with a separate switch, because they behave
+     * differently in the one case that matters: breaking a block is momentary,
+     * but holding the button on a block that takes a while pours particles out
+     * of the face you are looking at for the whole duration - directly over the
+     * thing you are trying to see. {@code addDestroyBlockEffect} does not cover
+     * this; it only fires once the block is gone.
+     * <p>
+     * 26.2 renamed the method this used to be. The old {@code ParticleEngine.crack}
+     * no longer exists - the whole crack/destroy pair moved onto
+     * {@link net.minecraft.client.multiplayer.ClientLevel} - and the caller is
+     * {@code Minecraft.continueAttack}, verified against the deobfuscated jar
+     * rather than carried over from an older mapping.
+     */
+    @Inject(method = "addBreakingBlockEffect", at = @At("HEAD"), cancellable = true)
+    private void hookAddBlockHitParticles(BlockPos pos, Direction side, CallbackInfo ci) {
+        if (!ModuleAntiBlind.canRender(DoRender.BLOCK_HIT_PARTICLES)) {
             ci.cancel();
         }
     }

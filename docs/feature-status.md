@@ -251,6 +251,7 @@ OpenGL with the toggle stored as on rewrote the option to `vulkan` while running
 | Stopwatch | done | 0 → 3 → 6, then held at 6 when stopped |
 | Durability warning | done | combo 4 → 0.00, sword durability frozen |
 | Fire overlay reduction | present | `AntiBlind` → `FireOpacity` |
+| Mining particle suppression | done | `AntiBlind` → `BlockHitParticles`, added 2026-09-02 |
 | AppleSkin food HUD | done | bundled: AppleSkin `3.0.10+mc26.2` |
 | Minimap | present | **not** ported from Xaero's; see below |
 | Motion blur | done | bundled: Natural Motion Blur `1.4.4` (LGPL-3.0), off by default |
@@ -366,6 +367,26 @@ property, because nametags draw in screen space after the world.
 Three settings bridged, keys and defaults from `javap` on `Config` and the file
 name from its constant pool: `Enabled` (`renderingEnabled`), `HeartStacking`,
 `HeartOffset`.
+
+**`AntiBlind` gained `BlockHitParticles` (2026-09-02), and the gap it fills is
+worth naming.** `BlockBreakParticles` already suppressed the burst a block makes
+when it is destroyed, and it works - but it hooks
+`ClientLevel.addDestroyBlockEffect`, which only fires once the block is *gone*.
+The crumble particles that come off a block **while you are still mining it** are
+a separate effect entirely, and nothing was suppressing them. They are also the
+worse of the two for visibility: breaking a block is momentary, whereas holding
+the button on anything slow pours particles out of the face you are looking at
+for the whole duration, over the thing you are trying to see.
+
+The 26.2 target had moved, which is why this was not a one-line copy of the
+existing hook. The old `ParticleEngine.crack` does not exist any more - the
+crack/destroy pair migrated onto `ClientLevel` - and the method is now
+`addBreakingBlockEffect(BlockPos, Direction)`, called from
+`Minecraft.continueAttack`. Both were read out of the deobfuscated 26.2 jar with
+`javap` rather than carried over from an older mapping.
+
+On by default, so it changes nothing until someone unticks it, and it sits in the
+same `DoRender` set as every other AntiBlind switch.
 
 **Crystal optimisers: one of four, off by default, and the reasoning is the
 point.** Nathan asked for "any crystal optimizer". None of them is what the name
