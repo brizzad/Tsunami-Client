@@ -3,15 +3,22 @@
     import {fade} from "svelte/transition";
     import {quintOut} from "svelte/easing";
 
-    let { title, icon, children } = $props<{
+    let { title, icon, onBack, children } = $props<{
         title: string;
         icon?: string;
+        onBack?: () => void;
         children: Snippet;
     }>();
 </script>
 
 <div class="window" transition:fade|global={{duration: 200, easing: quintOut}}>
     <div class="title">
+        {#if onBack}
+            <button class="back" type="button" onclick={onBack} aria-label="Back to modules">
+                <span class="chevron"></span>
+                Modules
+            </button>
+        {/if}
         {#if icon}
             <img
                     class="icon"
@@ -45,7 +52,7 @@
 
   .title {
     display: grid;
-    grid-template-columns: max-content 1fr;
+    grid-template-columns: max-content max-content 1fr;
     align-items: center;
     column-gap: 12px;
     background-color: var(--clickgui-window-header-background-color);
@@ -58,6 +65,36 @@
 
   .title-text {
     font-weight: 600;
+  }
+
+  /* The way back to the module list, now that these are not tabs. */
+  .back {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px 5px 8px;
+    border: none;
+    border-radius: 999px;
+    background-color: var(--clickgui-base-70-color);
+    color: var(--clickgui-text-dimmed-color);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+
+    &:hover {
+      background-color: var(--clickgui-module-hover-background-color);
+      color: var(--clickgui-text-color);
+    }
+  }
+
+  .chevron {
+    width: 7px;
+    height: 7px;
+    border-left: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
   }
 
   .content {

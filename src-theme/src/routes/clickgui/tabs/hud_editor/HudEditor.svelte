@@ -14,6 +14,8 @@
     import {listen} from "../../../../integration/ws";
     import type {ScaleFactorChangeEvent} from "../../../../integration/events";
 
+    export let onBack: () => void = () => {};
+
     let dragState: HudEditorDragState | undefined;
     let scaleFactor = 2;
 
@@ -71,6 +73,11 @@
             <div class="magnetic-guide horizontal" style="top: {toClientCoordinate(dragState.horizontalGuide)}px"></div>
         {/if}
     {/if}
+
+    <button class="back" type="button" onclick={onBack}>
+        <span class="chevron"></span>
+        Modules
+    </button>
 
     <ComponentDrawer/>
     <Hud
@@ -198,5 +205,43 @@
       height: 1px;
       transform: translateY(-50%);
     }
+  }
+
+  /*
+   * The editor takes the whole screen and used to be left by the floating tab
+   * pill, which no longer exists. Without this there is no way back to the
+   * module list except closing the GUI entirely.
+   */
+  .back {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px 7px 11px;
+    border: none;
+    border-radius: 999px;
+    background-color: var(--clickgui-base-85-color);
+    color: var(--clickgui-text-color);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    transition: background-color 120ms ease;
+
+    &:hover {
+      background-color: var(--clickgui-module-hover-background-color);
+    }
+  }
+
+  .chevron {
+    width: 7px;
+    height: 7px;
+    border-left: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
   }
 </style>

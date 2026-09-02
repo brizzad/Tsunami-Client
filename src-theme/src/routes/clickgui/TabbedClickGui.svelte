@@ -1,7 +1,6 @@
 <script lang="ts">
     import ClickGui from "./ClickGui.svelte";
     import GlobalSettings from "./tabs/GlobalSettings.svelte";
-    import Tabs from "./tabs/Tabs.svelte";
     import {gridSize, os, scaleFactor, snappingEnabled, darken} from "./clickgui_store";
     import type {ConfigurableSetting, TogglableSetting} from "../../integration/types";
     import {onMount} from "svelte";
@@ -16,19 +15,31 @@
     import type {ClickGuiValueChangeEvent, ScaleFactorChangeEvent} from "../../integration/events";
     import HudEditor from "./tabs/hud_editor/HudEditor.svelte";
 
-    const tabs = [
-        {title: "ClickGUI", content: ClickGui},
-        {title: "HUD Editor", content: HudEditor},
-        {title: "Settings", content: GlobalSettings},
-    ];
+    /*
+     * Three views, one shell. Upstream floated a pill of tabs over the top of
+     * everything, which is a second navigation system sitting on top of the one
+     * inside the window - and it put "HUD Editor" and "Settings" at the same
+     * level as the entire module list. They are now entries in the ClickGUI's
+     * own sidebar, and this only decides which view is mounted.
+     */
+    type View = "modules" | "hud" | "settings";
 
-    let activeTab = $state(0);
+    let view = $state<View>("modules");
     let minecraftScaleFactor = $state(2);
     let clickGuiScaleFactor = $state(1);
 
     $effect(() => {
         $scaleFactor = minecraftScaleFactor * clickGuiScaleFactor;
     });
+
+    /*
+     * HudEditor sets and clears the client's own hud-editor flag in its mount
+     * and cleanup, so switching away from it is enough to leave edit mode.
+     * Setting it here as well would fight with that.
+     */
+    function show(next: View) {
+        view = next;
+    }
 
     function applyValues(configurable: ConfigurableSetting) {
         const scaleValue = configurable.value.find(v => v.name === "Scale");
@@ -71,7 +82,16 @@
         class="tabbed-clickgui"
         class:darken={$darken}
 >
-    <Tabs {tabs} bind:activeTab/>
+    {#if view === "modules"}
+        <ClickGui
+                onOpenHudEditor={() => show("hud")}
+                onOpenSettings={() => show("settings")}
+        />
+    {:else if view === "hud"}
+        <HudEditor onBack={() => show("modules")}/>
+    {:else}
+        <GlobalSettings onBack={() => show("modules")}/>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -79,7 +99,7 @@
     overflow: hidden;
     position: absolute;
     inset: 0;
-    transition: ease background-color .2s;
+    transition: background-color 180ms ease;
 
     &.darken {
       background-color: var(--clickgui-overlay-background-color);
