@@ -1,0 +1,145 @@
+# Builds the client jar and publishes it as a release asset.
+#
+# This exists because the jar was, for the whole project so far, built on a
+# developer's machine and copied by hand into the launcher's `custom_mods`
+# folder. That failed silently: `prelauncher.rs` logs one line when the file is
+# absent and carries on, so the game starts as plain Fabric with no HUD and a
+# dead ClickGUI key, which looks exactly like a broken client and is a missing
+# file.
+#
+# The launcher reads `build.client_jar` out of the catalogue and downloads it
+# like any other mod, checking the digest before it installs. So the two outputs
+# that matter here are the asset itself and its sha1, and the last step prints
+# the exact JSON to add to `tsunami-api`.
+#
+# Publishing to the catalogue is not automated yet: a workflow's GITHUB_TOKEN is
+# scoped to its own repository, so pushing to `brizzad/tsunami-api` needs a PAT
+# or a GitHub App this repo does not have. Until then the job summary carries the
+# block to paste, which is one edit rather than a build.
+
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build and release (e.g. v0.40.1)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Read the versions this build is pinned to
+        id: versions
+        run: |
+          set -euo pipefail
+          jdk=$(grep -E '^jdk[[:space:]]*=' gradle/libs.versions.toml | head -n1 | sed -n 's/^[^=]*=[[:space:]]*"\([^"]*\)".*/\1/p')
+          mod_version=$(grep '^mod_version=' gradle.properties | head -n1 | cut -d'=' -f2- | tr -d '[:space:]')
+          [ -n "$jdk" ] && [ -n "$mod_version" ] || { echo "::error::could not read jdk or mod_version"; exit 1; }
+          echo "jdk=$jdk" >> "$GITHUB_OUTPUT"
+          echo "mod_version=$mod_version" >> "$GITHUB_OUTPUT"
+
+      - name: Setting up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: ${{ steps.versions.outputs.jdk }}
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('src-theme/package-lock.json') }}
+          restore-keys: npm-${{ runner.os }}-
+
+      - name: Grant permissions to src-theme
+        run: sudo chmod -R 777 src-theme
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Tests and detekt gate `nextgen` in build.yml. Skipping them here would
+      # mean a tag could publish something that never passed either.
+      - name: Build
+        env:
+          CI: true
+        run: ./gradlew build
+
+      # A jar that builds is not necessarily a jar the launcher can use. These are
+      # the three things the launcher and Fabric actually read, and each has been
+      # wrong at least once in a way no compiler noticed.
+      - name: Check the jar is the mod we think it is
+        id: jar
+        run: |
+          set -euo pipefail
+          version='${{ steps.versions.outputs.mod_version }}'
+          jar="build/libs/liquidbounce-${version}.jar"
+          [ -f "$jar" ] || { echo "::error::expected $jar, found: $(ls build/libs)"; exit 1; }
+
+          unzip -p "$jar" fabric.mod.json > /tmp/fabric.mod.json
+          node -e '
+            const m = JSON.parse(require("fs").readFileSync("/tmp/fabric.mod.json", "utf8"));
+            const want = process.argv[1];
+            const fail = (s) => { console.error("::error::" + s); process.exitCode = 1; };
+            // The id is a resource namespace, not a brand: every asset and language
+            // key in the jar resolves against it. See the client README.
+            if (m.id !== "liquidbounce") fail(`fabric.mod.json id is "${m.id}", expected "liquidbounce"`);
+            if (m.name !== "Tsunami") fail(`fabric.mod.json name is "${m.name}", expected "Tsunami"`);
+            if (m.version !== want) fail(`fabric.mod.json version is "${m.version}", tag build says "${want}"`);
+            console.log("fabric.mod.json:", JSON.stringify({ id: m.id, name: m.name, version: m.version }));
+          ' "$version"
+
+          asset="tsunami-client.jar"
+          cp "$jar" "$asset"
+          sha1=$(sha1sum "$asset" | cut -d' ' -f1)
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+          echo "sha1=$sha1" >> "$GITHUB_OUTPUT"
+          echo "bytes=$(stat -c%s "$asset")" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag='${{ github.event.inputs.tag || github.ref_name }}'
+          gh release create "$tag" '${{ steps.jar.outputs.asset }}' \
+            --title "Tsunami ${{ steps.versions.outputs.mod_version }}" \
+            --generate-notes \
+            --verify-tag
+
+      # The launcher will not install a jar whose digest disagrees with the
+      # catalogue, so this block has to be exact. Printed rather than pushed
+      # because a cross-repository write needs a credential this repo does not
+      # hold - see the note at the top of this file.
+      - name: The catalogue entry to add to tsunami-api
+        run: |
+          tag='${{ github.event.inputs.tag || github.ref_name }}'
+          url="https://github.com/${{ github.repository }}/releases/download/${tag}/${{ steps.jar.outputs.asset }}"
+          {
+            echo '## Add this to `data/builds.json` in `tsunami-api`'
+            echo
+            echo 'As `client_jar` on the build record, then push - the publish workflow regenerates the site.'
+            echo
+            echo '```json'
+            echo '"client_jar": {'
+            echo "  \"url\": \"${url}\","
+            echo "  \"sha1\": \"${{ steps.jar.outputs.sha1 }}\""
+            echo '}'
+            echo '```'
+            echo
+            echo "Asset is ${{ steps.jar.outputs.bytes }} bytes."
+            echo
+            echo 'Then, in the launcher repo: `node scripts/verify-api.mjs --jar`.'
+          } >> "$GITHUB_STEP_SUMMARY"
