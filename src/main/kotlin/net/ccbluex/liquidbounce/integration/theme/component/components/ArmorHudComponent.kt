@@ -18,12 +18,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Tsunami. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.features.module.modules.render
+package net.ccbluex.liquidbounce.integration.theme.component.components
 
 import net.ccbluex.liquidbounce.config.types.list.Tagged
-import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.features.module.ModuleCategories
+import net.ccbluex.liquidbounce.render.engine.type.BoundingBox2f
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
+import net.ccbluex.liquidbounce.utils.render.Alignment
 
 /**
  * ArmorHud
@@ -52,9 +52,29 @@ import net.ccbluex.liquidbounce.render.engine.type.Color4b
  * anchor and the `DAMAGED_PIECES` filter were kept; the rest of its
  * permutations were not, and can be added if anyone misses them.
  */
-object ModuleArmorHud : ClientModule("ArmorHud", ModuleCategories.RENDER) {
+object ArmorHudComponent : NativeHudComponent(
+    "ArmorHud",
+    enabled = false,
+    alignment = Alignment(
+        horizontalAlignment = Alignment.ScreenAxisX.CENTER_TRANSLATED,
+        horizontalOffset = 0,
+        verticalAlignment = Alignment.ScreenAxisY.BOTTOM,
+        verticalOffset = 60,
+    ),
+    description = "Your armour and its durability, beside the hotbar.",
+) {
 
     enum class Anchor(override val tag: String) : Tagged {
+        /**
+         * Wherever you dragged it in the HUD editor.
+         *
+         * The other four anchors predate the editor and are uku's own: they are
+         * computed against the hotbar and the screen edges every frame, which is why
+         * HOTBAR can dodge the offhand slot and a stored x/y could not. Pick this one
+         * to place the widget by hand instead.
+         */
+        FREE("Free"),
+
         /** Beside the hotbar, clearing the offhand slot and attack indicator. */
         HOTBAR("Hotbar"),
         TOP("Top"),
@@ -139,4 +159,32 @@ object ModuleArmorHud : ClientModule("ArmorHud", ModuleCategories.RENDER) {
 
     /** Or below this many points, whichever triggers first. */
     val warnBelowDurability by int("WarnBelowDurability", 20, 0..500)
+
+    /**
+     * Four slots laid out horizontally - the widget at its usual size.
+     *
+     * The real widget shrinks when `WidgetShown` hides empty slots, but the editor
+     * needs one stable box to drag rather than one that resizes as you put armour on.
+     */
+    override val guiScaledWidth: Float
+        get() = if (orientation == Orientation.VERTICAL) SLOT_SIZE else FULL_ROW
+
+    override val guiScaledHeight: Float
+        get() = if (orientation == Orientation.VERTICAL) FULL_ROW else SLOT_SIZE
+
+    /**
+     * Where the editor put it, for [Anchor.FREE].
+     *
+     * `getGuiScaledBounds` is protected, and the renderer that needs it is Java in
+     * another package, so this is the way through.
+     */
+    @JvmStatic
+    fun editorBounds(width: Float, height: Float): BoundingBox2f = getGuiScaledBounds(width, height)
+
+    init {
+        registerComponentListen(this)
+    }
+
+    private const val SLOT_SIZE = 20f
+    private const val FULL_ROW = 80f
 }

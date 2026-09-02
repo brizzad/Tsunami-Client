@@ -1,9 +1,7 @@
 /*
- * This file is part of Tsunami, a fork of LiquidBounce
- * (https://github.com/CCBlueX/LiquidBounce)
+ * This file is part of Tsunami (https://github.com/brizzad/Tsunami-Client)
  *
  * Copyright (c) 2015 - 2026 CCBlueX
- * Copyright (c) 2026 Tsunami contributors
  *
  * Tsunami is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Tsunami. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.features.module.modules.render
+package net.ccbluex.liquidbounce.integration.theme.component.components
 
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.features.module.ModuleCategories
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
+import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.animal.equine.AbstractHorse
 import net.minecraft.world.phys.EntityHitResult
@@ -45,12 +42,24 @@ import java.util.Locale
  * Jump height is converted out of the raw attribute into blocks, because
  * "0.7143" means nothing and "5.2 blocks" is the number you would compare
  * against a fence.
+ *
+ * ## Was a module until 2026-09-02
+ *
+ * Positioned by an `Anchor` enum and two offset spinners; now dragged in the HUD
+ * editor like everything else. Its bind came with it - [HudComponent] gained one
+ * in the same commit, so nothing was lost in the move.
  */
-object ModuleHorseStats : ClientModule("HorseStats", ModuleCategories.RENDER) {
-
-    private val anchor by enumChoice("Anchor", ScreenAnchor.TOP_LEFT)
-    private val offsetX by int("OffsetX", 4, 0..512)
-    private val offsetY by int("OffsetY", 40, 0..512)
+object HorseStatsHudComponent : NativeHudComponent(
+    "HorseStats",
+    enabled = false,
+    alignment = Alignment(
+        horizontalAlignment = Alignment.ScreenAxisX.LEFT,
+        horizontalOffset = 4,
+        verticalAlignment = Alignment.ScreenAxisY.TOP,
+        verticalOffset = 40,
+    ),
+    description = "Speed, jump height and health of the horse you are on or looking at.",
+) {
 
     /** Also read the horse under the crosshair, not only the one you are on. */
     private val whileLookingAt by boolean("WhileLookingAt", true)
@@ -61,26 +70,59 @@ object ModuleHorseStats : ClientModule("HorseStats", ModuleCategories.RENDER) {
     private const val LINE_HEIGHT = 10
     private const val PADDING = 3
 
-    @Suppress("unused")
-    private val renderHandler = handler<OverlayRenderEvent> { event ->
-        val horse = targetHorse() ?: return@handler
+    /**
+     * What the box looks like with a horse in front of you.
+     *
+     * The editor sizes its drag handle from the reported width and height, and there
+     * is usually no horse while you are arranging a HUD - so the idle size is this
+     * rather than nothing. The digits are the widest the real rows get, so the handle
+     * does not jump when a horse does turn up.
+     */
+    private val SAMPLE_LINES = listOf(
+        "Speed  00.00 b/s",
+        "Jump   00.00 blocks",
+        "Health 00.00 / 00.00",
+    )
 
-        val lines = listOf(
+    private fun lines(): List<String> {
+        val horse = targetHorse() ?: return emptyList()
+        return listOf(
             "Speed  ${format(blocksPerSecond(horse))} b/s",
             "Jump   ${format(jumpBlocks(horse))} blocks",
             "Health ${format(horse.health.toDouble())} / ${format(horse.maxHealth.toDouble())}",
         )
+    }
+
+    private fun sizingLines(): List<String> = lines().ifEmpty { SAMPLE_LINES }
+
+    override val guiScaledWidth: Float
+        get() = (sizingLines().maxOf { mc.font.width(it) } + PADDING * 2).toFloat()
+
+    override val guiScaledHeight: Float
+        get() = (sizingLines().size * LINE_HEIGHT + PADDING * 2).toFloat()
+
+    init {
+        registerComponentListen(this)
+    }
+
+    @Suppress("unused")
+    private val renderHandler = handler<OverlayRenderEvent> { event ->
+        val lines = lines()
+        if (lines.isEmpty()) {
+            return@handler
+        }
+
+        val font = mc.font
+        val width = (lines.maxOf { font.width(it) } + PADDING * 2).toFloat()
+        val height = (lines.size * LINE_HEIGHT + PADDING * 2).toFloat()
+        val bounds = getGuiScaledBounds(width, height)
 
         val context = event.context
-        val font = mc.font
-        val width = lines.maxOf { font.width(it) } + PADDING * 2
-        val height = lines.size * LINE_HEIGHT + PADDING * 2
-
-        val x = anchor.x(context.guiWidth(), width, offsetX)
-        val y = anchor.y(context.guiHeight(), height, offsetY)
+        val x = bounds.xMin.toInt()
+        val y = bounds.yMin.toInt()
 
         if (!backgroundColor.isTransparent) {
-            context.fill(x, y, x + width, y + height, backgroundColor.argb)
+            context.fill(x, y, x + width.toInt(), y + height.toInt(), backgroundColor.argb)
         }
 
         lines.forEachIndexed { index, line ->

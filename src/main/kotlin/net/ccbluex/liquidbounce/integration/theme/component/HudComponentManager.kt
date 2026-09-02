@@ -25,11 +25,23 @@ import net.ccbluex.liquidbounce.features.misc.HideAppearance
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.integration.theme.Theme
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
+import net.ccbluex.liquidbounce.integration.theme.component.components.ArmorHudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.components.CooldownsHudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.components.HorseStatsHudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.components.PackDisplayHudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.components.PickupInfoHudComponent
 import net.ccbluex.liquidbounce.integration.theme.component.components.minimap.MinimapHudComponent
 
 object HudComponentManager {
 
-    val nativeComponents = listOf(MinimapHudComponent)
+    val nativeComponents = listOf(
+        MinimapHudComponent,
+        PackDisplayHudComponent,
+        HorseStatsHudComponent,
+        PickupInfoHudComponent,
+        CooldownsHudComponent,
+        ArmorHudComponent,
+    )
 
     val components: List<HudComponent>
         get() = nativeComponents + (ThemeManager.theme?.components ?: emptyList())

@@ -27,6 +27,8 @@ import net.ccbluex.liquidbounce.config.types.VALUE_NAME_ORDER
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.events.DisconnectEvent
 import net.ccbluex.liquidbounce.event.events.KeyboardKeyEvent
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentManager
+import net.ccbluex.liquidbounce.utils.input.Bindable
 import net.ccbluex.liquidbounce.event.events.MouseButtonEvent
 import net.ccbluex.liquidbounce.event.events.WorldChangeEvent
 import net.ccbluex.liquidbounce.event.handler
@@ -48,7 +50,6 @@ import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleAutoReconnect
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleLogCleanup
 import net.ccbluex.liquidbounce.features.module.modules.player.ModuleDropProtect
 import net.ccbluex.liquidbounce.features.module.modules.player.ModuleDeathInfo
-import net.ccbluex.liquidbounce.features.module.modules.render.ModulePickupInfo
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleTextFieldProtect
 import net.ccbluex.liquidbounce.features.module.modules.misc.betterchat.ModuleBetterChat
 import net.ccbluex.liquidbounce.features.module.modules.misc.nameprotect.ModuleNameProtect
@@ -71,16 +72,12 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleMlgHelper
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDamageTint
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleBundledMods
 import net.ccbluex.liquidbounce.features.module.modules.render.ModulePotionTimers
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleCooldowns
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleArmorHud
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleBetterHitreg
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitboxes
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleColorSaturation
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleItemDespawn
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleLightLevels
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleLootBeams
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHorseStats
-import net.ccbluex.liquidbounce.features.module.modules.render.ModulePackDisplay
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHitDirection
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleChunkBorders
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleWaypoints
@@ -129,8 +126,23 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
     }
     private class SmartBindMouseState(val pendingEnabled: Boolean, val pressTimestamp: Long)
 
-    private val smartKeyboardStates = Reference2ObjectArrayMap<ClientModule, SmartBindKeyboardState>()
-    private val smartMouseStates = Reference2ObjectArrayMap<ClientModule, SmartBindMouseState>()
+    private val smartKeyboardStates = Reference2ObjectArrayMap<Bindable, SmartBindKeyboardState>()
+    private val smartMouseStates = Reference2ObjectArrayMap<Bindable, SmartBindMouseState>()
+
+    /**
+     * Everything a key press can toggle: every module, and every HUD component.
+     *
+     * Components were added when the native HUD elements became draggable. Turning one
+     * into a HudComponent is what makes it movable, and a HudComponent is not a module -
+     * so without this, ArmorHud and friends would have gained a drag handle and lost
+     * their key in the same commit.
+     *
+     * Rebuilt per event rather than cached because the component list changes with the
+     * loaded theme. It is a walk over a few dozen entries against a key press, which is
+     * not a rate anything notices.
+     */
+    private val bindables: Sequence<Bindable>
+        get() = modules.asSequence() + HudComponentManager.components.asSequence()
 
     /**
      * Handles keystrokes for module binds.
@@ -143,7 +155,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             if (mc.gui.screen() == null) {
                 // Usually nobody actually wants a module to activate when they press the Minecraft debug key combo.
                 if (mc.options.keyDebugModifier.isDown) return@handler
-                for (m in modules) {
+                for (m in bindables) {
                     if (!m.bind.matchesKeyPress(event)) {
                         continue
                     }
@@ -163,7 +175,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
                 }
             }
         } else if (event.isRepeat) {
-            for (m in modules) {
+            for (m in bindables) {
                 if (m.bind.action != InputBind.BindAction.SMART ||
                     !m.bind.matchesKey(event.keyCode, event.scanCode) ||
                     m !in smartKeyboardStates
@@ -174,7 +186,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
                 smartKeyboardStates[m] = SmartBindKeyboardState.HOLDING
             }
         } else if (event.isReleased) {
-            for (m in modules) {
+            for (m in bindables) {
                 if (!m.bind.matchesKeyRelease(event)) {
                     continue
                 }
@@ -197,7 +209,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
     private val mouseButtonHandler = handler<MouseButtonEvent> { event ->
         if (event.isPressed) {
             if (mc.gui.screen() == null) {
-                for (m in modules) {
+                for (m in bindables) {
                     if (!m.bind.matchesMousePress(event)) {
                         continue
                     }
@@ -213,7 +225,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
                 }
             }
         } else if (event.isReleased) {
-            for (m in modules) {
+            for (m in bindables) {
                 if (!m.bind.matchesMouseRelease(event)) {
                     continue
                 }
@@ -344,8 +356,6 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleDamageTint,
             ModuleHitboxes,
             ModuleBetterHitreg,
-            ModuleArmorHud,
-            ModuleCooldowns,
             ModulePotionTimers,
             ModuleBundledMods,
             ModuleChunkBorders,
@@ -353,10 +363,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleLootBeams,
             ModuleItemDespawn,
             ModuleLightLevels,
-            ModuleHorseStats,
-            ModulePackDisplay,
             ModuleHitDirection,
-            ModulePickupInfo,
             ModuleWaypoints,
             ModuleShinyPots,
             ModuleDurabilityGuard,

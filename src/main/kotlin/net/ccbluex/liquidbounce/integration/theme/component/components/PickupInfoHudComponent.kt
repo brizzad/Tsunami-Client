@@ -18,16 +18,15 @@
  * You should have received a copy of the GNU General Public License
  * along with Tsunami. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.features.module.modules.render
+package net.ccbluex.liquidbounce.integration.theme.component.components
 
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.ccbluex.liquidbounce.event.events.GameTickEvent
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.events.WorldChangeEvent
 import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.features.module.ModuleCategories
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
+import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import kotlin.math.roundToInt
@@ -52,12 +51,24 @@ import kotlin.math.roundToInt
  * By diffing your own inventory once a tick against its previous contents. It
  * reads nothing but the inventory the client is already holding, and sends
  * nothing anywhere.
+ *
+ * ## Was a module until 2026-09-02
+ *
+ * Positioned by an anchor enum and two offset spinners; now dragged in the HUD
+ * editor. Its bind came with it, because [HudComponent] gained one in the same
+ * commit.
  */
-object ModulePickupInfo : ClientModule("PickupInfo", ModuleCategories.RENDER) {
-
-    private val anchor by enumChoice("Anchor", ScreenAnchor.BOTTOM_LEFT)
-    private val offsetX by int("OffsetX", 4, 0..512)
-    private val offsetY by int("OffsetY", 60, 0..512)
+object PickupInfoHudComponent : NativeHudComponent(
+    "PickupInfo",
+    enabled = false,
+    alignment = Alignment(
+        horizontalAlignment = Alignment.ScreenAxisX.LEFT,
+        horizontalOffset = 4,
+        verticalAlignment = Alignment.ScreenAxisY.BOTTOM,
+        verticalOffset = 60,
+    ),
+    description = "A running tally of what just entered or left your inventory.",
+) {
 
     /** How long an entry stays on screen, in milliseconds. */
     private val duration by int("Duration", 4000, 500..20_000)
@@ -167,8 +178,9 @@ object ModulePickupInfo : ClientModule("PickupInfo", ModuleCategories.RENDER) {
         val width = lines.maxOf { font.width(it.first) }
         val height = lines.size * LINE_HEIGHT
 
-        val x = anchor.x(context.guiWidth(), width, offsetX)
-        val y = anchor.y(context.guiHeight(), height, offsetY)
+        val bounds = getGuiScaledBounds(width.toFloat(), height.toFloat())
+        val x = bounds.xMin.toInt()
+        val y = bounds.yMin.toInt()
 
         lines.forEachIndexed { index, (text, entry) ->
             val base = if (entry.delta > 0) gainColor else lossColor
@@ -190,6 +202,31 @@ object ModulePickupInfo : ClientModule("PickupInfo", ModuleCategories.RENDER) {
                 Color4b(base.r, base.g, base.b, alpha).argb,
             )
         }
+    }
+
+    /**
+     * What the editor measures.
+     *
+     * A tally is empty most of the time, and the HUD editor draws its drag handle from
+     * the reported size - so an idle component would be one you could not pick up. The
+     * sample row is about as wide as a real one gets.
+     */
+    private const val SAMPLE_LINE = "+64 Cobblestone"
+
+    private fun currentLines(): List<String> {
+        val now = System.currentTimeMillis()
+        return entries.filter { now - it.at <= duration }
+            .map { "${if (it.delta > 0) "+" else ""}${it.delta} ${ItemStack(it.item).hoverName.string}" }
+    }
+
+    override val guiScaledWidth: Float
+        get() = currentLines().ifEmpty { listOf(SAMPLE_LINE) }.maxOf { mc.font.width(it) }.toFloat()
+
+    override val guiScaledHeight: Float
+        get() = (currentLines().ifEmpty { listOf(SAMPLE_LINE) }.size * LINE_HEIGHT).toFloat()
+
+    init {
+        registerComponentListen(this)
     }
 
     private class Entry(val item: Item, var delta: Int, var at: Long)

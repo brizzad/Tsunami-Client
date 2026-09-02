@@ -32,7 +32,7 @@
  */
 package net.ccbluex.liquidbounce.features.armorhud;
 
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleArmorHud;
+import net.ccbluex.liquidbounce.integration.theme.component.components.ArmorHudComponent;
 import net.minecraft.client.AttackIndicatorStatus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -94,7 +94,7 @@ public final class ArmorHudRenderer {
      * drawing site.
      */
     public static List<ItemStack> armorItems(Player player) {
-        ModuleArmorHud module = ModuleArmorHud.INSTANCE;
+        ArmorHudComponent module = ArmorHudComponent.INSTANCE;
 
         List<ItemStack> all = new ArrayList<>(SLOTS.length);
         for (EquipmentSlot slot : SLOTS) {
@@ -125,7 +125,7 @@ public final class ArmorHudRenderer {
      * when it grows leftwards.
      */
     public static @Nullable Rect2i widgetRect(GuiGraphicsExtractor graphics, Player player) {
-        ModuleArmorHud module = ModuleArmorHud.INSTANCE;
+        ArmorHudComponent module = ArmorHudComponent.INSTANCE;
         List<ItemStack> items = armorItems(player);
 
         if (items.isEmpty()) {
@@ -134,9 +134,9 @@ public final class ArmorHudRenderer {
 
         var anchor = module.getAnchor();
         var side = module.getSide();
-        boolean hotbarAnchored = anchor == ModuleArmorHud.Anchor.HOTBAR;
-        boolean growsLeft = (hotbarAnchored && side == ModuleArmorHud.Side.LEFT)
-                || (!hotbarAnchored && side == ModuleArmorHud.Side.RIGHT);
+        boolean hotbarAnchored = anchor == ArmorHudComponent.Anchor.HOTBAR;
+        boolean growsLeft = (hotbarAnchored && side == ArmorHudComponent.Side.LEFT)
+                || (!hotbarAnchored && side == ArmorHudComponent.Side.RIGHT);
 
         int sideMultiplier = growsLeft ? -1 : 1;
         int sideOffsetMultiplier = growsLeft ? -1 : 0;
@@ -149,9 +149,24 @@ public final class ArmorHudRenderer {
         };
 
         int textureWidth = SIZE + ((items.size() - 1) * STEP);
-        boolean vertical = module.getOrientation() == ModuleArmorHud.Orientation.VERTICAL;
+        boolean vertical = module.getOrientation() == ArmorHudComponent.Orientation.VERTICAL;
         int widgetWidth = vertical ? SIZE : textureWidth;
         int widgetHeight = vertical ? textureWidth : SIZE;
+
+        // FREE hands positioning to the HUD editor: the widget sits where it was
+        // dragged, and the offsets still nudge it from there. The other four are uku's
+        // own and are recomputed against the hotbar and the screen edges every frame,
+        // which is how HOTBAR dodges the offhand slot - a stored x/y cannot do that,
+        // which is why both exist rather than one replacing the other.
+        if (anchor == ArmorHudComponent.Anchor.FREE) {
+            var bounds = ArmorHudComponent.editorBounds(widgetWidth, widgetHeight);
+            return new Rect2i(
+                    (int) bounds.xMin() + module.getOffsetX(),
+                    (int) bounds.yMin() + module.getOffsetY(),
+                    widgetWidth,
+                    widgetHeight
+            );
+        }
 
         int x = module.getOffsetX() * sideMultiplier + switch (anchor) {
             case TOP_CENTER -> (graphics.guiWidth() - widgetWidth) / 2;
@@ -159,11 +174,13 @@ public final class ArmorHudRenderer {
             case HOTBAR -> graphics.guiWidth() / 2
                     + ((HOTBAR_OFFSET + addedHotbarOffset) * sideMultiplier)
                     + (widgetWidth * sideOffsetMultiplier);
+            case FREE -> throw new IllegalStateException("handled above");
         };
 
         int y = switch (anchor) {
             case BOTTOM, HOTBAR -> graphics.guiHeight() - widgetHeight - module.getOffsetY();
             case TOP, TOP_CENTER -> module.getOffsetY();
+            case FREE -> throw new IllegalStateException("handled above");
         };
 
         return new Rect2i(x, y, widgetWidth, widgetHeight);
@@ -176,7 +193,7 @@ public final class ArmorHudRenderer {
      * cooldown is running; on the other side it is the offhand slot, and only
      * while something is held there.
      */
-    private static int adhereOffset(Player player, ModuleArmorHud.Side side) {
+    private static int adhereOffset(Player player, ArmorHudComponent.Side side) {
         if (player.getMainArm() == mainArmFor(side)) {
             boolean hotbarIndicator = Minecraft.getInstance().options.attackIndicator().get()
                     == AttackIndicatorStatus.HOTBAR;
@@ -189,8 +206,8 @@ public final class ArmorHudRenderer {
         return player.getOffhandItem().isEmpty() ? 0 : OFFHAND_OFFSET;
     }
 
-    private static net.minecraft.world.entity.HumanoidArm mainArmFor(ModuleArmorHud.Side side) {
-        return side == ModuleArmorHud.Side.LEFT
+    private static net.minecraft.world.entity.HumanoidArm mainArmFor(ArmorHudComponent.Side side) {
+        return side == ArmorHudComponent.Side.LEFT
                 ? net.minecraft.world.entity.HumanoidArm.LEFT
                 : net.minecraft.world.entity.HumanoidArm.RIGHT;
     }
@@ -207,7 +224,7 @@ public final class ArmorHudRenderer {
             return false;
         }
 
-        ModuleArmorHud module = ModuleArmorHud.INSTANCE;
+        ArmorHudComponent module = ArmorHudComponent.INSTANCE;
         int damage = stack.getDamageValue();
         int maxDamage = stack.getMaxDamage();
         int remaining = maxDamage - damage;
@@ -219,7 +236,7 @@ public final class ArmorHudRenderer {
 
     /** Durability text for a slot, or null when nothing should be drawn. */
     public static @Nullable String durabilityText(ItemStack stack) {
-        ModuleArmorHud module = ModuleArmorHud.INSTANCE;
+        ArmorHudComponent module = ArmorHudComponent.INSTANCE;
 
         if (stack.isEmpty() || !stack.isDamageableItem()) {
             return null;

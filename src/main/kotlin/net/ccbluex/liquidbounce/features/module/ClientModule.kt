@@ -43,6 +43,7 @@ import net.ccbluex.liquidbounce.utils.client.inGame
 import net.ccbluex.liquidbounce.utils.client.notification
 import net.ccbluex.liquidbounce.utils.text.plus
 import net.ccbluex.liquidbounce.utils.text.toLowerCamelCase
+import net.ccbluex.liquidbounce.utils.input.Bindable
 import net.ccbluex.liquidbounce.utils.input.InputBind
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
@@ -63,7 +64,7 @@ open class ClientModule(
     @Exclude val disableOnQuit: Boolean = false, // disables module when player leaves the world,
     aliases: List<String> = emptyList(), // additional names under which the module is known
     hide: Boolean = false // default hide
-) : ToggleableValueGroup(null, name, state, aliases = aliases), EventListener, MinecraftShortcuts {
+) : ToggleableValueGroup(null, name, state, aliases = aliases), EventListener, MinecraftShortcuts, Bindable {
 
     protected val logger = clientLogger("Module/$name")
 
@@ -113,7 +114,7 @@ open class ClientModule(
                 notAnOption()
             }
         }
-    val bind get() = bindValue.get()
+    override val bind get() = bindValue.get()
 
     var hidden by boolean("Hidden", hide)
         .doNotIncludeWhen { !AutoConfig.includeConfiguration.includeHidden }
@@ -177,7 +178,10 @@ open class ClientModule(
         }
         calledSinceStartup = true
 
-        val state = super.onToggled(state)
+        // Explicit because ClientModule now inherits onToggled from two places: the
+        // ToggleableValueGroup it extends, and Toggleable's default via Bindable. The
+        // class is the one that does the real work.
+        val state = super<ToggleableValueGroup>.onToggled(state)
 
         EventManager.callEvent(ModuleActivationEvent(name))
 

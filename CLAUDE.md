@@ -143,6 +143,56 @@ JavaScript sends 0.7999999999999999 and reads back 0.8. That is the language,
 not the client - compare with a tolerance or use values that are exact in
 binary.
 
+## Making a HUD element draggable
+
+The HUD editor moves anything that is a `HudComponent`, and nothing that is not.
+That is the whole rule, and it is why "the editor is already coded" and "you can
+move this element" were different questions until 2026-09-02.
+
+Two kinds exist. `WebHudComponent` is a Svelte element declared in
+`src-theme/public/components/` (21 of them). `NativeHudComponent` is drawn in
+Kotlin and registered in `HudComponentManager.nativeComponents` - the minimap was
+the only one for a long time; ArmorHud, Cooldowns, HorseStats, PackDisplay and
+PickupInfo joined it when they stopped being modules.
+
+**A module cannot be dragged.** Making one movable means converting it:
+
+1. `object ModuleX : ClientModule("X", RENDER)` becomes
+   `object XHudComponent : NativeHudComponent("X", enabled = false, Alignment(...), description = "...")`,
+   in `integration/theme/component/components/`.
+2. Delete its `Anchor`/`OffsetX`/`OffsetY` settings - the inherited `alignment` is
+   the position now - and position with `getGuiScaledBounds(width, height)`.
+3. Override `guiScaledWidth`/`guiScaledHeight`.
+4. `registerComponentListen(this)` in an `init` block, or setting changes will not
+   reach the HUD.
+5. Add it to `HudComponentManager.nativeComponents`, remove it from
+   `ModuleManager`, and delete its now-orphaned
+   `tsunami.module.<name>.description` key. Component descriptions are the
+   `description` constructor argument, not a lang key.
+
+**Report a non-zero size when there is nothing to draw.** The editor draws its
+drag handle from the `width`/`height` the component reports
+(`ReadOnlyComponentSerializer`), so a component that measures its live content
+and returns 0 when idle cannot be picked up - and arranging a HUD is exactly when
+nothing is happening. Each converted component falls back to a sample row.
+
+**Components can be bound and protocol-gated, as of the same day.** `HudComponent`
+gained a `Bind` and an `inapplicableOnProtocol`, so a converted module keeps both.
+The shared half is `utils/input/Bindable`, which `ModuleManager`'s key and mouse
+handlers dispatch against - previously they walked `modules` alone, which is why
+a converted module would otherwise have lost its key.
+
+**Watch for `super.onToggled` after adding an interface.** `Bindable` extends
+`Toggleable`, which carries a default `onToggled`, so any class that also extends
+`ToggleableValueGroup` now inherits two and must say
+`super<ToggleableValueGroup>.onToggled(state)`.
+
+**Driving it without clicking**: `GET /client/components/native` lists them with
+their sizes, `POST /client/components/{id}/alignment` is exactly what a drag
+sends, and the payload is flat with *tag* strings -
+`{"horizontalAlignment":"Left","verticalAlignment":"Top","horizontalOffset":123,"verticalOffset":45}`.
+`"LEFT"` is the TypeScript enum key and is rejected with a 400.
+
 ## Changing the theme — the ClickGUI and the HUD
 
 The interface is a **Svelte 5** app in `src-theme/`, built into the jar. Its

@@ -58,7 +58,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.ccbluex.liquidbounce.features.armorhud.ArmorHudRenderer;
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleArmorHud;
+import net.ccbluex.liquidbounce.integration.theme.component.components.ArmorHudComponent;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModulePotionTimers;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.util.ARGB;
@@ -321,7 +321,7 @@ public abstract class MixinHud {
      */
     @Inject(method = "extractItemHotbar", at = @At("TAIL"))
     private void hookArmorHud(GuiGraphicsExtractor graphics, DeltaTracker tickCounter, CallbackInfo ci) {
-        var module = ModuleArmorHud.INSTANCE;
+        var module = ArmorHudComponent.INSTANCE;
         if (!module.getRunning()) {
             return;
         }
@@ -340,7 +340,7 @@ public abstract class MixinHud {
         int size = ArmorHudRenderer.SIZE;
         int step = ArmorHudRenderer.STEP;
         int textureWidth = size + ((items.size() - 1) * step);
-        boolean vertical = module.getOrientation() == ModuleArmorHud.Orientation.VERTICAL;
+        boolean vertical = module.getOrientation() == ArmorHudComponent.Orientation.VERTICAL;
 
         // The background is drawn in the widget's own space; rotating for the
         // vertical layout is cheaper than a second set of blit coordinates.

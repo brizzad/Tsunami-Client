@@ -350,6 +350,42 @@ licence implies.
 about how hard anyone had looked, which is the failure this document keeps
 recording.
 
+**Five HUD elements became draggable (2026-09-02).** ArmorHud, Cooldowns,
+HorseStats, PackDisplay and PickupInfo were modules that positioned themselves
+with an `Anchor` enum and two offset spinners. They are now
+`NativeHudComponent`s, so the HUD editor moves them by dragging like the minimap
+and the theme's own 21 elements.
+
+The editor itself needed no work - it was complete, and had been moving those 21
+all along. What was missing is that nothing else was registered with it:
+`HudComponentManager.nativeComponents` held the minimap and nothing more, and a
+`ClientModule` is not a component, so the editor could not see one.
+
+**The conversion had a cost, and it was paid rather than accepted.** A
+`HudComponent` is a `ToggleableValueGroup`, not a module, so it had no keybind and
+no `inapplicableOnProtocol`; converting would have taken a key away from five
+things and silently dropped Cooldowns' "item cooldowns do not exist below 1.9"
+gate. Both now exist on `HudComponent`, dispatched through a shared
+`utils/input/Bindable` that `ModuleManager` matches key events against - so every
+HUD component is bindable now, including the theme's and the minimap's.
+
+**ArmorHud keeps its own anchors and gains `Free`.** Its `HOTBAR` anchor is
+recomputed every frame against the hotbar, the offhand slot and the attack
+indicator, which a stored x/y cannot express - so the four uku anchors stayed and
+a fifth, `Free`, defers to the dragged position. Default is unchanged, so nobody's
+HUD moved.
+
+**Verified in a running client.** `GET /client/components/native` lists all six
+with non-zero sizes; the five are gone from `/client/modules` (69 registered, was
+74); ArmorHud's settings carry both `Bind` and `Alignment`;
+`POST /client/components/{id}/alignment` - the call a drag makes - moved it to
+`Left+123 / Top+45` and it drew there, in the upper left rather than beside the
+hotbar. `./gradlew clean build` is green with `:test` and `:detekt`.
+
+Two were deliberately left as modules. **PotionTimers** draws onto the vanilla
+effect icons and **HitDirection** is an arc centred on the crosshair; neither is
+free-floating, so neither has a position to drag.
+
 **Player health moved from a nametag part to the real mod (2026-09-02).**
 `NametagTextFormatter` had a `HEALTH` part printing `18 HP` in green/yellow/red.
 It was removed at Nathan's direction and replaced by **Player Health Indicators**

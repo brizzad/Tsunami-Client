@@ -18,14 +18,13 @@
  * You should have received a copy of the GNU General Public License
  * along with Tsunami. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.features.module.modules.render
+package net.ccbluex.liquidbounce.integration.theme.component.components
 
 import net.ccbluex.liquidbounce.utils.client.isOlderThan1_9
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.features.module.ModuleCategories
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
+import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.ccbluex.liquidbounce.utils.item.getCooldown
 import net.minecraft.world.item.ItemStack
 
@@ -52,7 +51,17 @@ import net.minecraft.world.item.ItemStack
  * Reads state the game already gave you and draws it. It cannot start, stop or
  * shorten a cooldown, and does not touch the server's copy of one.
  */
-object ModuleCooldowns : ClientModule("Cooldowns", ModuleCategories.RENDER) {
+object CooldownsHudComponent : NativeHudComponent(
+    "Cooldowns",
+    enabled = false,
+    alignment = Alignment(
+        horizontalAlignment = Alignment.ScreenAxisX.LEFT,
+        horizontalOffset = 4,
+        verticalAlignment = Alignment.ScreenAxisY.TOP,
+        verticalOffset = 110,
+    ),
+    description = "Item cooldowns, with a bar draining as each one runs down.",
+) {
 
     /**
      * Nothing has an item cooldown before 1.9 - no ender pearl throw, no chorus fruit, no
@@ -61,9 +70,6 @@ object ModuleCooldowns : ClientModule("Cooldowns", ModuleCategories.RENDER) {
     override val inapplicableOnProtocol: String?
         get() = if (isOlderThan1_9) "Item cooldowns do not exist below 1.9" else null
 
-    private val anchor by enumChoice("Anchor", ScreenAnchor.TOP_LEFT)
-    private val offsetX by int("OffsetX", 4, 0..512)
-    private val offsetY by int("OffsetY", 110, 0..512)
 
     /** Row height. Also the icon size, so the two stay aligned. */
     private const val ROW_HEIGHT = 18
@@ -94,6 +100,25 @@ object ModuleCooldowns : ClientModule("Cooldowns", ModuleCategories.RENDER) {
     /** Most rows to draw, so a full inventory cannot fill the screen. */
     private val maxEntries by int("MaxEntries", 6, 1..12)
 
+    override val guiScaledWidth: Float
+        get() = ROW_WIDTH.toFloat()
+
+    /**
+     * One row per live cooldown, and one when there are none - the editor draws its
+     * drag handle from this, and you arrange a HUD standing still with nothing on
+     * cooldown.
+     */
+    override val guiScaledHeight: Float
+        get() {
+            val player = mc.player ?: return ROW_HEIGHT.toFloat()
+            val rows = collect(player.inventory.nonEquipmentItems + player.offhandItem).size
+            return (rows.coerceAtLeast(1) * ROW_HEIGHT).toFloat()
+        }
+
+    init {
+        registerComponentListen(this)
+    }
+
     @Suppress("unused")
     private val renderHandler = handler<OverlayRenderEvent> { event ->
         val player = mc.player ?: return@handler
@@ -104,12 +129,11 @@ object ModuleCooldowns : ClientModule("Cooldowns", ModuleCategories.RENDER) {
         }
 
         val context = event.context
-        val width = context.guiWidth()
-        val height = context.guiHeight()
         val rows = cooldowns.size
 
-        val x = anchor.x(width, ROW_WIDTH, offsetX)
-        val top = anchor.y(height, rows * ROW_HEIGHT, offsetY)
+        val bounds = getGuiScaledBounds(ROW_WIDTH.toFloat(), (rows * ROW_HEIGHT).toFloat())
+        val x = bounds.xMin.toInt()
+        val top = bounds.yMin.toInt()
 
         cooldowns.forEachIndexed { index, entry ->
             val y = top + index * ROW_HEIGHT
